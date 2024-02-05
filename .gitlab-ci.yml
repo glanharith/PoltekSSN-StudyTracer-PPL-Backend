@@ -1,0 +1,14 @@
+stages:
+  - test
+
+variables:
+  NODE_IMAGE: 'node:20'
+
+before_script:
+  - yarn
+
+test:
+  stage: test
+  image: $NODE_IMAGE
+  script:
+    - yarn test
