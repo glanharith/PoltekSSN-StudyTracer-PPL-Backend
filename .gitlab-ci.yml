@@ -1,4 +1,5 @@
 stages:
+  - build
   - test
 
 variables:
@@ -7,8 +8,19 @@ variables:
 before_script:
   - yarn
 
+build:
+  stage: build
+  image: $NODE_IMAGE
+  script:
+    - yarn build
+  artifacts:
+    paths:
+      - dist/
+
 test:
   stage: test
   image: $NODE_IMAGE
   script:
     - yarn test
+  dependencies:
+    - build
