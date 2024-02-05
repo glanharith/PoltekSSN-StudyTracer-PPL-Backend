@@ -21,6 +21,7 @@ test:
   stage: test
   image: $NODE_IMAGE
   script:
-    - yarn test
+    - yarn test:ci
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   dependencies:
     - build
