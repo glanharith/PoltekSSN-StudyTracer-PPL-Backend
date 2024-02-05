@@ -1,5 +1,7 @@
 # Tracer Study Backend
 
+
+[![pipeline status](https://gitlab.cs.ui.ac.id/tracer-study-poltekssn/tracer-study-be/badges/staging/pipeline.svg)](https://gitlab.cs.ui.ac.id/tracer-study-poltekssn/tracer-study-be/-/commits/staging) 
 [![coverage report](https://gitlab.cs.ui.ac.id/tracer-study-poltekssn/tracer-study-be/badges/staging/coverage.svg)](https://gitlab.cs.ui.ac.id/tracer-study-poltekssn/tracer-study-be/-/commits/staging)
 
 
