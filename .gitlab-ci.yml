@@ -51,13 +51,12 @@ publish:
   dependencies:
     - test
   before_script:
+    - apk update && apk --no-cache add docker
     - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
   script:
     - echo $ENV > .env
     - docker build --build-arg ENV_FILE=.env -t $DOCKER_IMAGE_NAME:$TAG .
     - docker push $DOCKER_IMAGE_NAME:$TAG
-  tags:
-    - docker-windows
   only:
     - main
     - staging
