@@ -47,14 +47,8 @@ test:
 
 publish:
   stage: deploy
-  image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind
   dependencies:
     - test
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ''
   before_script:
     - docker info
     - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
@@ -66,7 +60,7 @@ publish:
     - main
     - staging
   tags:
-    - dind
+    - shell
 
 deploy:
   stage: deploy
