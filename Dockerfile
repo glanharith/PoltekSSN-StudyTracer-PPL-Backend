@@ -7,7 +7,7 @@ COPY package.json yarn.lock ./
 RUN yarn cache clean
 RUN yarn install --no-lockfile
 COPY . .
-RUN yarn migrate
+RUN yarn prisma generate
 RUN yarn build
 
 FROM base AS production
@@ -20,4 +20,4 @@ COPY --from=build /usr/src/app/package.json .
 COPY --from=build /usr/src/app/yarn.lock .
 COPY --from=build /usr/src/app/prisma ./prisma
 
-CMD ["yarn", "start:prod"]
+CMD ["sh", "-c", "yarn migrate && yarn start:prod"]
