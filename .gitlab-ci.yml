@@ -48,8 +48,6 @@ test:
 publish:
   stage: deploy
   image: docker:latest
-  services:
-    - docker:dind
   dependencies:
     - test
   before_script:
@@ -59,7 +57,7 @@ publish:
     - docker build --build-arg ENV_FILE=.env -t $DOCKER_IMAGE_NAME:$TAG .
     - docker push $DOCKER_IMAGE_NAME:$TAG
   tags:
-    - dind
+    - docker-windows
   only:
     - main
     - staging
