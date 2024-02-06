@@ -74,7 +74,7 @@ deploy:
     - apk update && apk add openssh-client
   script:
     - ssh -o StrictHostKeyChecking=no -i $SSH_KEY $GCP_USERNAME@$GCP_HOST "
-      echo $ENV > .env &&
+      printf \"%s\" \"$ENV\" > .env || true &&
       docker container rm -f $CONTAINER_NAME || true &&
       docker image rm -f $DOCKER_IMAGE_NAME:$TAG || true &&
       docker run --name $CONTAINER_NAME --env-file=.env -d -p 80:8000 $DOCKER_IMAGE_NAME:$TAG"
