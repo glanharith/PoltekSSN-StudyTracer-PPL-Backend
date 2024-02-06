@@ -1,0 +1,87 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  NODE_IMAGE: 'node:20'
+  DOCKER_IMAGE_NAME: '$DOCKERHUB_USERNAME/$CONTAINER_NAME'
+  PRODUCTION_TAG: 'latest'
+  STAGING_TAG: 'staging'
+  TAG: ''
+  GCP_HOST: ''
+  ENV: ''
+
+before_script:
+  - yarn
+
+build:
+  stage: build
+  image: $NODE_IMAGE
+  script:
+    - yarn build
+  artifacts:
+    paths:
+      - dist/
+
+test:
+  stage: test
+  image: $NODE_IMAGE
+  script:
+    - export DATABASE_URL=$TEST_DATABASE_URL
+    - yarn migrate
+    - yarn test:ci
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  dependencies:
+    - build
+
+publish:
+  stage: deploy
+  dependencies:
+    - test
+  before_script:
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "main" ]; then
+        export TAG=$PRODUCTION_TAG
+      elif [ "$CI_COMMIT_BRANCH" == "staging" ]; then
+        export TAG=$STAGING_TAG
+      fi
+    - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
+  script:
+    - docker build -t $DOCKER_IMAGE_NAME:$TAG .
+    - docker push $DOCKER_IMAGE_NAME:$TAG
+  only:
+    - main
+    - staging
+  tags:
+    - shell
+
+deploy:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "main" ]; then
+        export TAG=$PRODUCTION_TAG
+        export GCP_HOST=$PRODUCTION_GCP_HOST
+        export ENV=$ENV_PRODUCTION
+      elif [ "$CI_COMMIT_BRANCH" == "staging" ]; then
+        export TAG=$STAGING_TAG
+        export GCP_HOST=$STAGING_GCP_HOST
+        export ENV=$ENV_STAGING
+      fi
+    - chmod 400 $SSH_KEY
+    - apk update && apk add openssh-client
+  script:
+    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY $GCP_USERNAME@$GCP_HOST "
+      printf \"%s\" \"$ENV\" > .env || true &&
+      docker container rm -f $CONTAINER_NAME || true &&
+      docker image rm -f $DOCKER_IMAGE_NAME:$TAG || true &&
+      docker run --name $CONTAINER_NAME --env-file=.env -d -p 80:8000 $DOCKER_IMAGE_NAME:$TAG"
+  only:
+    - main
+    - staging
+  needs:
+    - job: publish
+  tags:
+    - ssh
