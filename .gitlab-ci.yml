@@ -47,11 +47,16 @@ test:
 
 publish:
   stage: deploy
-  image: alpine:latest
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
   dependencies:
     - test
+  variables:
+    - DOCKER_HOST: tcp://docker:2375
+    - DOCKER_TLS_CERTDIR: ''
   before_script:
-    - apk update && apk --no-cache add docker
+    - docker info
     - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
   script:
     - echo $ENV > .env
@@ -60,6 +65,8 @@ publish:
   only:
     - main
     - staging
+  tags:
+    - dind
 
 deploy:
   stage: deploy
