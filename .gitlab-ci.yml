@@ -14,14 +14,15 @@ variables:
 
 before_script:
   - yarn
-  - if [ "$CI_COMMIT_BRANCH" == "main" ]; then
-    export TAG=$PRODUCTION_TAG
-    export GCP_HOST=$PRODUCTION_GCP_HOST
-    export ENV=$ENV_PRODUCTION
+  - |
+    if [ "$CI_COMMIT_BRANCH" == "main" ]; then
+      export TAG=$PRODUCTION_TAG
+      export GCP_HOST=$PRODUCTION_GCP_HOST
+      export ENV=$ENV_PRODUCTION
     elif [ "$CI_COMMIT_BRANCH" == "staging" ]; then
-    export TAG=$STAGING_TAG
-    export GCP_HOST=$STAGING_GCP_HOST
-    export ENV=$ENV_STAGING
+      export TAG=$STAGING_TAG
+      export GCP_HOST=$STAGING_GCP_HOST
+      export ENV=$ENV_STAGING
     fi
 
 build:
