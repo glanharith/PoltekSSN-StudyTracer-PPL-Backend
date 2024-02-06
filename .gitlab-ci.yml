@@ -85,3 +85,5 @@ deploy:
     - staging
   needs:
     - job: publish
+  tags:
+    - ssh
