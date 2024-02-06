@@ -47,7 +47,7 @@ test:
 
 publish:
   stage: deploy
-  image: docker:latest
+  image: alpine:latest
   dependencies:
     - test
   before_script:
