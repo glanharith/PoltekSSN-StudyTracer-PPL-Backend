@@ -43,17 +43,12 @@ publish:
     - |
       if [ "$CI_COMMIT_BRANCH" == "main" ]; then
         export TAG=$PRODUCTION_TAG
-        export ENV=$ENV_PRODUCTION
       elif [ "$CI_COMMIT_BRANCH" == "staging" ]; then
         export TAG=$STAGING_TAG
-        export ENV=$ENV_STAGING
       fi
-    - docker info
     - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
-    - echo $TAG
   script:
-    - echo $ENV > .env
-    - docker build --build-arg ENV_FILE=.env -t $DOCKER_IMAGE_NAME:$TAG .
+    - docker build -t $DOCKER_IMAGE_NAME:$TAG .
     - docker push $DOCKER_IMAGE_NAME:$TAG
   only:
     - main
@@ -69,17 +64,20 @@ deploy:
       if [ "$CI_COMMIT_BRANCH" == "main" ]; then
         export TAG=$PRODUCTION_TAG
         export GCP_HOST=$PRODUCTION_GCP_HOST
+        export ENV=$ENV_PRODUCTION
       elif [ "$CI_COMMIT_BRANCH" == "staging" ]; then
         export TAG=$STAGING_TAG
         export GCP_HOST=$STAGING_GCP_HOST
+        export ENV=$ENV_STAGING
       fi
     - chmod 400 $SSH_KEY
     - apk update && apk add openssh-client
   script:
     - ssh -o StrictHostKeyChecking=no -i $SSH_KEY $GCP_USERNAME@$GCP_HOST "
+      echo $ENV > .env
       docker container rm -f $CONTAINER_NAME || true &&
       docker image rm -f $DOCKER_IMAGE_NAME:$TAG || true &&
-      docker run --name $CONTAINER_NAME -d -p 80:8000 $DOCKER_IMAGE_NAME:$TAG"
+      docker run --name $CONTAINER_NAME --env-file=.env -d -p 80:8000 $DOCKER_IMAGE_NAME:$TAG"
   only:
     - main
     - staging

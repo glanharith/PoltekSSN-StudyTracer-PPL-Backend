@@ -1,8 +1,5 @@
 FROM node:alpine AS base
 
-ARG ENV_FILE
-ENV ENV_FILE ${ENV_FILE}
-
 FROM base AS build
 
 WORKDIR /usr/src/app
@@ -22,6 +19,5 @@ COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/package.json .
 COPY --from=build /usr/src/app/yarn.lock .
 COPY --from=build /usr/src/app/prisma ./prisma
-COPY ${ENV_FILE} .env
 
 CMD ["yarn", "start:prod"]
