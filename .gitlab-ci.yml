@@ -52,6 +52,7 @@ publish:
   before_script:
     - docker info
     - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
+    - echo $TAG
   script:
     - echo $ENV > .env
     - docker build --build-arg ENV_FILE=.env -t $DOCKER_IMAGE_NAME:$TAG .
