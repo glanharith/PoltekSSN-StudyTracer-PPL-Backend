@@ -14,16 +14,6 @@ variables:
 
 before_script:
   - yarn
-  - |
-    if [ "$CI_COMMIT_BRANCH" == "main" ]; then
-      export TAG=$PRODUCTION_TAG
-      export GCP_HOST=$PRODUCTION_GCP_HOST
-      export ENV=$ENV_PRODUCTION
-    elif [ "$CI_COMMIT_BRANCH" == "staging" ]; then
-      export TAG=$STAGING_TAG
-      export GCP_HOST=$STAGING_GCP_HOST
-      export ENV=$ENV_STAGING
-    fi
 
 build:
   stage: build
@@ -50,6 +40,14 @@ publish:
   dependencies:
     - test
   before_script:
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "main" ]; then
+        export TAG=$PRODUCTION_TAG
+        export ENV=$ENV_PRODUCTION
+      elif [ "$CI_COMMIT_BRANCH" == "staging" ]; then
+        export TAG=$STAGING_TAG
+        export ENV=$ENV_STAGING
+      fi
     - docker info
     - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
     - echo $TAG
@@ -67,6 +65,14 @@ deploy:
   stage: deploy
   image: alpine:latest
   before_script:
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "main" ]; then
+        export TAG=$PRODUCTION_TAG
+        export GCP_HOST=$PRODUCTION_GCP_HOST
+      elif [ "$CI_COMMIT_BRANCH" == "staging" ]; then
+        export TAG=$STAGING_TAG
+        export GCP_HOST=$STAGING_GCP_HOST
+      fi
     - chmod 400 $SSH_KEY
     - apk update && apk add openssh-client
   script:
