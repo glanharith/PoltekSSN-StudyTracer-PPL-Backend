@@ -68,7 +68,7 @@ deploy:
   stage: deploy
   image: alpine:latest
   dependencies:
-    - publish
+    - test
   before_script:
     - chmod 400 $SSH_KEY
     - apk update && apk add openssh-client
@@ -80,3 +80,5 @@ deploy:
   only:
     - main
     - staging
+  needs:
+    - job: publish
