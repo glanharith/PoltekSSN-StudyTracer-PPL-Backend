@@ -7,7 +7,7 @@ COPY package.json yarn.lock ./
 RUN yarn cache clean
 RUN yarn install --no-lockfile
 COPY . .
-RUN yarn prisma generate
+RUN yarn migrate
 RUN yarn build
 
 FROM base AS production
