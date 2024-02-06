@@ -21,7 +21,9 @@ test:
   stage: test
   image: $NODE_IMAGE
   script:
-    - DATABASE_URL=$TEST_DATABASE_URL yarn test:ci
+    - export DATABASE_URL=$TEST_DATABASE_URL
+    - yarn migrate
+    - yarn test:ci
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   dependencies:
     - build
