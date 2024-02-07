@@ -77,7 +77,7 @@ deploy:
       printf \"%s\" \"$ENV\" > .env || true &&
       docker container rm -f $CONTAINER_NAME || true &&
       docker image rm -f $DOCKER_IMAGE_NAME:$TAG || true &&
-      docker run --name $CONTAINER_NAME --env-file=.env -d -p 80:8000 $DOCKER_IMAGE_NAME:$TAG"
+      docker run --name $CONTAINER_NAME --env-file=.env -v $HOST_KEY_LOCATION:$DOCKER_KEY_LOCATION -v $HOST_CERT_LOCATION:$DOCKER_CERT_LOCATION -d -p 443:443 $DOCKER_IMAGE_NAME:$TAG"
   only:
     - main
     - staging
