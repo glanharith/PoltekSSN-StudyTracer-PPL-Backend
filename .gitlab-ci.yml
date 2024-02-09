@@ -1,6 +1,7 @@
 stages:
   - build
   - test
+  - sonar
   - deploy
 
 variables:
@@ -12,12 +13,11 @@ variables:
   GCP_HOST: ''
   ENV: ''
 
-before_script:
-  - yarn
-
 build:
   stage: build
   image: $NODE_IMAGE
+  before_script:
+    - yarn
   script:
     - yarn build
   artifacts:
@@ -34,6 +34,21 @@ test:
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   dependencies:
     - build
+  artifacts:
+    paths:
+      - coverage/
+
+sonar:
+  stage: sonar
+  image: $NODE_IMAGE
+  before_script:
+    - yarn
+  script:
+    - yarn sonar-scanner -Dsonar.host.url=$SONAR_HOST -Dsonar.login=$SONAR_LOGIN -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.projectName=tracer-study-be -Dsonar.sources=src -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+  dependencies:
+    - test
+  only:
+    - staging
 
 publish:
   stage: deploy

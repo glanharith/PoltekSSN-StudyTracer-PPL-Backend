@@ -12,6 +12,6 @@ export class AppController {
 
   @Get('hello/:username')
   async getUsername(@Param('username') username: string) {
-    return await this.appService.getUsername(username);
+    return this.appService.getUsername(username);
   }
 }
