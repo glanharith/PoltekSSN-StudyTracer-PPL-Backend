@@ -27,6 +27,8 @@ build:
 test:
   stage: test
   image: $NODE_IMAGE
+  before_script:
+    - yarn
   script:
     - export DATABASE_URL=$TEST_DATABASE_URL
     - yarn migrate
