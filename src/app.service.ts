@@ -9,10 +9,10 @@ export class AppService {
     return 'Hello World!';
   }
 
-  async getUsername(username: string) {
+  async getEmail(email: string) {
     const user = await this.prisma.user.findUnique({
       where: {
-        username,
+        email,
       },
     });
 

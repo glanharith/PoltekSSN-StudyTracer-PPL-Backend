@@ -10,8 +10,8 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Get('hello/:username')
-  async getUsername(@Param('username') username: string) {
-    return this.appService.getUsername(username);
+  @Get('hello/:email')
+  async getEmail(@Param('email') email: string) {
+    return this.appService.getEmail(email);
   }
 }

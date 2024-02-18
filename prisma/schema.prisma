@@ -11,8 +11,14 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(uuid())
-  username String @unique
-  name     String
-  age      Int    @default(0)
+  id    String @id @default(uuid())
+  email String @unique
+  name  String
+  role  Role
+}
+
+enum Role {
+  ALUMNI
+  ADMIN
+  HEAD_STUDY_PROGRAM
 }

@@ -18,12 +18,13 @@ describe('AppController', () => {
 
     await prismaService.user.upsert({
       where: {
-        username: 'testuser1',
+        email: 'testuser1',
       },
       update: {},
       create: {
-        username: 'testuser1',
+        email: 'testuser1',
         name: 'Test User 1',
+        role: 'ADMIN',
       },
     });
   });
@@ -36,13 +37,13 @@ describe('AppController', () => {
 
   describe('/hello/:username', () => {
     it('should return "Hello {name}!" if username found', async () => {
-      expect(await appController.getUsername('testuser1')).toEqual(
+      expect(await appController.getEmail('testuser1')).toEqual(
         'Hello Test User 1!',
       );
     });
 
     it('should return "User not found" if username not found', async () => {
-      expect(await appController.getUsername('testuser2')).toEqual(
+      expect(await appController.getEmail('testuser2')).toEqual(
         'User not found',
       );
     });
@@ -51,7 +52,7 @@ describe('AppController', () => {
   afterAll(async () => {
     await prismaService.user.delete({
       where: {
-        username: 'testuser1',
+        email: 'testuser1',
       },
     });
   });
