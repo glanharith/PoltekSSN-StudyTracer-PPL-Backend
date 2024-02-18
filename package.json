@@ -13,13 +13,12 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "dotenvx run --env-file=.env.test -- yarn jest",
-    "test:watch": "dotenvx run --env-file=.env.test -- jest --watch",
-    "test:cov": "dotenvx run --env-file=.env.test -- jest --coverage",
+    "test": "yarn jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
     "test:ci": "jest --ci --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "migrate:dev": "yarn prisma migrate dev --schema=./prisma/schema.prisma && yarn prisma generate --schema=./prisma/schema.prisma",
-    "migrate:test": "dotenvx run --env-file=.env.test -- prisma migrate dev --schema=./prisma/schema.prisma && yarn prisma generate --schema=./prisma/schema.prisma",
     "migrate": "yarn prisma migrate deploy --schema=./prisma/schema.prisma && yarn prisma generate --schema=./prisma/schema.prisma",
     "studio": "yarn prisma studio --schema=./prisma/schema.prisma"
   },
@@ -77,7 +76,8 @@
     "coveragePathIgnorePatterns": [
       "/node_modules/",
       "/main\\.ts$",
-      "\\.module\\.ts$"
+      "\\.module\\.ts$",
+      "\\.mock\\.ts$"
     ],
     "coverageReporters": [
       "lcov",

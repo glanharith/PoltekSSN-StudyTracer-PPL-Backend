@@ -1,32 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaService } from './prisma/prisma.service';
 
 describe('AppController', () => {
   let appController: AppController;
-  let prismaService: PrismaService;
+  let appServiceMock = {
+    getUserById: jest.fn(),
+  };
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService, PrismaService],
+      providers: [{ provide: AppService, useValue: appServiceMock }],
     }).compile();
 
     appController = app.get<AppController>(AppController);
-    prismaService = app.get<PrismaService>(PrismaService);
-
-    await prismaService.user.upsert({
-      where: {
-        email: 'testuser1',
-      },
-      update: {},
-      create: {
-        email: 'testuser1',
-        name: 'Test User 1',
-        role: 'ADMIN',
-      },
-    });
   });
 
   describe('root', () => {
@@ -35,25 +23,20 @@ describe('AppController', () => {
     });
   });
 
-  describe('/hello/:username', () => {
-    it('should return "Hello {name}!" if username found', async () => {
-      expect(await appController.getEmail('testuser1')).toEqual(
-        'Hello Test User 1!',
-      );
-    });
+  describe('/hello/:id', () => {
+    it('should return user info', async () => {
+      const USER = {
+        id: 'user1',
+        email: 'user1@gmail.com',
+        namme: 'Test User 1',
+      };
+      appServiceMock.getUserById.mockResolvedValue(USER);
 
-    it('should return "User not found" if username not found', async () => {
-      expect(await appController.getEmail('testuser2')).toEqual(
-        'User not found',
-      );
+      expect(await appController.getUserById(USER.id)).toEqual({ user: USER });
     });
   });
 
-  afterAll(async () => {
-    await prismaService.user.delete({
-      where: {
-        email: 'testuser1',
-      },
-    });
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 });
