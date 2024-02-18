@@ -30,8 +30,6 @@ test:
   before_script:
     - yarn
   script:
-    - export DATABASE_URL=$TEST_DATABASE_URL
-    - yarn migrate
     - yarn test:ci
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   dependencies:
@@ -46,7 +44,7 @@ sonar:
   before_script:
     - yarn
   script:
-    - yarn sonar-scanner -Dsonar.host.url=$SONAR_HOST -Dsonar.login=$SONAR_LOGIN -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.projectName=tracer-study-be -Dsonar.sources=src -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info -Dsonar.exclusions=src/main.ts,**/*.spec.ts
+    - yarn sonar-scanner -Dsonar.host.url=$SONAR_HOST -Dsonar.login=$SONAR_LOGIN -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.projectName=tracer-study-be -Dsonar.sources=src -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info -Dsonar.exclusions=src/main.ts,**/*.spec.ts,**/*.mock.ts
   dependencies:
     - test
   only:

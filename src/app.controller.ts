@@ -7,11 +7,13 @@ export class AppController {
 
   @Get()
   getHello(): string {
-    return this.appService.getHello();
+    return 'Hello World!';
   }
 
-  @Get('hello/:email')
-  async getEmail(@Param('email') email: string) {
-    return this.appService.getEmail(email);
+  @Get('hello/:id')
+  async getUserById(@Param('id') id: string) {
+    const user = await this.appService.getUserById(id);
+
+    return { user };
   }
 }
