@@ -11,14 +11,125 @@ datasource db {
 }
 
 model User {
-  id    String @id @default(uuid())
-  email String @unique
-  name  String
-  role  Role
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+  name     String
+  role     Role
+
+  admin            Admin?
+  headStudyProgram HeadStudyProgram?
+  alumni           Alumni?
+}
+
+model Admin {
+  id   String @id @unique
+  user User   @relation(fields: [id], references: [id])
+}
+
+model HeadStudyProgram {
+  id             String @id @unique
+  studyProgramId String
+
+  user         User         @relation(fields: [id], references: [id])
+  studyProgram StudyProgram @relation(fields: [studyProgramId], references: [id])
+}
+
+model Alumni {
+  id             String @id @unique
+  phoneNo        String
+  address        String
+  gender         Gender
+  enrollmentYear Int
+  graduateYear   Int
+  studyProgramId String
+
+  user         User         @relation(fields: [id], references: [id])
+  studyProgram StudyProgram @relation(fields: [studyProgramId], references: [id])
+  responses    Response[]
+}
+
+model StudyProgram {
+  id   String @id @unique @default(uuid())
+  name String
+
+  headStudyProgram HeadStudyProgram[]
+  alumni           Alumni[]
+}
+
+model Form {
+  id          String   @id @unique @default(uuid())
+  type        FormType
+  title       String
+  description String
+  startTime   DateTime
+  endTime     DateTime
+
+  questions Question[]
+  responses Response[]
+}
+
+model Question {
+  id        String       @id @unique @default(uuid())
+  type      QuestionType
+  question  String
+  rangeFrom Int?
+  rangeTo   Int?
+  order     Int
+  formId    String
+
+  form    Form     @relation(fields: [formId], references: [id])
+  option  Option[]
+  answers Answer[]
+}
+
+model Option {
+  id         String @id @unique @default(uuid())
+  label      String
+  questionId String
+
+  question Question @relation(fields: [questionId], references: [id])
+}
+
+model Response {
+  id       String @id @unique @default(uuid())
+  formId   String
+  alumniId String
+
+  form    Form     @relation(fields: [formId], references: [id])
+  alumni  Alumni   @relation(fields: [alumniId], references: [id])
+  answers Answer[]
+}
+
+model Answer {
+  id         String @id @unique @default(uuid())
+  answer     String
+  responseId String
+  questionId String
+
+  response Response @relation(fields: [responseId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
 }
 
 enum Role {
   ALUMNI
   ADMIN
   HEAD_STUDY_PROGRAM
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum FormType {
+  CURRICULUM
+  CAREER
+}
+
+enum QuestionType {
+  TEXT
+  RADIO
+  CHECKBOX
+  RANGE
 }
