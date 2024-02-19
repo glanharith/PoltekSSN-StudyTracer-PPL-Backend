@@ -1,20 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { User } from '@prisma/client';
+
+jest.mock('./app.service');
 
 describe('AppController', () => {
   let appController: AppController;
-  let appServiceMock = {
-    getUserById: jest.fn(),
-  };
+  let appServiceMock: jest.Mocked<AppService>;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [{ provide: AppService, useValue: appServiceMock }],
+      providers: [AppService],
     }).compile();
 
     appController = app.get<AppController>(AppController);
+    appServiceMock = app.get<jest.Mocked<AppService>>(AppService);
   });
 
   describe('root', () => {
@@ -25,14 +27,16 @@ describe('AppController', () => {
 
   describe('/hello/:id', () => {
     it('should return user info', async () => {
-      const USER = {
+      const user: User = {
         id: 'user1',
         email: 'user1@gmail.com',
-        namme: 'Test User 1',
+        password: 'password',
+        name: 'Test User 1',
+        role: 'ADMIN',
       };
-      appServiceMock.getUserById.mockResolvedValue(USER);
+      appServiceMock.getUserById.mockResolvedValue(user);
 
-      expect(await appController.getUserById(USER.id)).toEqual({ user: USER });
+      expect(await appController.getUserById(user.id)).toEqual({ user: user });
     });
   });
 
