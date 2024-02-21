@@ -1,11 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { RegisterDTO } from './DTO';
+import { LoginDTO, RegisterDTO } from './DTO';
 import { hash, secure } from 'src/common/util/security';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { compare } from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async register({
     email,
@@ -107,6 +112,38 @@ export class AuthService {
             },
           },
         },
+      });
+    }
+  }
+
+  async login({ email, password }: LoginDTO) {
+    const emailHash = await hash(email);
+
+    const user = await this.prisma.user.findFirst({
+      where: {
+        email: {
+          startsWith: `${emailHash}|`,
+        },
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException({
+        message: 'Invalid email or password',
+      });
+    }
+
+    if (await compare(password, user.password)) {
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      };
+      return this.jwtService.sign(payload);
+    } else {
+      throw new BadRequestException({
+        message: 'Invalid email or password',
       });
     }
   }
