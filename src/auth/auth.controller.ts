@@ -1,16 +1,19 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtService } from '@nestjs/jwt';
-import { IsPublic } from 'src/common/decorator/isPublic';
+import {
+  IsAdmin,
+  IsAlumni,
+  IsHead,
+  IsPublic,
+  ReqUser,
+} from 'src/common/decorator';
 import { LoginDTO, RegisterDTO } from './DTO';
 import { response } from 'src/common/util/response';
+import { RequestUser } from 'src/common/decorator/interface';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @IsPublic()
   @Post('/register')
@@ -29,7 +32,8 @@ export class AuthController {
   }
 
   @Get('/protected')
-  async protected() {
+  async protected(@ReqUser() user: RequestUser) {
+    console.log(user);
     return response('Authenticated');
   }
 }
