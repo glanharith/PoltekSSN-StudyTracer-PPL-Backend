@@ -33,12 +33,12 @@ describe('StudyProgramController', () => {
 
   describe('POST /study-program', () => {
     it('should create a new study program', async () => {
-      jest
-        .spyOn(studyProgramServiceMock, 'create')
-        .mockResolvedValue(studyProgram);
+      studyProgramServiceMock.create.mockResolvedValue(studyProgram);
+
       const result = await studyProgramController.createStudyProgram(
         studyProgramDTO,
       );
+
       expect(result).toEqual({
         message: 'Successfully created a new study program',
       });
@@ -47,13 +47,13 @@ describe('StudyProgramController', () => {
 
   describe('UPDATE /study-program', () => {
     it('should update a study program', async () => {
-      jest
-        .spyOn(studyProgramServiceMock, 'update')
-        .mockResolvedValue(studyProgram);
+      studyProgramServiceMock.update.mockResolvedValue(studyProgram);
+
       const result = await studyProgramController.updateStudyProgram(
         studyProgram.id,
         studyProgramDTO,
       );
+
       expect(result).toEqual({
         message: 'Successfully updated a study program',
       });
