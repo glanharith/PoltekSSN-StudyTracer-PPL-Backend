@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { LoginDTO, RegisterDTO } from './DTO';
 import { hash, secure } from 'src/common/util/security';
 import { PrismaService } from 'src/prisma/prisma.service';

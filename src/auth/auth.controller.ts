@@ -1,15 +1,8 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import {
-  IsAdmin,
-  IsAlumni,
-  IsHead,
-  IsPublic,
-  ReqUser,
-} from 'src/common/decorator';
+import { IsPublic } from 'src/common/decorator';
 import { LoginDTO, RegisterDTO } from './DTO';
 import { response } from 'src/common/util/response';
-import { RequestUser } from 'src/common/decorator/interface';
 
 @Controller('auth')
 export class AuthController {
