@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { LoginDTO, RegisterDTO } from './DTO';
 import { hash, secure } from 'src/common/util/security';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -41,6 +45,12 @@ export class AuthService {
     }
 
     if (role !== 'ADMIN') {
+      if (!studyProgramId) {
+        throw new BadRequestException({
+          message: 'Fields required for non admin register: studyProgramId',
+        });
+      }
+
       const studyProgram = await this.prisma.studyProgram.findUnique({
         where: {
           id: studyProgramId,
@@ -70,8 +80,15 @@ export class AuthService {
         },
       });
     } else if (role === 'ALUMNI') {
-      const securedPhoneNo = await secure(phoneNo);
-      const securedAddress = await secure(address);
+      if (!phoneNo || !address || !gender || !enrollmentYear || !graduateYear) {
+        throw new BadRequestException({
+          message:
+            'Fields required for alumni register: phoneNo, address, gender, enrollmentYear, graduateYear',
+        });
+      }
+
+      const securedPhoneNo = await secure(phoneNo!);
+      const securedAddress = await secure(address!);
 
       await this.prisma.user.create({
         data: {

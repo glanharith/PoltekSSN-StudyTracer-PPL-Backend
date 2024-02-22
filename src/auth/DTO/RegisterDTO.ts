@@ -28,26 +28,26 @@ export class RegisterDTO {
   // Alumni only
   @IsString()
   @IsOptional()
-  phoneNo: string;
+  phoneNo?: string;
 
   @IsString()
   @IsOptional()
-  address: string;
+  address?: string;
 
   @IsIn(['MALE', 'FEMALE'])
   @IsOptional()
-  gender: Gender;
+  gender?: Gender;
 
   @IsNumber()
   @IsOptional()
-  enrollmentYear: number;
+  enrollmentYear?: number;
 
   @IsNumber()
   @IsOptional()
-  graduateYear: number;
+  graduateYear?: number;
 
   // Alumni and Head
   @IsString()
   @IsOptional()
-  studyProgramId: string;
+  studyProgramId?: string;
 }

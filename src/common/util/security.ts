@@ -1,4 +1,4 @@
-import { hash as bcryptHash, compare } from 'bcrypt';
+import { hash as bcryptHash } from 'bcrypt';
 import {
   createCipheriv,
   createDecipheriv,
@@ -12,7 +12,7 @@ export const encrypt = async (data: string): Promise<string> => {
   const salt = randomBytes(8).toString('hex');
 
   return new Promise((resolve, reject) => {
-    scrypt(process.env.ENCRYPT_PASSWORD, salt, 24, (err, key) => {
+    scrypt(process.env.ENCRYPT_PASSWORD as string, salt, 24, (err, key) => {
       if (err) reject(err);
 
       randomFill(new Uint8Array(16), (err, iv) => {
@@ -41,7 +41,7 @@ export const decrypt = async (encryptedData: string): Promise<string> => {
 
     const iv = Buffer.from(ivHex, 'hex');
 
-    scrypt(process.env.ENCRYPT_PASSWORD, salt, 24, (err, key) => {
+    scrypt(process.env.ENCRYPT_PASSWORD as string, salt, 24, (err, key) => {
       if (err) reject(err);
 
       const decipher = createDecipheriv(algorithm, key, iv);
@@ -55,7 +55,7 @@ export const decrypt = async (encryptedData: string): Promise<string> => {
 };
 
 export const hash = async (data: string) =>
-  bcryptHash(data, process.env.HASH_SALT);
+  bcryptHash(data, process.env.HASH_SALT as string);
 
 export const secure = async (data: string) => {
   const encrypted = await encrypt(data);
