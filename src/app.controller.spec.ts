@@ -19,13 +19,13 @@ describe('AppController', () => {
     appServiceMock = app.get<jest.Mocked<AppService>>(AppService);
   });
 
-  describe('root', () => {
+  describe('GET /', () => {
     it('should return "Hello World!"', () => {
       expect(appController.getHello()).toBe('Hello World!');
     });
   });
 
-  describe('/hello/:id', () => {
+  describe('GET /hello/:id', () => {
     it('should return user info', async () => {
       const user: User = {
         id: 'user1',
