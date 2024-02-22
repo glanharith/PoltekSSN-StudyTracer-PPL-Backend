@@ -27,7 +27,7 @@ describe('StudyProgramService', () => {
     name: 'Information Systems',
   };
 
-  describe('createNewStudyProgram', () => {
+  describe('create', () => {
     it('should create a new study program', async () => {
       jest
         .spyOn(prismaService.studyProgram, 'create')
@@ -36,8 +36,7 @@ describe('StudyProgramService', () => {
         .spyOn(studyProgramService, 'isStudyProgramNameAvailable')
         .mockResolvedValue(true);
       expect(
-        (await studyProgramService.createNewStudyProgram(studyProgram.name))
-          .name,
+        (await studyProgramService.create(studyProgram.name)).name,
       ).toEqual(studyProgram.name);
     });
 
@@ -46,7 +45,7 @@ describe('StudyProgramService', () => {
         .spyOn(studyProgramService, 'isStudyProgramNameAvailable')
         .mockResolvedValue(false);
       await expect(
-        studyProgramService.createNewStudyProgram(studyProgram.name),
+        studyProgramService.create(studyProgram.name),
       ).rejects.toThrow(ConflictException);
     });
   });
@@ -71,8 +70,8 @@ describe('StudyProgramService', () => {
     });
   });
 
-  describe('renameStudyProgram', () => {
-    it('should rename study program', async () => {
+  describe('update', () => {
+    it('should update study program', async () => {
       jest
         .spyOn(studyProgramService, 'getStudyProgramById')
         .mockResolvedValue(studyProgram);
@@ -80,7 +79,7 @@ describe('StudyProgramService', () => {
         .spyOn(prismaService.studyProgram, 'update')
         .mockResolvedValue(updatedStudyProgram);
       expect(
-        await studyProgramService.renameStudyProgram(
+        await studyProgramService.update(
           studyProgram.id,
           updatedStudyProgram.name,
         ),
@@ -92,10 +91,7 @@ describe('StudyProgramService', () => {
         .spyOn(prismaService.studyProgram, 'findUnique')
         .mockResolvedValue(null);
       await expect(
-        studyProgramService.renameStudyProgram(
-          studyProgram.id,
-          updatedStudyProgram.name,
-        ),
+        studyProgramService.update(studyProgram.id, updatedStudyProgram.name),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -107,10 +103,7 @@ describe('StudyProgramService', () => {
         .spyOn(studyProgramService, 'isStudyProgramNameAvailable')
         .mockResolvedValue(false);
       await expect(
-        studyProgramService.renameStudyProgram(
-          studyProgram.id,
-          updatedStudyProgram.name,
-        ),
+        studyProgramService.update(studyProgram.id, updatedStudyProgram.name),
       ).rejects.toThrow(ConflictException);
     });
   });

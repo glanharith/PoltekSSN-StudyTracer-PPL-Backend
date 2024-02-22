@@ -9,7 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class StudyProgramService {
   constructor(private readonly prisma: PrismaService) {}
-  async createNewStudyProgram(studyProgramName: string): Promise<StudyProgram> {
+  async create(studyProgramName: string): Promise<StudyProgram> {
     if (await this.isStudyProgramNameAvailable(studyProgramName)) {
       const newStudyProgram = await this.prisma.studyProgram.create({
         data: {
@@ -21,7 +21,7 @@ export class StudyProgramService {
     throw new ConflictException('Study program name already exists');
   }
 
-  async renameStudyProgram(id: string, name: string): Promise<StudyProgram> {
+  async update(id: string, name: string): Promise<StudyProgram> {
     await this.getStudyProgramById(id);
     if (await this.isStudyProgramNameAvailable(name)) {
       const updatedStudyProgram = await this.prisma.studyProgram.update({
