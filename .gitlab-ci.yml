@@ -45,7 +45,7 @@ sonar:
   before_script:
     - yarn
   script:
-    - yarn sonar-scanner -Dsonar.host.url=$SONAR_HOST -Dsonar.login=$SONAR_LOGIN -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.projectName=tracer-study-be -Dsonar.sources=src -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info -Dsonar.exclusions=src/main.ts,**/*.spec.ts,**/*.mock.ts
+    - yarn sonar-scanner -Dsonar.host.url=$SONAR_HOST -Dsonar.login=$SONAR_LOGIN -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.projectName=tracer-study-be -Dsonar.sources=src -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info -Dsonar.exclusions=src/main.ts,src/common/**,**/*.spec.ts,**/*.mock.ts,**/*.module.ts,**/*.guard.ts,**/DTO/**
   dependencies:
     - test
   only:

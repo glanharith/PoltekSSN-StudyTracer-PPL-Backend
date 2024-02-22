@@ -30,10 +30,4 @@ export class AuthController {
 
     return response('Successfully logged in', { token });
   }
-
-  @Get('/protected')
-  async protected(@ReqUser() user: RequestUser) {
-    console.log(user);
-    return response('Authenticated');
-  }
 }
