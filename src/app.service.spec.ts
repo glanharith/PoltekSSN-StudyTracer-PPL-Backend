@@ -2,19 +2,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
+import { DeepMockProxy } from 'jest-mock-extended';
+import { createPrismaMock } from './prisma/prisma.mock';
 
 describe('AppService', () => {
   let appService: AppService;
-  let prismaService: PrismaService;
+  let prismaMock: DeepMockProxy<PrismaClient>;
 
   beforeEach(async () => {
+    prismaMock = createPrismaMock();
     const app: TestingModule = await Test.createTestingModule({
-      providers: [AppService, PrismaService],
+      providers: [AppService, { provide: PrismaService, useValue: prismaMock }],
     }).compile();
 
     appService = app.get<AppService>(AppService);
-    prismaService = app.get<PrismaService>(PrismaService);
   });
 
   describe('getUserById', () => {
@@ -27,13 +29,13 @@ describe('AppService', () => {
         role: 'ADMIN',
       };
 
-      jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(user);
+      prismaMock.user.findUnique.mockResolvedValue(user);
 
       expect(await appService.getUserById(user.id)).toEqual(user);
     });
 
     it('should return NotFoundException if user not exists', async () => {
-      jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(null);
+      prismaMock.user.findUnique.mockResolvedValue(null);
 
       await expect(appService.getUserById('user2')).rejects.toThrow(
         NotFoundException,
