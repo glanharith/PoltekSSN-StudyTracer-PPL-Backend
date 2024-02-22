@@ -7,11 +7,13 @@ export class AppController {
 
   @Get()
   getHello(): string {
-    return this.appService.getHello();
+    return 'Hello World!';
   }
 
-  @Get('hello/:username')
-  async getUsername(@Param('username') username: string) {
-    return await this.appService.getUsername(username);
+  @Get('hello/:id')
+  async getUserById(@Param('id') id: string) {
+    const user = await this.appService.getUserById(id);
+
+    return { user };
   }
 }
