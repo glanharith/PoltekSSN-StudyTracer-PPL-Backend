@@ -24,4 +24,8 @@ export class StudyProgramController {
     await this.studyProgramService.update(id, programDTO.name);
     return response('Successfully updated a study program');
   }
+
+  viewAllStudyProgram() {
+    throw new Error('Method not implemented.');
+  }
 }

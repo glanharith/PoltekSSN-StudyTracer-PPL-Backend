@@ -57,4 +57,8 @@ export class StudyProgramService {
 
     return count === 0;
   }
+
+  async findAll(): Promise<StudyProgram[]> {
+    throw new Error('Method not implemented.');
+  }
 }

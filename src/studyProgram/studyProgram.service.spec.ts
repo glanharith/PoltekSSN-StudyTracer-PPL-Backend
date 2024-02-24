@@ -32,6 +32,7 @@ describe('StudyProgramService', () => {
     id: studyProgram.id,
     name: 'Information Systems',
   };
+  const allStudyPrograms: StudyProgram[] = [studyProgram, updatedStudyProgram];
 
   describe('create', () => {
     it('should create a new study program', async () => {
@@ -126,6 +127,26 @@ describe('StudyProgramService', () => {
       await expect(
         studyProgramService.getStudyProgramById(studyProgram.id),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return all study programs', async () => {
+      prismaMock.studyProgram.findMany.mockResolvedValue(allStudyPrograms);
+      
+      expect(
+        await studyProgramService.findAll(),
+      ).toEqual(allStudyPrograms);
+      expect(prismaMock.studyProgram.findMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return an empty array if no study program exist', async () => {
+      prismaMock.studyProgram.findMany.mockResolvedValue([]);
+      
+      expect(
+        await studyProgramService.findAll(),
+      ).toEqual([]);
+      expect(prismaMock.studyProgram.findMany).toHaveBeenCalledTimes(1);
     });
   });
 });
