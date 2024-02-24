@@ -4,6 +4,6 @@ import { HeadOfStudyProgramController } from './head-of-study-program.controller
 
 @Module({
   controllers: [HeadOfStudyProgramController],
-  providers: [HeadOfStudyProgramService]
+  providers: [HeadOfStudyProgramService],
 })
 export class HeadOfStudyProgramModule {}

@@ -66,14 +66,23 @@ export class HeadOfStudyProgramService {
       where: {
         role: 'HEAD_STUDY_PROGRAM',
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
         headStudyProgram: {
-          include: {
-            studyProgram: {},
+          select: {
+            studyProgram: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },
     });
+
+    if (res.length == 0) return [];
 
     const modifiedData = await res.map(async ({ email, ...rest }) => ({
       ...rest,

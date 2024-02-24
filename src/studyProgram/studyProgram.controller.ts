@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { StudyProgramService } from './studyProgram.service';
 import { StudyProgramDTO } from './DTO';
 import { response } from 'src/common/util/response';
@@ -29,7 +37,9 @@ export class StudyProgramController {
   @Get()
   async viewAllStudyProgram() {
     const allStudyPrograms = await this.studyProgramService.findAll();
-    return response("Successfully got all study programs", { data: allStudyPrograms });
+    return response('Successfully got all study programs', {
+      data: allStudyPrograms,
+    });
   }
 
   @IsAdmin()
