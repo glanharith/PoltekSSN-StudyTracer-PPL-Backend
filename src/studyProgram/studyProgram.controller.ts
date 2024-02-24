@@ -25,7 +25,10 @@ export class StudyProgramController {
     return response('Successfully updated a study program');
   }
 
-  viewAllStudyProgram() {
-    throw new Error('Method not implemented.');
+  @IsAdmin()
+  @Get()
+  async viewAllStudyProgram() {
+    const allStudyPrograms = await this.studyProgramService.findAll();
+    return response("Successfully got all study programs", { data: allStudyPrograms });
   }
 }
