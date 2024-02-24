@@ -63,6 +63,12 @@ export class StudyProgramService {
   }
 
   async delete(id: string): Promise<StudyProgram> {
-    throw new Error('Method not implemented.');
+    await this.getStudyProgramById(id);
+    const studyProgram = await this.prisma.studyProgram.delete({
+      where: {
+        id: id,
+      }
+    });
+    return studyProgram;
   }
 }

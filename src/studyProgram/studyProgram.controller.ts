@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { StudyProgramService } from './studyProgram.service';
 import { StudyProgramDTO } from './DTO';
 import { response } from 'src/common/util/response';
@@ -32,7 +32,10 @@ export class StudyProgramController {
     return response("Successfully got all study programs", { data: allStudyPrograms });
   }
 
-  deleteStudyProgram(id: string) {
-    throw new Error('Method not implemented.');
+  @IsAdmin()
+  @Delete('/:id')
+  async deleteStudyProgram(@Param('id') id: string) {
+    await this.studyProgramService.delete(id);
+    return response('Successfully deleted a study program');
   }
 }
