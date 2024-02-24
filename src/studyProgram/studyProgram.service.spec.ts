@@ -149,4 +149,29 @@ describe('StudyProgramService', () => {
       expect(prismaMock.studyProgram.findMany).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('delete', () => {
+    it('should delete a study program', async () => {
+      prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgram);
+      prismaMock.studyProgram.delete.mockResolvedValue(studyProgram);
+
+      expect(
+        await studyProgramService.delete(studyProgram.id)
+      ).toEqual(studyProgram);
+      expect(prismaMock.studyProgram.delete).toHaveBeenCalledWith({
+        where: {
+          id: studyProgram.id
+        },
+      });
+    });
+
+    it('should throw NotFoundException if study program is not found', async () => {
+      prismaMock.studyProgram.findUnique.mockResolvedValue(null);
+
+      await expect(
+        studyProgramService.delete(studyProgram.id),
+      ).rejects.toThrow(NotFoundException);
+      expect(prismaMock.studyProgram.delete).toHaveBeenCalledTimes(0);
+    });
+  });
 });

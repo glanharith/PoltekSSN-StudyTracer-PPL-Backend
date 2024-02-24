@@ -31,4 +31,8 @@ export class StudyProgramController {
     const allStudyPrograms = await this.studyProgramService.findAll();
     return response("Successfully got all study programs", { data: allStudyPrograms });
   }
+
+  deleteStudyProgram(id: string) {
+    throw new Error('Method not implemented.');
+  }
 }

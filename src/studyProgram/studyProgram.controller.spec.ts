@@ -85,6 +85,19 @@ describe('StudyProgramController', () => {
     });
   });
 
+  describe('DELETE /study-program/:id', () => {
+    it('should delete a study program', async () => {
+      studyProgramServiceMock.delete.mockResolvedValue(studyProgram);
+
+      const result = await studyProgramController.deleteStudyProgram(studyProgram.id);
+
+      expect(result).toEqual({
+        message: 'Successfully deleted a study program',
+      });
+    });
+
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });

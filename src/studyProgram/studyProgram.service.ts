@@ -61,4 +61,8 @@ export class StudyProgramService {
   async findAll(): Promise<StudyProgram[]> {
     return this.prisma.studyProgram.findMany({});
   }
+
+  async delete(id: string): Promise<StudyProgram> {
+    throw new Error('Method not implemented.');
+  }
 }
