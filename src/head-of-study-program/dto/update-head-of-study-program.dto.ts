@@ -1,4 +1,14 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateHeadOfStudyProgramDto } from './create-head-of-study-program.dto';
+import { IsString } from 'class-validator';
+export class UpdateHeadOfStudyProgramDto {
+  @IsString()
+  studyProgramId: string;
 
-export class UpdateHeadOfStudyProgramDto extends PartialType(CreateHeadOfStudyProgramDto) {}
+  @IsString()
+  email: string;
+
+  @IsString()
+  name: string;
+
+  @IsString()
+  password: string;
+}

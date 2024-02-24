@@ -11,7 +11,9 @@ describe('HeadOfStudyProgramController', () => {
       providers: [HeadOfStudyProgramService],
     }).compile();
 
-    controller = module.get<HeadOfStudyProgramController>(HeadOfStudyProgramController);
+    controller = module.get<HeadOfStudyProgramController>(
+      HeadOfStudyProgramController,
+    );
   });
 
   it('should be defined', () => {
