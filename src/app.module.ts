@@ -6,6 +6,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { StudyProgramModule } from './studyProgram/studyProgram.module';
+import { HeadOfStudyProgramModule } from './head-of-study-program/head-of-study-program.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { StudyProgramModule } from './studyProgram/studyProgram.module';
     PrismaModule,
     AuthModule,
     StudyProgramModule,
+    HeadOfStudyProgramModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
