@@ -57,4 +57,18 @@ export class StudyProgramService {
 
     return count === 0;
   }
+
+  async findAll(): Promise<StudyProgram[]> {
+    return this.prisma.studyProgram.findMany({});
+  }
+
+  async delete(id: string): Promise<StudyProgram> {
+    await this.getStudyProgramById(id);
+    const studyProgram = await this.prisma.studyProgram.delete({
+      where: {
+        id: id,
+      }
+    });
+    return studyProgram;
+  }
 }
