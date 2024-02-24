@@ -7,8 +7,8 @@ async function bootstrap() {
   const https = process.env.APP_OPEN_HTTPS;
   const httpsOptions = https
     ? {
-        key: fs.readFileSync(process.env.APP_KEY),
-        cert: fs.readFileSync(process.env.APP_CERT),
+        key: fs.readFileSync(process.env.APP_KEY!),
+        cert: fs.readFileSync(process.env.APP_CERT!),
       }
     : {};
   const app = await NestFactory.create(
