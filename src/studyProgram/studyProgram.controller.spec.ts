@@ -30,6 +30,7 @@ describe('StudyProgramController', () => {
     id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
     name: 'Computer Science',
   };
+  const allStudyPrograms: StudyProgram[] = [studyProgram];
 
   describe('POST /study-program', () => {
     it('should create a new study program', async () => {
@@ -58,6 +59,43 @@ describe('StudyProgramController', () => {
         message: 'Successfully updated a study program',
       });
     });
+  });
+
+  describe('GET /study-program', () => {
+    it('should return all study programs', async () => {
+      studyProgramServiceMock.findAll.mockResolvedValue(allStudyPrograms);
+
+      const result = await studyProgramController.viewAllStudyProgram();
+
+      expect(result).toEqual({
+        message: 'Successfully got all study programs',
+        data: allStudyPrograms,
+      });
+    });
+
+    it('an empty array if no study program exist', async () => {
+      studyProgramServiceMock.findAll.mockResolvedValue([]);
+
+      const result = await studyProgramController.viewAllStudyProgram();
+
+      expect(result).toEqual({
+        message: 'Successfully got all study programs',
+        data: [],
+      });
+    });
+  });
+
+  describe('DELETE /study-program/:id', () => {
+    it('should delete a study program', async () => {
+      studyProgramServiceMock.delete.mockResolvedValue(studyProgram);
+
+      const result = await studyProgramController.deleteStudyProgram(studyProgram.id);
+
+      expect(result).toEqual({
+        message: 'Successfully deleted a study program',
+      });
+    });
+
   });
 
   afterEach(() => {
