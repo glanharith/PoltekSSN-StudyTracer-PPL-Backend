@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, Param, Patch, } from '@nestjs/common';
 import { HeadOfStudyProgramService } from './head-of-study-program.service';
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
 import { IsAdmin } from 'src/common/decorator';
@@ -23,5 +23,22 @@ export class HeadOfStudyProgramController {
   @IsAdmin()
   async findAll() {
     return this.headOfStudyProgramService.findAll();
+  }
+
+  @Delete('/:id')
+  @IsAdmin()
+  async deleteHeadOfStudyProgram(@Param('id') id: string) {
+    await this.headOfStudyProgramService.deleteHeadOfStudyProgram(id);
+    return response('Successfully deleted a head of study program');
+  }
+
+  @Patch('/:id')
+  @IsAdmin()
+  async updateHeadOfStudyProgram(
+    @Param('id') id: string,
+    @Body() headOfStudyProgramDto: CreateHeadOfStudyProgramDto,
+  ) {
+    await this.headOfStudyProgramService.updateHeadofStudyProgram(id, headOfStudyProgramDto.email, headOfStudyProgramDto.studyProgramId);
+    return response('Successfully updated a head of study program')
   }
 }
