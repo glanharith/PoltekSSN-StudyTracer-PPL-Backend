@@ -1,58 +1,46 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaService } from './prisma/prisma.service';
+import { User } from '@prisma/client';
+
+jest.mock('./app.service');
 
 describe('AppController', () => {
   let appController: AppController;
-  let prismaService: PrismaService;
+  let appServiceMock: jest.Mocked<AppService>;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService, PrismaService],
+      providers: [AppService],
     }).compile();
 
     appController = app.get<AppController>(AppController);
-    prismaService = app.get<PrismaService>(PrismaService);
-
-    await prismaService.user.upsert({
-      where: {
-        username: 'testuser1',
-      },
-      update: {},
-      create: {
-        username: 'testuser1',
-        name: 'Test User 1',
-      },
-    });
+    appServiceMock = app.get<jest.Mocked<AppService>>(AppService);
   });
 
-  describe('root', () => {
+  describe('GET /', () => {
     it('should return "Hello World!"', () => {
       expect(appController.getHello()).toBe('Hello World!');
     });
   });
 
-  describe('/hello/:username', () => {
-    it('should return "Hello {name}!" if username found', async () => {
-      expect(await appController.getUsername('testuser1')).toEqual(
-        'Hello Test User 1!',
-      );
-    });
+  describe('GET /hello/:id', () => {
+    it('should return user info', async () => {
+      const user: User = {
+        id: 'user1',
+        email: 'user1@gmail.com',
+        password: 'password',
+        name: 'Test User 1',
+        role: 'ADMIN',
+      };
+      appServiceMock.getUserById.mockResolvedValue(user);
 
-    it('should return "User not found" if username not found', async () => {
-      expect(await appController.getUsername('testuser2')).toEqual(
-        'User not found',
-      );
+      expect(await appController.getUserById(user.id)).toEqual({ user: user });
     });
   });
 
-  afterAll(async () => {
-    await prismaService.user.delete({
-      where: {
-        username: 'testuser1',
-      },
-    });
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 });
