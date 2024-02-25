@@ -145,7 +145,8 @@ export class AuthService {
         message: 'Invalid email or password',
       });
     }
-
+    console.log(password)
+    console.log(user.password)
     if (await compare(password, user.password)) {
       const payload = {
         sub: user.id,
