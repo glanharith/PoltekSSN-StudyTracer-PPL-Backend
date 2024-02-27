@@ -10,7 +10,7 @@ import {
 import { StudyProgramService } from './studyProgram.service';
 import { StudyProgramDTO } from './DTO';
 import { response } from 'src/common/util/response';
-import { IsAdmin } from 'src/common/decorator';
+import { IsAdmin, IsPublic } from 'src/common/decorator';
 
 @Controller('prodi')
 export class StudyProgramController {
@@ -33,6 +33,7 @@ export class StudyProgramController {
     return response('Successfully updated a study program');
   }
 
+  @IsPublic()
   @IsAdmin()
   @Get()
   async viewAllStudyProgram() {
