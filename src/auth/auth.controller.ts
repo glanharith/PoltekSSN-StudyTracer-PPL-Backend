@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { IsPublic } from 'src/common/decorator';
 import { LoginDTO, RegisterDTO } from './DTO';
@@ -16,6 +16,7 @@ export class AuthController {
     return response('Successfully registered');
   }
 
+  @HttpCode(HttpStatus.OK)
   @IsPublic()
   @Post('/login')
   async login(@Body() loginDTO: LoginDTO) {
