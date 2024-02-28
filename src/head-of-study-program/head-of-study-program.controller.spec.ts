@@ -84,8 +84,8 @@ describe('HeadOfStudyProgramController', () => {
     });
   });
 
-  describe('DELETE /kaprodi', () => {
-    it('should successfully delete a head of study program', async() => {
+  describe('DELETE /kaprodi/:id', () => {
+    it('should successfully delete a head of study program', async () => {
       const id = 'id';
       kaprodiServiceMock.delete.mockResolvedValue({id, message:"Deleted successfully"});
       const result = await kaprodiController.delete(id);
@@ -98,7 +98,7 @@ describe('HeadOfStudyProgramController', () => {
       expect(kaprodiServiceMock.delete).toHaveBeenCalledWith(id);
     });
 
-    it('should throw NotFoundException for a non-existing head of study program', async() => {
+    it('should throw NotFoundException for a non-existing head of study program', async () => {
       const id = 'notExist';
       kaprodiServiceMock.delete.mockRejectedValue(new NotFoundException());
 
@@ -112,4 +112,9 @@ describe('HeadOfStudyProgramController', () => {
       await expect(kaprodiController.delete(id)).rejects.toThrow(InternalServerErrorException);
     });
   });
+
+  // describe('PATCH /kaprodi/:id', () => {
+  //   it('should successfully update a head of study program', async )
+
+  // });
 });

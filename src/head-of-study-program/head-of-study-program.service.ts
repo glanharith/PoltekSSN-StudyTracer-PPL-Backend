@@ -2,7 +2,6 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { hash, secure, unsecure } from 'src/common/util/security';
-import { HeadStudyProgram } from '@prisma/client'
 
 @Injectable()
 export class HeadOfStudyProgramService {
@@ -94,19 +93,6 @@ export class HeadOfStudyProgramService {
     return cleanData;
   }
   
-  async getHeadOfStudyProgramById(id: string): Promise<HeadStudyProgram> {
-    const headStudyProgram = await this.prisma.headStudyProgram.findUnique({
-      where: {
-        id,
-      },
-    });
-
-    if (!headStudyProgram) {
-      throw new NotFoundException('Head of Study Program not found')
-    };
-    return headStudyProgram
-  }
-
   async delete(id: string): Promise<{id: string; message: string}> {
     const existingHeadOfStudyProgram = await this.prisma.headStudyProgram.findUnique({
       where: { id },
