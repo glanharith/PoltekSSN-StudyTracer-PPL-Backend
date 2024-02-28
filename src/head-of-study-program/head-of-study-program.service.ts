@@ -99,9 +99,7 @@ export class HeadOfStudyProgramService {
     });
 
     if (existingHeadOfStudyPrograms.length !== ids.length) {
-      const foundIds = existingHeadOfStudyPrograms.map(head => head.id);
-      const notFoundIds = ids.filter(id => !foundIds.includes(id));
-      throw new NotFoundException(`Head of Study Program(s) with ID(s) ${notFoundIds.join(', ')} not found`);
+      throw new NotFoundException('Head of Study Program not all found');
     }
 
     await this.prisma.headStudyProgram.deleteMany({
@@ -117,7 +115,7 @@ export class HeadOfStudyProgramService {
     });
 
     if (!existingHeadOfStudyProgram) {
-      throw new NotFoundException(`Head of Study Program with ID ${id} not found`);
+      throw new NotFoundException(`Head of Study Program with not found`);
     }
 
     await this.prisma.headStudyProgram.delete({
