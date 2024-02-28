@@ -4,7 +4,7 @@ import {
   } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfileDTO } from './DTO';
-import { hash, secure } from 'src/common/util/security';
+import { decrypt, hash, secure, unsecure } from 'src/common/util/security';
   @Injectable()
   export class ProfileService {
     constructor(private readonly prisma: PrismaService) {}
@@ -47,9 +47,8 @@ import { hash, secure } from 'src/common/util/security';
                     name:true,
                     id: false,
                     email: false,
-                    password: true,
+                    password: false,
                     role: false,
-                    // Ensure alumni object includes all required fields
                     alumni: {
                         select: {
                             id: false,
@@ -63,23 +62,19 @@ import { hash, secure } from 'src/common/util/security';
                     },
                 },
             });
-            
+         
             if (!user) throw new NotFoundException('User not found');
-            return user
-            // console.log(user.password)
-            // const decryptPhoneNo = user.alumni?.phoneNo ? await decrypt(user.alumni?.phoneNo) : undefined;
-            // const decryptAddress = user.alumni?.address ? await decrypt(user.alumni?.address) : undefined;
-            // const decryptPassword = await decrypt(user.password);
-            // console.log(decryptPassword)
-            // return {
-            //   name: user.name,
-            //   password: decryptPassword,
-            //   alumni:{
-            //     phoneNo: decryptPhoneNo,
-            //     address : decryptAddress,
-            //     enrollmentYear: user.alumni?.enrollmentYear
-            //   }
-            // };
+            const decryptPhoneNo = user?.alumni?.phoneNo? await unsecure(user?.alumni?.phoneNo):undefined;
+            const decryptAddress = user.alumni?.address ? await unsecure(user.alumni?.address) : undefined;
+ 
+            return {
+              name: user.name,
+              alumni:{
+                phoneNo: decryptPhoneNo,
+                address : decryptAddress,
+                enrollmentYear: user.alumni?.enrollmentYear
+              }
+            };
         }
   }
   
