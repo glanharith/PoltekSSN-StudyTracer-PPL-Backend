@@ -4,7 +4,7 @@ import {
   } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfileDTO } from './DTO';
-import { decrypt, hash, secure, unsecure } from 'src/common/util/security';
+import {hash, secure, unsecure } from 'src/common/util/security';
   @Injectable()
   export class ProfileService {
     constructor(private readonly prisma: PrismaService) {}
