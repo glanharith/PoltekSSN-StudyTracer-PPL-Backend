@@ -157,7 +157,7 @@ describe('HeadOfStudyProgramService', () => {
     });
 
     it("should throw NotFoundException if any of the head of study programs are not found", async () => {
-      const nonExistentIds = ['nonExistingId1', 'nonExistingId2'];
+      const nonExistentIds = [allHeadsId[0], 'nonExistingId2'];
       prismaMock.headStudyProgram.findMany.mockResolvedValue([]);
   
       await expect(headOfStudyProgramService.deleteMultiple(nonExistentIds)).rejects.toThrow(
