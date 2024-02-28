@@ -5,6 +5,7 @@ import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.
 import { StudyProgram } from '@prisma/client';
 import { NotFoundError } from 'rxjs';
 import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
+// import { UpdateHeadOfStudyProgramDto } from './dto/update-head-of-study-program.dto';
 
 jest.mock('./head-of-study-program.service');
 
@@ -37,6 +38,10 @@ describe('HeadOfStudyProgramController', () => {
     password: 'passwordKaprpdi',
     studyProgramId: studyProgram.id,
   };
+
+  const updateKaprodiDTO: UpdateHeadOfStudyProgramDto = {
+    
+  }
 
   const cleanData = [
     {
@@ -114,7 +119,11 @@ describe('HeadOfStudyProgramController', () => {
   });
 
   // describe('PATCH /kaprodi/:id', () => {
-  //   it('should successfully update a head of study program', async )
+  //   it('should successfully update a head of study program', async () => {
+  //     const id = "id";
+
+
+  //   });
 
   // });
 });
