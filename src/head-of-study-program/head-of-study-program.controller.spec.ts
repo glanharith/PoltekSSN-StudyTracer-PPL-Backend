@@ -155,13 +155,4 @@ describe('HeadOfStudyProgramController', () => {
       await expect(kaprodiController.delete(id)).rejects.toThrow(InternalServerErrorException);
     });
   });
-
-  // describe('PATCH /kaprodi/:id', () => {
-  //   it('should successfully update a head of study program', async () => {
-  //     const id = "id";
-
-
-  //   });
-
-  // });
 });

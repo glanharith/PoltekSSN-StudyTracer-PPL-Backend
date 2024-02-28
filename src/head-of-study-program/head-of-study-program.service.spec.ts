@@ -146,12 +146,12 @@ describe('HeadOfStudyProgramService', () => {
       });
       expect(prismaMock.headStudyProgram.findMany).toHaveBeenCalledWith({
         where: {
-          id: { in: allHeadsId }
+          id: { in: allHeadsId },
         },
-      })
+      });
       expect(prismaMock.headStudyProgram.deleteMany).toHaveBeenCalledWith({
         where: {
-          id: allHeadsId,
+          id: { in: allHeadsId },
         },
       });
     });

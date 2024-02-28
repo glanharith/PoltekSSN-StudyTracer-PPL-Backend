@@ -36,13 +36,4 @@ export class HeadOfStudyProgramController {
   async delete(@Param('id') id: string) {
     return this.headOfStudyProgramService.delete(id);
   }
-
-  // @Patch('/:id')
-  // @IsAdmin()
-  // async update(
-  //   @Param('id') id: string,
-  //   @Body() headOfStudyProgramDto: CreateHeadOfStudyProgramDto,
-  // ) {
-  //   return null;
-  // }
 }

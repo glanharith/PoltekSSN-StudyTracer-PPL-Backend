@@ -93,8 +93,22 @@ export class HeadOfStudyProgramService {
     return cleanData;
   }
 
-  async deleteMultiple(ids: string[]): Promise<{ids: string[], message: string}> {
-    return {ids: ids, message: "Deleted successfully"}
+  async deleteMultiple(ids: string[]): Promise<{ ids: string[]; message: string }> {
+    const existingHeadOfStudyPrograms = await this.prisma.headStudyProgram.findMany({
+      where: { id: { in: ids } },
+    });
+
+    if (existingHeadOfStudyPrograms.length !== ids.length) {
+      const foundIds = existingHeadOfStudyPrograms.map(head => head.id);
+      const notFoundIds = ids.filter(id => !foundIds.includes(id));
+      throw new NotFoundException(`Head of Study Program(s) with ID(s) ${notFoundIds.join(', ')} not found`);
+    }
+
+    await this.prisma.headStudyProgram.deleteMany({
+      where: { id: { in: ids } },
+    });
+
+    return { ids, message: 'Deleted successfully' };
   }
   
   async delete(id: string): Promise<{id: string; message: string}> {
