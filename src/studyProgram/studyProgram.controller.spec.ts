@@ -3,6 +3,7 @@ import { StudyProgram } from '@prisma/client';
 import { StudyProgramDTO } from './DTO';
 import { StudyProgramController } from './studyProgram.controller';
 import { StudyProgramService } from './studyProgram.service';
+import { NotFoundException } from '@nestjs/common';
 
 jest.mock('./studyProgram.service');
 
@@ -30,7 +31,11 @@ describe('StudyProgramController', () => {
     id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
     name: 'Computer Science',
   };
-  const allStudyPrograms: StudyProgram[] = [studyProgram];
+  const studyProgram2: StudyProgram = {
+    id: '221cf51e-df85-43ab-96a3-13bb513e77d3',
+    name: 'Information System',
+  };
+  const allStudyPrograms: StudyProgram[] = [studyProgram, studyProgram2];
 
   describe('POST /study-program', () => {
     it('should create a new study program', async () => {
@@ -96,6 +101,66 @@ describe('StudyProgramController', () => {
       expect(result).toEqual({
         message: 'Successfully deleted a study program',
       });
+    });
+
+    it('should return NotFoundException if study program does not exists', async () => {
+      const nonExistingId = 'nonExistingId';
+      studyProgramServiceMock.delete.mockRejectedValue(
+        new NotFoundException('Study program not found'),
+      );
+
+      try {
+        await studyProgramController.deleteStudyProgram(nonExistingId);
+      } catch (error) {
+        expect(error).toBeInstanceOf(NotFoundException);
+        expect(error.message).toBe('Study program not found');
+      }
+
+      expect(studyProgramServiceMock.delete).toHaveBeenCalledWith(
+        nonExistingId,
+      );
+    });
+  });
+
+  describe('DELETE /study-program', () => {
+    it('should delete multiple study programs', async () => {
+      const idsToDelete = [allStudyPrograms[0].id, allStudyPrograms[1].id];
+
+      studyProgramServiceMock.deleteMultiple.mockResolvedValue(
+        allStudyPrograms,
+      );
+
+      const result = await studyProgramController.deleteMultipleStudyPrograms(
+        idsToDelete,
+      );
+
+      expect(studyProgramServiceMock.deleteMultiple).toHaveBeenCalledWith(
+        idsToDelete,
+      );
+      expect(result).toEqual({
+        message: 'Successfully deleted study programs',
+      });
+    });
+
+
+    it('should throw NotFoundException if there is any study program that is not found', async () => {
+      const haveANonExistentId = ['nonexistent-id', studyProgram.id];
+
+      studyProgramServiceMock.deleteMultiple.mockRejectedValue(
+        new NotFoundException('Study programs not found'),
+      );
+
+      try {
+        await studyProgramController.deleteMultipleStudyPrograms(
+          haveANonExistentId,
+        );
+      } catch (error) {
+        expect(error).toBeInstanceOf(NotFoundException);
+        expect(error.message).toBe('Study programs not found');
+      }
+      expect(studyProgramServiceMock.deleteMultiple).toHaveBeenCalledWith(
+        haveANonExistentId,
+      );
     });
   });
 

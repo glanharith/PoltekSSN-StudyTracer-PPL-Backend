@@ -49,4 +49,14 @@ export class StudyProgramController {
     await this.studyProgramService.delete(id);
     return response('Successfully deleted a study program');
   }
+
+  @IsAdmin()
+  @Delete()
+  async deleteMultipleStudyPrograms(@Body('ids') ids: string[]) {
+    await this.studyProgramService.deleteMultiple(
+      ids,
+    );
+    return response('Successfully deleted study programs');
+  }
+
 }
