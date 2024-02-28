@@ -101,17 +101,15 @@ describe('HeadOfStudyProgramController', () => {
     it('should throw NotFoundException for a non-existing head of study program', async() => {
       const id = 'notExist';
       kaprodiServiceMock.delete.mockRejectedValue(new NotFoundException());
-      const result = await kaprodiController.delete(id);
 
-      expect(result).rejects.toThrow(NotFoundException);
+      await expect(kaprodiController.delete(id)).rejects.toThrow(NotFoundException);
     });
 
     it('should handle errors during deletion', async () => {
       const id = 'id';
       kaprodiServiceMock.delete.mockRejectedValue(new InternalServerErrorException());;
-      const result = await kaprodiController.delete(id)
-
-      expect(result).rejects.toThrow(InternalServerErrorException);
+      
+      await expect(kaprodiController.delete(id)).rejects.toThrow(InternalServerErrorException);
     });
   });
 });

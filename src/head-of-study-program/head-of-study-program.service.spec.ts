@@ -4,7 +4,7 @@ import { DeepMockProxy } from 'jest-mock-extended';
 import { PrismaClient, HeadStudyProgram, StudyProgram } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { createPrismaMock } from 'src/prisma/prisma.mock';
 import { hash, secure, unsecure } from 'src/common/util/security';
 
@@ -37,6 +37,11 @@ describe('HeadOfStudyProgramService', () => {
     password: 'passwordKaprpdi',
     studyProgramId: studyProgram.id,
   };
+
+  const headOfStudyProgram: HeadStudyProgram = {
+    id: 'id',
+    studyProgramId: studyProgram.id,
+  }
 
   const cleanData = [
     {
@@ -114,6 +119,32 @@ describe('HeadOfStudyProgramService', () => {
       prismaMock.headStudyProgram.findMany.mockResolvedValue([]);
 
       expect(await headOfStudyProgramService.findAll()).toEqual([]);
+    });
+  });
+
+  describe('delete', () => {
+    it("should successfully delete a head of study program", async () => {
+      prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram)
+      prismaMock.headStudyProgram.delete.mockResolvedValue(headOfStudyProgram);
+
+      expect(await headOfStudyProgramService.delete(headOfStudyProgram.id)).toEqual({
+        id: headOfStudyProgram.id,
+        message: "Deleted successfully",
+      });
+      expect(prismaMock.headStudyProgram.delete).toHaveBeenCalledWith({
+        where: {
+          id: headOfStudyProgram.id
+        },
+      });
+    });
+
+    it("should throw NotFoundException if head of study program is not found", async () => {
+      prismaMock.headStudyProgram.findUnique.mockResolvedValue(null);
+
+      await expect(headOfStudyProgramService.delete(headOfStudyProgram.id)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prismaMock.headStudyProgram.delete).toHaveBeenCalledTimes(0)
     });
   });
 });

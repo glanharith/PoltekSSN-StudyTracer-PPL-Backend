@@ -28,15 +28,15 @@ export class HeadOfStudyProgramController {
   @Delete('/:id')
   @IsAdmin()
   async delete(@Param('id') id: string) {
-    return null;
+    return this.headOfStudyProgramService.delete(id);
   }
 
-  @Patch('/:id')
-  @IsAdmin()
-  async update(
-    @Param('id') id: string,
-    @Body() headOfStudyProgramDto: CreateHeadOfStudyProgramDto,
-  ) {
-    return null;
-  }
+  // @Patch('/:id')
+  // @IsAdmin()
+  // async update(
+  //   @Param('id') id: string,
+  //   @Body() headOfStudyProgramDto: CreateHeadOfStudyProgramDto,
+  // ) {
+  //   return null;
+  // }
 }

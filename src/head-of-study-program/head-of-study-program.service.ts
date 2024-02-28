@@ -108,10 +108,22 @@ export class HeadOfStudyProgramService {
   }
 
   async delete(id: string): Promise<{id: string; message: string}> {
-    return {id:"id", message: "message"};
+    const existingHeadOfStudyProgram = await this.prisma.headStudyProgram.findUnique({
+      where: { id },
+    });
+
+    if (!existingHeadOfStudyProgram) {
+      throw new NotFoundException(`Head of Study Program with ID ${id} not found`);
+    }
+
+    await this.prisma.headStudyProgram.delete({
+      where: { id },
+    });
+
+    return { id, message: "Deleted successfully" };
   }
 
-  async update(id: string, email: string, studyProgram: string) {
-    return null;
-  }
+  // async update(id: string, email: string, studyProgram: string) {
+  //   return null;
+  // }
 }
