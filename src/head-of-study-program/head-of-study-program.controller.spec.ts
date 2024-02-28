@@ -39,9 +39,9 @@ describe('HeadOfStudyProgramController', () => {
     studyProgramId: studyProgram.id,
   };
 
-  const updateKaprodiDTO: UpdateHeadOfStudyProgramDto = {
+  // const updateKaprodiDTO: UpdateHeadOfStudyProgramDto = {
     
-  }
+  // }
 
   const cleanData = [
     {
