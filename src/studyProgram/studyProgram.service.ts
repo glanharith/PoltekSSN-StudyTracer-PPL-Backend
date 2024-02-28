@@ -57,4 +57,46 @@ export class StudyProgramService {
 
     return count === 0;
   }
+
+  async findAll(): Promise<StudyProgram[]> {
+    return this.prisma.studyProgram.findMany({});
+  }
+
+  async delete(id: string): Promise<StudyProgram> {
+    await this.getStudyProgramById(id);
+    const studyProgram = await this.prisma.studyProgram.delete({
+      where: {
+        id: id,
+      }
+    });
+    return studyProgram;
+  }
+
+  async getMultipleStudyProgramsById(ids: string[]): Promise<StudyProgram[]> {
+    const studyPrograms = await this.prisma.studyProgram.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+
+    if (studyPrograms.length !=  ids.length) {
+      throw new NotFoundException('Study programs not found');
+    }
+    return studyPrograms;
+  }
+
+  async deleteMultiple(ids: string[]): Promise<StudyProgram[]> {
+    const studyPrograms = await this.getMultipleStudyProgramsById(ids);
+    await this.prisma.studyProgram.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+
+    return studyPrograms;
+  }
 }

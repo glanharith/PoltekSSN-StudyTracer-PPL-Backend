@@ -19,8 +19,7 @@ import {hash, secure, unsecure } from 'src/common/util/security';
         const hashedPassword = await hash(password);
         const securedPhoneNo = phoneNo ? await secure(phoneNo) : undefined;
         const securedAddress = address ? await secure(address) : undefined;
-  
-        const updatedUser = await this.prisma.user.update({
+        return this.prisma.user.update({
             where: {
               email,
             },
@@ -36,9 +35,8 @@ import {hash, secure, unsecure } from 'src/common/util/security';
                 }
             },
           });
-          return updatedUser
         }
-        async getProfilebyId(email: string): Promise<any> {
+        async getProfilebyEmail(email: string): Promise<any> {
             const user = await this.prisma.user.findUnique({
                 where: {
                     email,
