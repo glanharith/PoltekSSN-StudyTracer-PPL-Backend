@@ -92,6 +92,10 @@ export class HeadOfStudyProgramService {
     const cleanData = await Promise.all(modifiedData);
     return cleanData;
   }
+
+  async deleteMultiple(ids: string[]): Promise<{ids: string[], message: string}> {
+    return {ids: ids, message: "Deleted successfully"}
+  }
   
   async delete(id: string): Promise<{id: string; message: string}> {
     const existingHeadOfStudyProgram = await this.prisma.headStudyProgram.findUnique({

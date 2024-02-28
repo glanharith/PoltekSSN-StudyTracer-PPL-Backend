@@ -31,6 +31,11 @@ describe('HeadOfStudyProgramService', () => {
     name: 'Study Program 2',
   };
 
+  const studyProgramTest: StudyProgram = {
+    id: 'studyprogramTest',
+    name: 'Study Program Test',
+  };
+
   const registerKaprodiDTO: CreateHeadOfStudyProgramDto = {
     email: 'kaprodi@gmail.com',
     name: 'Test kaprodi',
@@ -42,6 +47,14 @@ describe('HeadOfStudyProgramService', () => {
     id: 'id',
     studyProgramId: studyProgram.id,
   }
+
+  const headOfStudyProgram2: HeadStudyProgram = {
+    id: 'id2',
+    studyProgramId: studyProgramTest.id,
+  }
+
+  const allHeads: HeadStudyProgram[] = [headOfStudyProgram, headOfStudyProgram2]
+  const allHeadsId = [allHeads[0].id, allHeads[1].id]
 
   const cleanData = [
     {
@@ -119,6 +132,45 @@ describe('HeadOfStudyProgramService', () => {
       prismaMock.headStudyProgram.findMany.mockResolvedValue([]);
 
       expect(await headOfStudyProgramService.findAll()).toEqual([]);
+    });
+  });
+
+  describe('deleteMultiple', () => {
+    it("should successfully delete many head of study programs", async () => {
+      prismaMock.headStudyProgram.findMany.mockResolvedValue(allHeads);
+      prismaMock.headStudyProgram.deleteMany.mockResolvedValue({ count: allHeadsId.length });
+
+      expect(await headOfStudyProgramService.deleteMultiple(allHeadsId)).toEqual({
+        ids: allHeadsId,
+        message: "Deleted successfully",
+      });
+      expect(prismaMock.headStudyProgram.findMany).toHaveBeenCalledWith({
+        where: {
+          id: { in: allHeadsId }
+        },
+      })
+      expect(prismaMock.headStudyProgram.deleteMany).toHaveBeenCalledWith({
+        where: {
+          id: allHeadsId,
+        },
+      });
+    });
+
+    it("should throw NotFoundException if any of the head of study programs are not found", async () => {
+      const nonExistentIds = ['nonExistingId1', 'nonExistingId2'];
+      prismaMock.headStudyProgram.findMany.mockResolvedValue([]);
+  
+      await expect(headOfStudyProgramService.deleteMultiple(nonExistentIds)).rejects.toThrow(
+        NotFoundException,
+      );
+  
+      expect(prismaMock.headStudyProgram.findMany).toHaveBeenCalledWith({
+        where: {
+          id: { in: nonExistentIds }
+        },
+      });
+      
+      expect(prismaMock.headStudyProgram.deleteMany).toHaveBeenCalledTimes(0);
     });
   });
 

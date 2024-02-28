@@ -2,10 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HeadOfStudyProgramController } from './head-of-study-program.controller';
 import { HeadOfStudyProgramService } from './head-of-study-program.service';
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
-import { StudyProgram } from '@prisma/client';
-import { NotFoundError } from 'rxjs';
+import { StudyProgram, HeadStudyProgram } from '@prisma/client';
 import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
-// import { UpdateHeadOfStudyProgramDto } from './dto/update-head-of-study-program.dto';
 
 jest.mock('./head-of-study-program.service');
 
@@ -32,6 +30,11 @@ describe('HeadOfStudyProgramController', () => {
     name: 'Study Program 2',
   };
 
+  const studyProgramTest: StudyProgram = {
+    id: 'studyprogramtest',
+    name: 'Study Program Test',
+  };
+
   const registerKaprodiDTO: CreateHeadOfStudyProgramDto = {
     email: 'kaprodi@gmail.com',
     name: 'Test kaprodi',
@@ -39,9 +42,15 @@ describe('HeadOfStudyProgramController', () => {
     studyProgramId: studyProgram.id,
   };
 
-  // const updateKaprodiDTO: UpdateHeadOfStudyProgramDto = {
-    
-  // }
+  const headOfStudyProgram: HeadStudyProgram = {
+    id: '1',
+    studyProgramId: studyProgram.id
+  };
+
+  const headOfStudyProgram2: HeadStudyProgram = {
+    id: '2',
+    studyProgramId: studyProgramTest.id
+  };
 
   const cleanData = [
     {
@@ -89,9 +98,38 @@ describe('HeadOfStudyProgramController', () => {
     });
   });
 
+  describe('DELETE /kaprodi', () => {
+    it('should successfully delete many head of study programs', async () => {
+      const ids = [headOfStudyProgram.id, headOfStudyProgram2.id];
+      kaprodiServiceMock.deleteMultiple.mockResolvedValue({ids, message:"Deleted successfully"});
+      const result = await kaprodiController.deleteMultiple(ids);
+
+      expect(result).toEqual({
+        ids,
+        message: "Deleted successfully",
+      });
+      
+      expect(kaprodiServiceMock.deleteMultiple).toHaveBeenCalledWith(ids);
+    });
+
+    it('should throw NotFoundException for a non-existing head of study program in the list', async () => {
+      const idsWithNonExist = [headOfStudyProgram.id, "non-exist"];
+      kaprodiServiceMock.deleteMultiple.mockRejectedValue(new NotFoundException());
+
+      await expect(kaprodiController.deleteMultiple(idsWithNonExist)).rejects.toThrow(NotFoundException);
+    });
+
+    it("should handle errors during deletion", async () => {
+      const ids = [headOfStudyProgram.id, headOfStudyProgram2.id]
+      kaprodiServiceMock.deleteMultiple.mockRejectedValue(new InternalServerErrorException());
+
+      await expect(kaprodiController.deleteMultiple(ids)).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
   describe('DELETE /kaprodi/:id', () => {
     it('should successfully delete a head of study program', async () => {
-      const id = 'id';
+      const id = headOfStudyProgram.id;
       kaprodiServiceMock.delete.mockResolvedValue({id, message:"Deleted successfully"});
       const result = await kaprodiController.delete(id);
 
@@ -111,8 +149,8 @@ describe('HeadOfStudyProgramController', () => {
     });
 
     it('should handle errors during deletion', async () => {
-      const id = 'id';
-      kaprodiServiceMock.delete.mockRejectedValue(new InternalServerErrorException());;
+      const id = headOfStudyProgram.id;
+      kaprodiServiceMock.delete.mockRejectedValue(new InternalServerErrorException());
       
       await expect(kaprodiController.delete(id)).rejects.toThrow(InternalServerErrorException);
     });

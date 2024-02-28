@@ -25,6 +25,12 @@ export class HeadOfStudyProgramController {
     return this.headOfStudyProgramService.findAll();
   }
 
+  @Delete()
+  @IsAdmin()
+  async deleteMultiple(@Body('ids') ids: string[]) {
+    return this.headOfStudyProgramService.deleteMultiple(ids)
+  }
+
   @Delete('/:id')
   @IsAdmin()
   async delete(@Param('id') id: string) {
