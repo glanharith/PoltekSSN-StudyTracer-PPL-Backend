@@ -27,18 +27,16 @@ export class HeadOfStudyProgramController {
 
   @Delete('/:id')
   @IsAdmin()
-  async deleteHeadOfStudyProgram(@Param('id') id: string) {
-    await this.headOfStudyProgramService.deleteHeadOfStudyProgram(id);
-    return response('Successfully deleted a head of study program');
+  async delete(@Param('id') id: string) {
+    return null;
   }
 
   @Patch('/:id')
   @IsAdmin()
-  async updateHeadOfStudyProgram(
+  async update(
     @Param('id') id: string,
     @Body() headOfStudyProgramDto: CreateHeadOfStudyProgramDto,
   ) {
-    await this.headOfStudyProgramService.updateHeadofStudyProgram(id, headOfStudyProgramDto.email, headOfStudyProgramDto.studyProgramId);
-    return response('Successfully updated a head of study program')
+    return null;
   }
 }

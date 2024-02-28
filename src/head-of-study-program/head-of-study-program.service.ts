@@ -107,19 +107,11 @@ export class HeadOfStudyProgramService {
     return headStudyProgram
   }
 
-  async deleteHeadOfStudyProgram(id: string): Promise<HeadStudyProgram> {
-    await this.getHeadOfStudyProgramById(id);
-    const headStudyProgram = await this.prisma.headStudyProgram.delete({
-      where: {
-        id: id,
-      },
-    });
-    return headStudyProgram;
+  async delete(id: string): Promise<{id: string; message: string}> {
+    return {id:"id", message: "message"};
   }
 
-  async updateHeadofStudyProgram(id: string, email: string, studyProgram: string): Promise<HeadStudyProgram> {
-    await this.getHeadOfStudyProgramById(id);
-    // TODO
-    // Buat cek apakah email available, studi program available
+  async update(id: string, email: string, studyProgram: string) {
+    return null;
   }
 }

@@ -3,6 +3,8 @@ import { HeadOfStudyProgramController } from './head-of-study-program.controller
 import { HeadOfStudyProgramService } from './head-of-study-program.service';
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
 import { StudyProgram } from '@prisma/client';
+import { NotFoundError } from 'rxjs';
+import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
 jest.mock('./head-of-study-program.service');
 
@@ -79,6 +81,37 @@ describe('HeadOfStudyProgramController', () => {
       const result = await kaprodiController.findAll();
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('DELETE /kaprodi', () => {
+    it('should successfully delete a head of study program', async() => {
+      const id = 'id';
+      kaprodiServiceMock.delete.mockResolvedValue({id, message:"Deleted successfully"});
+      const result = await kaprodiController.delete(id);
+
+      expect(result).toEqual({
+        id,
+        message: 'Deleted successfully',
+      });
+      
+      expect(kaprodiServiceMock.delete).toHaveBeenCalledWith(id);
+    });
+
+    it('should throw NotFoundException for a non-existing head of study program', async() => {
+      const id = 'notExist';
+      kaprodiServiceMock.delete.mockRejectedValue(new NotFoundException());
+      const result = await kaprodiController.delete(id);
+
+      expect(result).rejects.toThrow(NotFoundException);
+    });
+
+    it('should handle errors during deletion', async () => {
+      const id = 'id';
+      kaprodiServiceMock.delete.mockRejectedValue(new InternalServerErrorException());;
+      const result = await kaprodiController.delete(id)
+
+      expect(result).rejects.toThrow(InternalServerErrorException);
     });
   });
 });
