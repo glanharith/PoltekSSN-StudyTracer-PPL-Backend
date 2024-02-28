@@ -126,8 +126,4 @@ export class HeadOfStudyProgramService {
 
     return { id, message: "Deleted successfully" };
   }
-
-  // async update(id: string, email: string, studyProgram: string) {
-  //   return null;
-  // }
 }
