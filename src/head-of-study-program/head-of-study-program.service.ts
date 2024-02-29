@@ -126,7 +126,28 @@ export class HeadOfStudyProgramService {
     return { id, message: "Deleted successfully" };
   }
 
-  async update(id: string, { studyProgramId: programStudyId }: UpdateHeadOfStudyProgramDto): Promise<{id: string; studyProgramId: string; message: string}> {
-    return {id: id, studyProgramId: programStudyId, message: "Updated successfully"}
+  async update(id: string, { studyProgramId: studyProgramId }: UpdateHeadOfStudyProgramDto): Promise<{id: string; studyProgramId: string; message: string}> {
+    const existingHeadOfStudyProgram = await this.prisma.headStudyProgram.findUnique({
+      where: { id },
+    });
+  
+    if (!existingHeadOfStudyProgram) {
+      throw new NotFoundException(`Head of Study Program with ID ${id} not found`);
+    }
+  
+    const existingStudyProgram = await this.prisma.studyProgram.findUnique({
+      where: { id: studyProgramId },
+    });
+  
+    if (!existingStudyProgram) {
+      throw new NotFoundException(`Study Program with ID ${studyProgramId} not found`);
+    }
+  
+    await this.prisma.headStudyProgram.update({
+      where: { id },
+      data: { studyProgramId },
+    });
+  
+    return { id, studyProgramId, message: "Updated successfully" };
   }
 }

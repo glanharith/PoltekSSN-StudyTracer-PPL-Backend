@@ -218,7 +218,7 @@ describe('HeadOfStudyProgramService', () => {
       prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgramNew);
       prismaMock.headStudyProgram.update.mockResolvedValue(headOfStudyProgramNew);
   
-      await expect(headOfStudyProgramService.update(id, { studyProgramId: studyProgramId })).toEqual({
+      await expect(headOfStudyProgramService.update(id, { studyProgramId: studyProgramId })).resolves.toEqual({
         id: id,
         studyProgramId: studyProgramId,
         message: "Updated successfully"
