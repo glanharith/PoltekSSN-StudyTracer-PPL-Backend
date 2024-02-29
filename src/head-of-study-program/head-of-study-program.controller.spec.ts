@@ -35,6 +35,11 @@ describe('HeadOfStudyProgramController', () => {
     name: 'Study Program Test',
   };
 
+  const studyProgramNew: StudyProgram = {
+    id: 'studyprogramnew',
+    name: 'Study Program New',
+  };
+
   const registerKaprodiDTO: CreateHeadOfStudyProgramDto = {
     email: 'kaprodi@gmail.com',
     name: 'Test kaprodi',
@@ -153,6 +158,34 @@ describe('HeadOfStudyProgramController', () => {
       kaprodiServiceMock.delete.mockRejectedValue(new InternalServerErrorException());
       
       await expect(kaprodiController.delete(id)).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
+  describe('PATCH /kaprodi/:id', () => {
+    it('should successfully update a head of study program', async () => {
+      const id = headOfStudyProgram.id;
+      const studyProgramId = studyProgramNew.id;
+      const response = { id: id, studyProgramId: studyProgramId, message: 'Program study updated successfully' };
+      kaprodiServiceMock.update.mockResolvedValue(response);
+
+      await expect(kaprodiController.update(id, { studyProgramId: studyProgramId })).resolves.toEqual(response);
+    });
+    it('should throw NotFoundException if the head of program study does not exist', async () => {
+      const idNotExist = "nonExist";
+      const studyProgramId = studyProgramNew.id;
+      kaprodiServiceMock.update.mockRejectedValue(new NotFoundException('Head of program study not found'));
+  
+      await expect(kaprodiController.update(idNotExist, { studyProgramId: studyProgramId }))
+        .rejects.toThrow(NotFoundException);
+    });
+  
+    it('should throw NotFoundException if the new program study does not exist', async () => {
+      const id = headOfStudyProgram.id;
+      const progIdNotExist = "nonExist";
+      kaprodiServiceMock.update.mockRejectedValue(new NotFoundException('Program study not found'));
+  
+      await expect(kaprodiController.update(id, { studyProgramId: progIdNotExist }))
+        .rejects.toThrow(NotFoundException);
     });
   });
 });

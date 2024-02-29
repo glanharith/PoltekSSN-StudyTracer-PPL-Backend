@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { hash, secure, unsecure } from 'src/common/util/security';
+import { UpdateHeadOfStudyProgramDto } from './dto/update-head-of-study-program.dto';
 
 @Injectable()
 export class HeadOfStudyProgramService {
@@ -123,5 +124,9 @@ export class HeadOfStudyProgramService {
     });
 
     return { id, message: "Deleted successfully" };
+  }
+
+  async update(id: string, { studyProgramId: programStudyId }: UpdateHeadOfStudyProgramDto): Promise<{id: string; studyProgramId: string; message: string}> {
+    return {id: id, studyProgramId: programStudyId, message: "Updated successfully"}
   }
 }

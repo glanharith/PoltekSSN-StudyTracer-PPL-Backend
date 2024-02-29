@@ -3,6 +3,7 @@ import { HeadOfStudyProgramService } from './head-of-study-program.service';
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
 import { IsAdmin } from 'src/common/decorator';
 import { response } from 'src/common/util/response';
+import { UpdateHeadOfStudyProgramDto } from './dto/update-head-of-study-program.dto';
 
 @Controller('kaprodi')
 export class HeadOfStudyProgramController {
@@ -35,5 +36,11 @@ export class HeadOfStudyProgramController {
   @IsAdmin()
   async delete(@Param('id') id: string) {
     return this.headOfStudyProgramService.delete(id);
+  }
+
+  @Patch('/:id')
+  @IsAdmin()
+  async update(@Param('id') id: string, @Body() updatedDto: UpdateHeadOfStudyProgramDto) {
+    return this.headOfStudyProgramService.update(id, updatedDto);
   }
 }
