@@ -140,7 +140,9 @@ describe('HeadOfStudyProgramService', () => {
     });
   });
 
+  // Test cases for delete multiple service kaprodi
   describe('deleteMultiple', () => {
+    // if successful
     it("should successfully delete many head of study programs", async () => {
       prismaMock.headStudyProgram.findMany.mockResolvedValue(allHeads);
       prismaMock.headStudyProgram.deleteMany.mockResolvedValue({ count: allHeadsId.length });
@@ -161,11 +163,13 @@ describe('HeadOfStudyProgramService', () => {
       });
     });
 
+    // if not a valid id
     it('should throw BadRequestException if any ID is not a valid UUID', async () => {
       const invalidUUIDs = [allHeadsId[0], 'invalid-uuid-2'];
       await expect(headOfStudyProgramService.deleteMultiple(invalidUUIDs)).rejects.toThrow(BadRequestException);
     });
 
+    // if a head of study program is not found
     it("should throw NotFoundException if any of the head of study programs are not found", async () => {
       const nonExistentIds = [allHeadsId[0], '3e38460a-d62f-41b3-a31a-38208de69d0d'];
       prismaMock.headStudyProgram.findMany.mockResolvedValue([]);
@@ -184,7 +188,9 @@ describe('HeadOfStudyProgramService', () => {
     });
   });
 
+  // Test cases for delete service kaprodi
   describe('delete', () => {
+    // if successful
     it("should successfully delete a head of study program", async () => {
       const id = headOfStudyProgram.id;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram)
@@ -201,11 +207,13 @@ describe('HeadOfStudyProgramService', () => {
       });
     });
 
+    // if not a valid id
     it("should throw BadRequestException if ID is not a valid UUID", async () => {
       const invalidUUID = "invalid-uuid";
       await expect(headOfStudyProgramService.delete(invalidUUID)).rejects.toThrow(BadRequestException);
     });
 
+    // if head of study program not found
     it("should throw NotFoundException if head of study program is not found", async () => {
       const idNotExist = '3e38460a-d62f-41b3-a31a-38208de69d0d';
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(null);
@@ -217,7 +225,9 @@ describe('HeadOfStudyProgramService', () => {
     });
   });
 
+  // Test cases for edit/update service kaprodi
   describe('update', () => {
+    // if successful
     it('should successfully update the program study of a head of study program', async () => {
       const id = headOfStudyProgram.id;
       const studyProgramId = studyProgramNew.id;
@@ -236,18 +246,21 @@ describe('HeadOfStudyProgramService', () => {
       });
     });
 
+    // if not a valid head of study program id
     it('should throw BadRequestException if head of study program id is not a valid UUID', async () => {
       const invalidUUID = 'invalid-uuid';
       const studyProgramId = studyProgramNew.id;
       await expect(headOfStudyProgramService.update(invalidUUID, { studyProgramId: studyProgramId })).rejects.toThrow(BadRequestException);
     });
 
+    // if not a valid study program id
     it('should throw BadRequestException if study program id is not a valid UUID', async () => {
       const id = headOfStudyProgram.id;
       const invalidUUID = 'invalid-uuid';
       await expect(headOfStudyProgramService.update(id, { studyProgramId: invalidUUID })).rejects.toThrow(BadRequestException);
     });
   
+    // if head of study program is not found
     it('should throw NotFoundException if the head of study program does not exist', async () => {
       const idNotExist = "3e38460a-d62f-41b3-a31a-38208de69d0d";
       const studyProgramId = studyProgramNew.id;
@@ -257,6 +270,7 @@ describe('HeadOfStudyProgramService', () => {
         .rejects.toThrow(NotFoundException);
     });
   
+    // if study program is not found
     it('should throw NotFoundException if the new study program does not exist', async () => {
       const id = headOfStudyProgram.id;
       const progIdNotExist = "3e38460a-d62f-41b3-a31a-38208de69d0d"
@@ -267,6 +281,7 @@ describe('HeadOfStudyProgramService', () => {
         .rejects.toThrow(NotFoundException);
     });
 
+    // if study program is not available or already has a head of study program
     it('should throw BadRequestException if the new study program is not available', async () => {
       const id = headOfStudyProgram.id;
       const progIdNotAvailable = studyProgramNew.id;
@@ -279,7 +294,9 @@ describe('HeadOfStudyProgramService', () => {
     })
   });  
 
+  // Test cases for get head of study program by id kaprodi service
   describe('getHeadById', () => {
+    // if successful
     it('should return a head of study program by id', async () => {
       const id = headOfStudyProgram.id;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
@@ -287,6 +304,7 @@ describe('HeadOfStudyProgramService', () => {
       expect(await headOfStudyProgramService.getHeadById(id)).toEqual(headOfStudyProgram);
     });
 
+    // if not found
     it('should throw NotFoundException if the head of study program does not exist', async () => {
       const idNotExit = "3e38460a-d62f-41b3-a31a-38208de69d0d";
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(null);
@@ -295,7 +313,9 @@ describe('HeadOfStudyProgramService', () => {
     });
   });
 
+  // Test cases for get study program by id kaprodi service 
   describe('getStudyProgramById', () => {
+    // if successful
     it('should return a study program', async () => {
       const studyProgramId = studyProgram.id;
       prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgram);
@@ -303,6 +323,7 @@ describe('HeadOfStudyProgramService', () => {
       expect(await headOfStudyProgramService.getStudyProgramById(studyProgramId)).toEqual(studyProgram);
     });
 
+    // if not found
     it('should throw NotFoundException if study program does not exist', async () => {
       const idNotExit = "3e38460a-d62f-41b3-a31a-38208de69d0d";
       prismaMock.studyProgram.findUnique.mockResolvedValue(null);
@@ -311,7 +332,9 @@ describe('HeadOfStudyProgramService', () => {
     });
   });
 
+  // Test cases for get head of study programs by id kaprodi service
   describe('getManyHeadsByIds', () => {
+    // if succeessful
     it('should return head of study programs', async () => {
       const ids = allHeadsId;
       prismaMock.headStudyProgram.findMany.mockResolvedValue(allHeads);
@@ -319,6 +342,7 @@ describe('HeadOfStudyProgramService', () => {
       expect(await headOfStudyProgramService.getManyHeadByIds(ids)).toEqual(allHeads);
     });
 
+    // if not found
     it('should throw NotFoundException if a head of study program does not exist', async () => {
       const nonExistentIds = [allHeadsId[0], '3e38460a-d62f-41b3-a31a-38208de69d0d'];
       prismaMock.headStudyProgram.findMany.mockResolvedValue([]);
@@ -327,7 +351,9 @@ describe('HeadOfStudyProgramService', () => {
     });
   });
 
+  // Test cases for the availability of a study program
   describe('isStudyProgramAvailable', () => {
+    // if available
     it('should return true if study program is available', async () => {
       const studyProgramId = studyProgramNew.id;
       prismaMock.headStudyProgram.count.mockResolvedValue(0);
@@ -335,6 +361,7 @@ describe('HeadOfStudyProgramService', () => {
       expect(await headOfStudyProgramService.isStudyProgramAvailable(studyProgramId)).toEqual(true);
     });
 
+    // if not available
     it('should return false if study program is not available', async () => {
       const studyProgramIdNotAvail = studyProgram.id;
       prismaMock.headStudyProgram.count.mockResolvedValue(1);

@@ -96,11 +96,14 @@ export class HeadOfStudyProgramService {
     return cleanData;
   }
 
+  // Get a head of study program by id
   async getHeadById(id: string): Promise<HeadStudyProgram> {
+    // take from database
     const existingHeadOfStudyProgram = await this.prisma.headStudyProgram.findUnique({
       where: { id },
     });
 
+    // if not exist throw error, else return head
     if (!existingHeadOfStudyProgram) {
       throw new NotFoundException(`Head of Study Program with ID ${id} not found`);
     }
@@ -109,11 +112,14 @@ export class HeadOfStudyProgramService {
     };
   }
 
+  // Get head of study programs by ids
   async getManyHeadByIds(ids: string[]): Promise<HeadStudyProgram[]> {
+    // take from database
     const existingHeadOfStudyPrograms = await this.prisma.headStudyProgram.findMany({
       where: { id: { in: ids } },
     });
 
+    // if not all exist throw error, else return heads
     if (existingHeadOfStudyPrograms.length !== ids.length) {
       throw new NotFoundException('Head of Study Program not all found');
     }
@@ -122,11 +128,14 @@ export class HeadOfStudyProgramService {
     };
   }
 
+  // Get a study program by id
   async getStudyProgramById(id :string): Promise<StudyProgram> {
+    // take from database
     const existingStudyProgram = await this.prisma.studyProgram.findUnique({
       where: { id },
     });
   
+    // if not exist throw error, else return study program
     if (!existingStudyProgram) {
       throw new NotFoundException(`Study Program with ID ${id} not found`);
     }
@@ -135,23 +144,30 @@ export class HeadOfStudyProgramService {
     };
   }
 
+  // Check availability of study program
   async isStudyProgramAvailable(studyProgramId: string): Promise<boolean> {
+    // take from database
     const count = await this.prisma.headStudyProgram.count({
       where: { studyProgramId: studyProgramId },
     });
 
+    // boolean: study program isn't taken => true
     return count === 0;
   }
 
+  // Delete multiple head of study program
   async deleteMultiple(ids: string[]): Promise<{ ids: string[]; message: string }> {
+    // check if each id is uuid
     ids.forEach(id => {
       if (!isUUID(id)) {
         throw new BadRequestException(`Invalid ID format for ID ${id}. All IDs must be valid UUIDs.`);
       }
     });
 
+    // check if ids is in database
     await this.getManyHeadByIds(ids)
 
+    // delete from databse
     await this.prisma.headStudyProgram.deleteMany({
       where: { id: { in: ids } },
     });
@@ -159,13 +175,17 @@ export class HeadOfStudyProgramService {
     return { ids, message: 'Deleted successfully' };
   }
   
+  // Delete a head of study program
   async delete(id: string): Promise<{id: string; message: string}> {
+    // check if id is uuid
     if (!isUUID(id)) {
       throw new BadRequestException('Invalid ID format. ID must be a valid UUID.');
     }
 
+    // check if id is in database
     await this.getHeadById(id);
 
+    // delete from database
     await this.prisma.headStudyProgram.delete({
       where: { id },
     });
@@ -173,24 +193,31 @@ export class HeadOfStudyProgramService {
     return { id, message: "Deleted successfully" };
   }
 
+  // Update a head of study program's study program
   async update(id: string, { studyProgramId: studyProgramId }: UpdateHeadOfStudyProgramDto): Promise<{id: string; studyProgramId: string; message: string}> {
+    // check if id is uuid
     if (!isUUID(id)) {
       throw new BadRequestException('Invalid ID format. ID must be a valid UUID.');
     }
 
+    // check if study program id is uuid
     if (!isUUID(studyProgramId)) {
       throw new BadRequestException('Invalid ID format. ID must be a valid UUID.');
     }
     
+    // check if id is in database
     await this.getHeadById(id);
 
+    // check if study program id is in databse
     await this.getStudyProgramById(studyProgramId);
 
+    // check if study program is available, if not throw error
     const isAvailable = await this.isStudyProgramAvailable(studyProgramId);
     if (!isAvailable) {
       throw new BadRequestException(`Study Program with ID ${studyProgramId} is not available`)
     }
   
+    // update head of study's study program
     await this.prisma.headStudyProgram.update({
       where: { id },
       data: { studyProgramId },
