@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { HeadStudyProgram, StudyProgram } from '@prisma/client';
 import { hash, secure, unsecure } from 'src/common/util/security';
 import { UpdateHeadOfStudyProgramDto } from './dto/update-head-of-study-program.dto';
 
@@ -94,7 +95,20 @@ export class HeadOfStudyProgramService {
     return cleanData;
   }
 
-  async deleteMultiple(ids: string[]): Promise<{ ids: string[]; message: string }> {
+  async getHeadById(id: string): Promise<HeadStudyProgram> {
+    const existingHeadOfStudyProgram = await this.prisma.headStudyProgram.findUnique({
+      where: { id },
+    });
+
+    if (!existingHeadOfStudyProgram) {
+      throw new NotFoundException(`Head of Study Program with ID ${id} not found`);
+    }
+    else {
+      return existingHeadOfStudyProgram;
+    };
+  }
+
+  async getManyHeadByIds(ids: string[]): Promise<HeadStudyProgram[]> {
     const existingHeadOfStudyPrograms = await this.prisma.headStudyProgram.findMany({
       where: { id: { in: ids } },
     });
@@ -102,6 +116,40 @@ export class HeadOfStudyProgramService {
     if (existingHeadOfStudyPrograms.length !== ids.length) {
       throw new NotFoundException('Head of Study Program not all found');
     }
+    else {
+      return existingHeadOfStudyPrograms;
+    };
+  }
+
+  async getStudyProgramById(id :string): Promise<StudyProgram> {
+    const existingStudyProgram = await this.prisma.studyProgram.findUnique({
+      where: { id },
+    });
+  
+    if (!existingStudyProgram) {
+      throw new NotFoundException(`Study Program with ID ${id} not found`);
+    }
+    else {
+      return existingStudyProgram;
+    };
+  }
+
+  async isStudyProgramAvailable(studyProgramId: string): Promise<boolean> {
+    const count = await this.prisma.headStudyProgram.count({
+      where: { studyProgramId: studyProgramId },
+    });
+
+    const isAvailable = count === 0;
+    if (!isAvailable) {
+      throw new BadRequestException(`Study Program with ID ${studyProgramId} is not available`)
+    }
+    else {
+      return isAvailable
+    };
+  }
+
+  async deleteMultiple(ids: string[]): Promise<{ ids: string[]; message: string }> {
+    await this.getManyHeadByIds(ids)
 
     await this.prisma.headStudyProgram.deleteMany({
       where: { id: { in: ids } },
@@ -111,13 +159,7 @@ export class HeadOfStudyProgramService {
   }
   
   async delete(id: string): Promise<{id: string; message: string}> {
-    const existingHeadOfStudyProgram = await this.prisma.headStudyProgram.findUnique({
-      where: { id },
-    });
-
-    if (!existingHeadOfStudyProgram) {
-      throw new NotFoundException(`Head of Study Program with not found`);
-    }
+    await this.getHeadById(id);
 
     await this.prisma.headStudyProgram.delete({
       where: { id },
@@ -127,21 +169,11 @@ export class HeadOfStudyProgramService {
   }
 
   async update(id: string, { studyProgramId: studyProgramId }: UpdateHeadOfStudyProgramDto): Promise<{id: string; studyProgramId: string; message: string}> {
-    const existingHeadOfStudyProgram = await this.prisma.headStudyProgram.findUnique({
-      where: { id },
-    });
-  
-    if (!existingHeadOfStudyProgram) {
-      throw new NotFoundException(`Head of Study Program with ID ${id} not found`);
-    }
-  
-    const existingStudyProgram = await this.prisma.studyProgram.findUnique({
-      where: { id: studyProgramId },
-    });
-  
-    if (!existingStudyProgram) {
-      throw new NotFoundException(`Study Program with ID ${studyProgramId} not found`);
-    }
+    await this.getHeadById(id);
+
+    await this.getStudyProgramById(id);
+
+    await this.isStudyProgramAvailable(studyProgramId);
   
     await this.prisma.headStudyProgram.update({
       where: { id },
