@@ -139,13 +139,7 @@ export class HeadOfStudyProgramService {
       where: { studyProgramId: studyProgramId },
     });
 
-    const isAvailable = count === 0;
-    if (!isAvailable) {
-      throw new BadRequestException(`Study Program with ID ${studyProgramId} is not available`)
-    }
-    else {
-      return isAvailable
-    };
+    return count === 0;
   }
 
   async deleteMultiple(ids: string[]): Promise<{ ids: string[]; message: string }> {
@@ -171,9 +165,12 @@ export class HeadOfStudyProgramService {
   async update(id: string, { studyProgramId: studyProgramId }: UpdateHeadOfStudyProgramDto): Promise<{id: string; studyProgramId: string; message: string}> {
     await this.getHeadById(id);
 
-    await this.getStudyProgramById(id);
+    await this.getStudyProgramById(studyProgramId);
 
-    await this.isStudyProgramAvailable(studyProgramId);
+    const isAvailable = await this.isStudyProgramAvailable(studyProgramId);
+    if (!isAvailable) {
+      throw new BadRequestException(`Study Program with ID ${studyProgramId} is not available`)
+    }
   
     await this.prisma.headStudyProgram.update({
       where: { id },

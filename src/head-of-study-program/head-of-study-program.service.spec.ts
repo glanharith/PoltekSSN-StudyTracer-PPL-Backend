@@ -58,11 +58,6 @@ describe('HeadOfStudyProgramService', () => {
     studyProgramId: studyProgramTest.id,
   }
 
-  const headOfStudyProgramNew: HeadStudyProgram = {
-    id: headOfStudyProgram.id,
-    studyProgramId: studyProgramNew.id
-  }
-
   const allHeads: HeadStudyProgram[] = [headOfStudyProgram, headOfStudyProgram2]
   const allHeadsId = [allHeads[0].id, allHeads[1].id]
 
@@ -211,12 +206,16 @@ describe('HeadOfStudyProgramService', () => {
   });
 
   describe('update', () => {
-    it('should successfully update the program study of a head of program study', async () => {
+    it('should successfully update the program study of a head of study program', async () => {
       const id = headOfStudyProgram.id;
       const studyProgramId = studyProgramNew.id;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
       prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgramNew);
-      prismaMock.headStudyProgram.update.mockResolvedValue(headOfStudyProgramNew);
+      prismaMock.headStudyProgram.count.mockResolvedValue(0);
+      prismaMock.headStudyProgram.update.mockResolvedValue({
+        id: headOfStudyProgram.id,
+        studyProgramId: studyProgramNew.id
+      });
   
       await expect(headOfStudyProgramService.update(id, { studyProgramId: studyProgramId })).resolves.toEqual({
         id: id,
@@ -225,7 +224,7 @@ describe('HeadOfStudyProgramService', () => {
       });
     });
   
-    it('should throw NotFoundException if the head of program study does not exist', async () => {
+    it('should throw NotFoundException if the head of study program does not exist', async () => {
       const idNotExist = "notExist";
       const studyProgramId = studyProgramNew.id;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(null);
@@ -234,7 +233,7 @@ describe('HeadOfStudyProgramService', () => {
         .rejects.toThrow(NotFoundException);
     });
   
-    it('should throw NotFoundException if the new program study does not exist', async () => {
+    it('should throw NotFoundException if the new study program does not exist', async () => {
       const id = headOfStudyProgram.id;
       const progIdNotExist = "notExist"
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
@@ -243,5 +242,80 @@ describe('HeadOfStudyProgramService', () => {
       await expect(headOfStudyProgramService.update(id, { studyProgramId: progIdNotExist }))
         .rejects.toThrow(NotFoundException);
     });
+
+    it('should throw BadRequestException if the new study program is not available', async () => {
+      const id = headOfStudyProgram.id;
+      const progIdNotAvailable = studyProgramNew.id;
+      prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+      prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgramNew);
+      prismaMock.headStudyProgram.count.mockResolvedValue(1); 
+
+      await expect(headOfStudyProgramService.update(id, { studyProgramId: progIdNotAvailable }))
+        .rejects.toThrow(BadRequestException);
+    })
   });  
+
+  describe('getHeadById', () => {
+    it('should return a head of study program by id', async () => {
+      const id = headOfStudyProgram.id;
+      prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+
+      expect(await headOfStudyProgramService.getHeadById(id)).toEqual(headOfStudyProgram);
+    });
+
+    it('should throw NotFoundException if the head of study program does not exist', async () => {
+      const idNotExit = "notExist";
+      prismaMock.headStudyProgram.findUnique.mockResolvedValue(null);
+
+      await expect(headOfStudyProgramService.getHeadById(idNotExit)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getStudyProgramById', () => {
+    it('should return a study program', async () => {
+      const studyProgramId = studyProgram.id;
+      prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgram);
+
+      expect(await headOfStudyProgramService.getStudyProgramById(studyProgramId)).toEqual(studyProgram);
+    });
+
+    it('should throw NotFoundException if study program does not exist', async () => {
+      const idNotExit = "notExist";
+      prismaMock.studyProgram.findUnique.mockResolvedValue(null);
+
+      await expect(headOfStudyProgramService.getStudyProgramById(idNotExit)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getManyHeadsByIds', () => {
+    it('should return head of study programs', async () => {
+      const ids = allHeadsId;
+      prismaMock.headStudyProgram.findMany.mockResolvedValue(allHeads);
+      
+      expect(await headOfStudyProgramService.getManyHeadByIds(ids)).toEqual(allHeads);
+    });
+
+    it('should throw NotFoundException if a head of study program does not exist', async () => {
+      const nonExistentIds = [allHeadsId[0], 'nonExistingId2'];
+      prismaMock.headStudyProgram.findMany.mockResolvedValue([]);
+  
+      await expect(headOfStudyProgramService.getManyHeadByIds(nonExistentIds)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('isStudyProgramAvailable', () => {
+    it('should return true if study program is available', async () => {
+      const studyProgramId = studyProgramNew.id;
+      prismaMock.headStudyProgram.count.mockResolvedValue(0);
+
+      expect(await headOfStudyProgramService.isStudyProgramAvailable(studyProgramId)).toEqual(true);
+    });
+
+    it('should return false if study program is not available', async () => {
+      const studyProgramIdNotAvail = studyProgram.id;
+      prismaMock.headStudyProgram.count.mockResolvedValue(1);
+
+      expect(await headOfStudyProgramService.isStudyProgramAvailable(studyProgramIdNotAvail)).toEqual(false);
+    });
+  });
 });
