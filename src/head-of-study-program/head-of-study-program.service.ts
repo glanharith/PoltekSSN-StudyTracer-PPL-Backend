@@ -194,35 +194,60 @@ export class HeadOfStudyProgramService {
   }
 
   // Update a head of study program's study program
-  async update(id: string, { studyProgramId: studyProgramId }: UpdateHeadOfStudyProgramDto): Promise<{id: string; studyProgramId: string; message: string}> {
+  async update(id: string, updateDto: UpdateHeadOfStudyProgramDto): Promise<{id: string; studyProgramId: string; message: string}> {
+    var updated = false;
     // check if id is uuid
     if (!isUUID(id)) {
       throw new BadRequestException('Invalid ID format. ID must be a valid UUID.');
     }
 
-    // check if study program id is uuid
-    if (!isUUID(studyProgramId)) {
-      throw new BadRequestException('Invalid ID format. ID must be a valid UUID.');
-    }
-    
-    // check if id is in database
-    await this.getHeadById(id);
+    // check if id is in database and get the previous study program
+    var msgStudyProgramId = (await this.getHeadById(id)).studyProgramId;
 
-    // check if study program id is in databse
-    await this.getStudyProgramById(studyProgramId);
+    // check if name is filled
+    if (updateDto.name) {
+      // update name
+      await this.prisma.user.update({
+        where: { id },
+        data: { name: updateDto.name }
+      })
 
-    // check if study program is available, if not throw error
-    const isAvailable = await this.isStudyProgramAvailable(studyProgramId);
-    if (!isAvailable) {
-      throw new BadRequestException(`Study Program with ID ${studyProgramId} is not available`)
+      // change variable
+      updated = true;
     }
-  
-    // update head of study's study program
-    await this.prisma.headStudyProgram.update({
-      where: { id },
-      data: { studyProgramId },
-    });
-  
-    return { id, studyProgramId, message: "Updated successfully" };
+
+    // check if name is filled
+    if (updateDto.studyProgramId) {
+      // check if study program id is uuid
+      if (!isUUID(updateDto.studyProgramId)) {
+        throw new BadRequestException('Invalid ID format. ID must be a valid UUID.');
+      }
+      
+      // check if study program id is in databse
+      await this.getStudyProgramById(updateDto.studyProgramId);
+      
+      // check if study program is available, if not throw error
+      const isAvailable = await this.isStudyProgramAvailable(updateDto.studyProgramId);
+      if (!isAvailable) {
+        throw new BadRequestException(`Study Program with ID ${updateDto.studyProgramId} is not available`)
+      }
+      
+      // update head of study's study program
+      await this.prisma.headStudyProgram.update({
+        where: { id },
+        data: { studyProgramId: updateDto.studyProgramId },
+      });
+
+      // change variable
+      msgStudyProgramId = updateDto.studyProgramId;
+      updated = true;
+    }
+
+    if (updated) {
+      return { id, studyProgramId: msgStudyProgramId, message: "Updated successfully" };
+    }
+    else {
+      return { id, studyProgramId: msgStudyProgramId, message: "No changes were made" }
+    }
   }
 }

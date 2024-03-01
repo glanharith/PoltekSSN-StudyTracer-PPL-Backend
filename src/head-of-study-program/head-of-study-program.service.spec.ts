@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HeadOfStudyProgramService } from './head-of-study-program.service';
 import { DeepMockProxy } from 'jest-mock-extended';
-import { PrismaClient, HeadStudyProgram, StudyProgram } from '@prisma/client';
+import { PrismaClient, HeadStudyProgram, StudyProgram, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
@@ -56,6 +56,14 @@ describe('HeadOfStudyProgramService', () => {
   const headOfStudyProgram2: HeadStudyProgram = {
     id: 'a11960cf-aefe-4e1d-8388-6327e5ca5131',
     studyProgramId: studyProgramTest.id,
+  }
+
+  const headUser: User = {
+    id: headOfStudyProgram.id,
+    email: 'kaprodi@gmail.com',
+    name: 'Test kaprodi',
+    password: 'passwordKaprpdi',
+    role: 'HEAD_STUDY_PROGRAM',
   }
 
   const allHeads: HeadStudyProgram[] = [headOfStudyProgram, headOfStudyProgram2]
@@ -228,7 +236,56 @@ describe('HeadOfStudyProgramService', () => {
   // Test cases for edit/update service kaprodi
   describe('update', () => {
     // if successful
-    it('should successfully update the program study of a head of study program', async () => {
+    it('should successfully update a head of study program', async () => {
+      const id = headOfStudyProgram.id;
+      const name = "New name";
+      const studyProgramId = studyProgramNew.id;
+      prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+      prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgramNew);
+      prismaMock.headStudyProgram.count.mockResolvedValue(0);
+      prismaMock.headStudyProgram.update.mockResolvedValue({
+        id: headOfStudyProgram.id,
+        studyProgramId: studyProgramNew.id
+      });
+      prismaMock.user.update.mockResolvedValue({
+        id: headUser.id,
+        email: headUser.email,
+        password: headUser.password,
+        role: headUser.role,
+        name: name
+      });
+  
+      await expect(headOfStudyProgramService.update(id, { name: name, studyProgramId: studyProgramId })).resolves.toEqual({
+        id: id,
+        studyProgramId: studyProgramId,
+        message: "Updated successfully"
+      });
+    });
+
+    // if successful partial update name
+    it("should successfully update name of a head of study program", async () => {
+      const id = headOfStudyProgram.id;
+      const name = "New name";
+      const studyProgramId = headOfStudyProgram.studyProgramId;
+      prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+      prismaMock.user.update.mockResolvedValue({
+        id: headUser.id,
+        email: headUser.email,
+        password: headUser.password,
+        role: headUser.role,
+        name: name
+      });
+      prismaMock.headStudyProgram.update.mockResolvedValue(headOfStudyProgram);
+
+      await expect(headOfStudyProgramService.update(id, { name: name })).resolves.toEqual({
+        id: id,
+        studyProgramId: studyProgramId,
+        message: "Updated successfully"
+      });
+    })
+
+    // if successful partial update study program
+    it('should successfully update study program of a head of study program', async () => {
       const id = headOfStudyProgram.id;
       const studyProgramId = studyProgramNew.id;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
@@ -238,13 +295,29 @@ describe('HeadOfStudyProgramService', () => {
         id: headOfStudyProgram.id,
         studyProgramId: studyProgramNew.id
       });
-  
+      prismaMock.user.update.mockResolvedValue(headUser);
+
       await expect(headOfStudyProgramService.update(id, { studyProgramId: studyProgramId })).resolves.toEqual({
         id: id,
         studyProgramId: studyProgramId,
         message: "Updated successfully"
       });
-    });
+    })
+
+    // if successful no updates happen
+    it('should successfully not update a head of study program if no field is changed', async () => {
+      const id = headOfStudyProgram.id;
+      const studyProgramId = headOfStudyProgram.studyProgramId;
+      prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+      prismaMock.user.update.mockResolvedValue(headUser);
+      prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+
+      await expect(headOfStudyProgramService.update(id, {})).resolves.toEqual({
+        id: id,
+        studyProgramId: studyProgramId,
+        message: "No changes were made",
+      });
+    })
 
     // if not a valid head of study program id
     it('should throw BadRequestException if head of study program id is not a valid UUID', async () => {
@@ -257,6 +330,7 @@ describe('HeadOfStudyProgramService', () => {
     it('should throw BadRequestException if study program id is not a valid UUID', async () => {
       const id = headOfStudyProgram.id;
       const invalidUUID = 'invalid-uuid';
+      prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
       await expect(headOfStudyProgramService.update(id, { studyProgramId: invalidUUID })).rejects.toThrow(BadRequestException);
     });
   
