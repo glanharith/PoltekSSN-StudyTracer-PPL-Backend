@@ -27,17 +27,17 @@ describe('HeadOfStudyProgramService', () => {
   });
 
   const studyProgram: StudyProgram = {
-    id: 'studyprogram2',
+    id: '5e2633ba-435d-41e8-8432-efa2832ce563',
     name: 'Study Program 2',
   };
 
   const studyProgramTest: StudyProgram = {
-    id: 'studyprogramTest',
+    id: '71ebafd1-ba14-44af-97d6-da882a655076',
     name: 'Study Program Test',
   };
 
   const studyProgramNew: StudyProgram = {
-    id: 'studyprogramNew',
+    id: '53509990-9168-4fae-a963-d9c5aec1232a',
     name: 'Study Program New',
   }
 
@@ -49,12 +49,12 @@ describe('HeadOfStudyProgramService', () => {
   };
 
   const headOfStudyProgram: HeadStudyProgram = {
-    id: 'id',
+    id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
     studyProgramId: studyProgram.id,
   }
 
   const headOfStudyProgram2: HeadStudyProgram = {
-    id: 'id2',
+    id: 'a11960cf-aefe-4e1d-8388-6327e5ca5131',
     studyProgramId: studyProgramTest.id,
   }
 
@@ -161,8 +161,13 @@ describe('HeadOfStudyProgramService', () => {
       });
     });
 
+    it('should throw BadRequestException if any ID is not a valid UUID', async () => {
+      const invalidUUIDs = [allHeadsId[0], 'invalid-uuid-2'];
+      await expect(headOfStudyProgramService.deleteMultiple(invalidUUIDs)).rejects.toThrow(BadRequestException);
+    });
+
     it("should throw NotFoundException if any of the head of study programs are not found", async () => {
-      const nonExistentIds = [allHeadsId[0], 'nonExistingId2'];
+      const nonExistentIds = [allHeadsId[0], '3e38460a-d62f-41b3-a31a-38208de69d0d'];
       prismaMock.headStudyProgram.findMany.mockResolvedValue([]);
   
       await expect(headOfStudyProgramService.deleteMultiple(nonExistentIds)).rejects.toThrow(
@@ -181,10 +186,11 @@ describe('HeadOfStudyProgramService', () => {
 
   describe('delete', () => {
     it("should successfully delete a head of study program", async () => {
+      const id = headOfStudyProgram.id;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram)
       prismaMock.headStudyProgram.delete.mockResolvedValue(headOfStudyProgram);
 
-      expect(await headOfStudyProgramService.delete(headOfStudyProgram.id)).toEqual({
+      expect(await headOfStudyProgramService.delete(id)).toEqual({
         id: headOfStudyProgram.id,
         message: "Deleted successfully",
       });
@@ -195,10 +201,16 @@ describe('HeadOfStudyProgramService', () => {
       });
     });
 
+    it("should throw BadRequestException if ID is not a valid UUID", async () => {
+      const invalidUUID = "invalid-uuid";
+      await expect(headOfStudyProgramService.delete(invalidUUID)).rejects.toThrow(BadRequestException);
+    });
+
     it("should throw NotFoundException if head of study program is not found", async () => {
+      const idNotExist = '3e38460a-d62f-41b3-a31a-38208de69d0d';
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(null);
 
-      await expect(headOfStudyProgramService.delete(headOfStudyProgram.id)).rejects.toThrow(
+      await expect(headOfStudyProgramService.delete(idNotExist)).rejects.toThrow(
         NotFoundException,
       );
       expect(prismaMock.headStudyProgram.delete).toHaveBeenCalledTimes(0)
@@ -223,9 +235,21 @@ describe('HeadOfStudyProgramService', () => {
         message: "Updated successfully"
       });
     });
+
+    it('should throw BadRequestException if head of study program id is not a valid UUID', async () => {
+      const invalidUUID = 'invalid-uuid';
+      const studyProgramId = studyProgramNew.id;
+      await expect(headOfStudyProgramService.update(invalidUUID, { studyProgramId: studyProgramId })).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if study program id is not a valid UUID', async () => {
+      const id = headOfStudyProgram.id;
+      const invalidUUID = 'invalid-uuid';
+      await expect(headOfStudyProgramService.update(id, { studyProgramId: invalidUUID })).rejects.toThrow(BadRequestException);
+    });
   
     it('should throw NotFoundException if the head of study program does not exist', async () => {
-      const idNotExist = "notExist";
+      const idNotExist = "3e38460a-d62f-41b3-a31a-38208de69d0d";
       const studyProgramId = studyProgramNew.id;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(null);
   
@@ -235,7 +259,7 @@ describe('HeadOfStudyProgramService', () => {
   
     it('should throw NotFoundException if the new study program does not exist', async () => {
       const id = headOfStudyProgram.id;
-      const progIdNotExist = "notExist"
+      const progIdNotExist = "3e38460a-d62f-41b3-a31a-38208de69d0d"
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
       prismaMock.studyProgram.findUnique.mockResolvedValue(null);
   
@@ -264,7 +288,7 @@ describe('HeadOfStudyProgramService', () => {
     });
 
     it('should throw NotFoundException if the head of study program does not exist', async () => {
-      const idNotExit = "notExist";
+      const idNotExit = "3e38460a-d62f-41b3-a31a-38208de69d0d";
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(null);
 
       await expect(headOfStudyProgramService.getHeadById(idNotExit)).rejects.toThrow(NotFoundException);
@@ -280,7 +304,7 @@ describe('HeadOfStudyProgramService', () => {
     });
 
     it('should throw NotFoundException if study program does not exist', async () => {
-      const idNotExit = "notExist";
+      const idNotExit = "3e38460a-d62f-41b3-a31a-38208de69d0d";
       prismaMock.studyProgram.findUnique.mockResolvedValue(null);
 
       await expect(headOfStudyProgramService.getStudyProgramById(idNotExit)).rejects.toThrow(NotFoundException);
@@ -296,7 +320,7 @@ describe('HeadOfStudyProgramService', () => {
     });
 
     it('should throw NotFoundException if a head of study program does not exist', async () => {
-      const nonExistentIds = [allHeadsId[0], 'nonExistingId2'];
+      const nonExistentIds = [allHeadsId[0], '3e38460a-d62f-41b3-a31a-38208de69d0d'];
       prismaMock.headStudyProgram.findMany.mockResolvedValue([]);
   
       await expect(headOfStudyProgramService.getManyHeadByIds(nonExistentIds)).rejects.toThrow(NotFoundException);

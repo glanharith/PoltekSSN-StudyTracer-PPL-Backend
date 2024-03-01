@@ -4,6 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { HeadStudyProgram, StudyProgram } from '@prisma/client';
 import { hash, secure, unsecure } from 'src/common/util/security';
 import { UpdateHeadOfStudyProgramDto } from './dto/update-head-of-study-program.dto';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class HeadOfStudyProgramService {
@@ -143,6 +144,12 @@ export class HeadOfStudyProgramService {
   }
 
   async deleteMultiple(ids: string[]): Promise<{ ids: string[]; message: string }> {
+    ids.forEach(id => {
+      if (!isUUID(id)) {
+        throw new BadRequestException(`Invalid ID format for ID ${id}. All IDs must be valid UUIDs.`);
+      }
+    });
+
     await this.getManyHeadByIds(ids)
 
     await this.prisma.headStudyProgram.deleteMany({
@@ -153,6 +160,10 @@ export class HeadOfStudyProgramService {
   }
   
   async delete(id: string): Promise<{id: string; message: string}> {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid ID format. ID must be a valid UUID.');
+    }
+
     await this.getHeadById(id);
 
     await this.prisma.headStudyProgram.delete({
@@ -163,6 +174,14 @@ export class HeadOfStudyProgramService {
   }
 
   async update(id: string, { studyProgramId: studyProgramId }: UpdateHeadOfStudyProgramDto): Promise<{id: string; studyProgramId: string; message: string}> {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid ID format. ID must be a valid UUID.');
+    }
+
+    if (!isUUID(studyProgramId)) {
+      throw new BadRequestException('Invalid ID format. ID must be a valid UUID.');
+    }
+    
     await this.getHeadById(id);
 
     await this.getStudyProgramById(studyProgramId);
