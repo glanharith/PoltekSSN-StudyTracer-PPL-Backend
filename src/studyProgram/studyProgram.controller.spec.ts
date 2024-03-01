@@ -142,7 +142,6 @@ describe('StudyProgramController', () => {
       });
     });
 
-
     it('should throw NotFoundException if there is any study program that is not found', async () => {
       const haveANonExistentId = ['nonexistent-id', studyProgram.id];
 

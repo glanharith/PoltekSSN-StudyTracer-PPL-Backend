@@ -67,7 +67,7 @@ export class StudyProgramService {
     const studyProgram = await this.prisma.studyProgram.delete({
       where: {
         id: id,
-      }
+      },
     });
     return studyProgram;
   }
@@ -81,7 +81,7 @@ export class StudyProgramService {
       },
     });
 
-    if (studyPrograms.length !=  ids.length) {
+    if (studyPrograms.length != ids.length) {
       throw new NotFoundException('Study programs not found');
     }
     return studyPrograms;

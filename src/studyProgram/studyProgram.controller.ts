@@ -53,10 +53,7 @@ export class StudyProgramController {
   @IsAdmin()
   @Delete()
   async deleteMultipleStudyPrograms(@Body('ids') ids: string[]) {
-    await this.studyProgramService.deleteMultiple(
-      ids,
-    );
+    await this.studyProgramService.deleteMultiple(ids);
     return response('Successfully deleted study programs');
   }
-
 }

@@ -134,19 +134,15 @@ describe('StudyProgramService', () => {
   describe('findAll', () => {
     it('should return all study programs', async () => {
       prismaMock.studyProgram.findMany.mockResolvedValue(allStudyPrograms);
-      
-      expect(
-        await studyProgramService.findAll(),
-      ).toEqual(allStudyPrograms);
+
+      expect(await studyProgramService.findAll()).toEqual(allStudyPrograms);
       expect(prismaMock.studyProgram.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should return an empty array if no study program exist', async () => {
       prismaMock.studyProgram.findMany.mockResolvedValue([]);
-      
-      expect(
-        await studyProgramService.findAll(),
-      ).toEqual([]);
+
+      expect(await studyProgramService.findAll()).toEqual([]);
       expect(prismaMock.studyProgram.findMany).toHaveBeenCalledTimes(1);
     });
   });
@@ -156,12 +152,12 @@ describe('StudyProgramService', () => {
       prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgram);
       prismaMock.studyProgram.delete.mockResolvedValue(studyProgram);
 
-      expect(
-        await studyProgramService.delete(studyProgram.id)
-      ).toEqual(studyProgram);
+      expect(await studyProgramService.delete(studyProgram.id)).toEqual(
+        studyProgram,
+      );
       expect(prismaMock.studyProgram.delete).toHaveBeenCalledWith({
         where: {
-          id: studyProgram.id
+          id: studyProgram.id,
         },
       });
     });
@@ -169,9 +165,9 @@ describe('StudyProgramService', () => {
     it('should throw NotFoundException if study program is not found', async () => {
       prismaMock.studyProgram.findUnique.mockResolvedValue(null);
 
-      await expect(
-        studyProgramService.delete(studyProgram.id),
-      ).rejects.toThrow(NotFoundException);
+      await expect(studyProgramService.delete(studyProgram.id)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(prismaMock.studyProgram.delete).toHaveBeenCalledTimes(0);
     });
   });
@@ -179,21 +175,29 @@ describe('StudyProgramService', () => {
   describe('deleteMultiple', () => {
     it('should delete multiple study programs and return them', async () => {
       prismaMock.studyProgram.findMany.mockResolvedValue(allStudyPrograms);
-      prismaMock.studyProgram.deleteMany.mockResolvedValue({ count: allStudyProgramsIds.length });
- 
-      const result = await studyProgramService.deleteMultiple(allStudyProgramsIds);
- 
+      prismaMock.studyProgram.deleteMany.mockResolvedValue({
+        count: allStudyProgramsIds.length,
+      });
+
+      const result = await studyProgramService.deleteMultiple(
+        allStudyProgramsIds,
+      );
+
       expect(result).toEqual(allStudyPrograms);
-      expect(prismaMock.studyProgram.findMany).toHaveBeenCalledWith({ where: { id: { in: allStudyProgramsIds } } });
-      expect(prismaMock.studyProgram.deleteMany).toHaveBeenCalledWith({ where: { id: { in: allStudyProgramsIds } } });
+      expect(prismaMock.studyProgram.findMany).toHaveBeenCalledWith({
+        where: { id: { in: allStudyProgramsIds } },
+      });
+      expect(prismaMock.studyProgram.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: allStudyProgramsIds } },
+      });
     });
- 
+
     it('should throw NotFoundException if there is any study program that is not found', async () => {
       prismaMock.studyProgram.findMany.mockResolvedValue([studyProgram]);
- 
-      await expect(studyProgramService.deleteMultiple(allStudyProgramsIds)).rejects.toThrow(
-        NotFoundException,
-      );
+
+      await expect(
+        studyProgramService.deleteMultiple(allStudyProgramsIds),
+      ).rejects.toThrow(NotFoundException);
       expect(prismaMock.studyProgram.deleteMany).toHaveBeenCalledTimes(0);
     });
   });
@@ -202,12 +206,12 @@ describe('StudyProgramService', () => {
     it('should return study programs info if they are exist', async () => {
       prismaMock.studyProgram.findMany.mockResolvedValue(allStudyPrograms);
 
-
       expect(
-        await studyProgramService.getMultipleStudyProgramsById(allStudyProgramsIds),
+        await studyProgramService.getMultipleStudyProgramsById(
+          allStudyProgramsIds,
+        ),
       ).toEqual(allStudyPrograms);
     });
-
 
     it('should return NotFoundException if study program does not exists', async () => {
       prismaMock.studyProgram.findMany.mockResolvedValue([]);
