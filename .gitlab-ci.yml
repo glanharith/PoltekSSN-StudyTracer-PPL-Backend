@@ -49,7 +49,7 @@ sonar:
   dependencies:
     - test
   only:
-    - staging
+    - development
 
 publish:
   stage: deploy
