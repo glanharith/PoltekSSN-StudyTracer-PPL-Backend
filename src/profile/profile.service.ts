@@ -57,8 +57,8 @@ export class ProfileService {
 
     if (!user) throw new NotFoundException('User not found');
     if (!user.alumni) throw new NotFoundException('User not found');
-    const decryptPhoneNo = await unsecure(user.alumni.phoneNo)
-    const decryptAddress = await unsecure(user.alumni.address)
+    const decryptPhoneNo = await unsecure(user.alumni.phoneNo);
+    const decryptAddress = await unsecure(user.alumni.address);
 
     return {
       name: user.name,

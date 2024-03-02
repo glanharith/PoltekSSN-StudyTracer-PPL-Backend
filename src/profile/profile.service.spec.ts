@@ -21,15 +21,20 @@ describe('ProfileService', () => {
 
       // Mocking hash, secure, and unsecure functions
       (hash as jest.Mock).mockResolvedValue('hashedPassword');
-      (secure as jest.Mock).mockImplementation((value) => Promise.resolve('secured' + value));
+      (secure as jest.Mock).mockImplementation((value) =>
+        Promise.resolve('secured' + value),
+      );
 
-      const result = await profileService.edit({
-        name: 'John Doe',
-        password: 'password123',
-        phoneNo: '123456789',
-        address: '123 Main St',
-        enrollmentYear: 2020,
-      }, 'test@example.com');
+      const result = await profileService.edit(
+        {
+          name: 'John Doe',
+          password: 'password123',
+          phoneNo: '123456789',
+          address: '123 Main St',
+          enrollmentYear: 2020,
+        },
+        'test@example.com',
+      );
 
       expect(result).toEqual({});
       expect(prismaService.user.update).toHaveBeenCalledWith({
@@ -55,13 +60,16 @@ describe('ProfileService', () => {
       // Mocking hash function
       (hash as jest.Mock).mockResolvedValue('hashedPassword');
 
-      const result = await profileService.edit({
-        name: 'John Doe',
-        password: 'password123',
-        phoneNo: undefined,
-        address: undefined,
-        enrollmentYear: 2020,
-      }, 'test@example.com');
+      const result = await profileService.edit(
+        {
+          name: 'John Doe',
+          password: 'password123',
+          phoneNo: undefined,
+          address: undefined,
+          enrollmentYear: 2020,
+        },
+        'test@example.com',
+      );
 
       expect(result).toEqual({});
       expect(prismaService.user.update).toHaveBeenCalledWith({
@@ -83,7 +91,6 @@ describe('ProfileService', () => {
     // Add more test cases to cover other scenarios if necessary
   });
 
-
   describe('getProfilebyEmail', () => {
     it('should return user profile with decrypted phoneNo and address if they exist', async () => {
       const mockUser = {
@@ -91,13 +98,17 @@ describe('ProfileService', () => {
         alumni: {
           phoneNo: 'securedPhoneNoValue',
           address: 'securedAddressValue',
-          enrollmentYear: 2020
-        }
+          enrollmentYear: 2020,
+        },
       };
 
       const findUniqueMock = jest.fn().mockResolvedValue(mockUser);
-      const profileService = new ProfileService({ user: { findUnique: findUniqueMock } } as any);
-      (unsecure as jest.Mock).mockResolvedValueOnce('unsecuredPhoneNoValue').mockResolvedValueOnce('unsecuredAddressValue');
+      const profileService = new ProfileService({
+        user: { findUnique: findUniqueMock },
+      } as any);
+      (unsecure as jest.Mock)
+        .mockResolvedValueOnce('unsecuredPhoneNoValue')
+        .mockResolvedValueOnce('unsecuredAddressValue');
 
       const result = await profileService.getProfilebyEmail('test@example.com');
 
@@ -113,33 +124,43 @@ describe('ProfileService', () => {
 
     it('should throw NotFoundException if user is not found', async () => {
       const findUniqueMock = jest.fn().mockResolvedValue(null);
-      const profileService = new ProfileService({ user: { findUnique: findUniqueMock } } as any);
+      const profileService = new ProfileService({
+        user: { findUnique: findUniqueMock },
+      } as any);
 
-      await expect(profileService.getProfilebyEmail('nonexistent@example.com')).rejects.toThrowError(NotFoundException);
+      await expect(
+        profileService.getProfilebyEmail('nonexistent@example.com'),
+      ).rejects.toThrowError(NotFoundException);
     });
 
     it('should throw NotFoundException if alumni is not found', async () => {
       const mockUser = {
         name: 'John Doe',
-        alumni: null
+        alumni: null,
       };
 
       const findUniqueMock = jest.fn().mockResolvedValue(mockUser);
-      const profileService = new ProfileService({ user: { findUnique: findUniqueMock } } as any);
+      const profileService = new ProfileService({
+        user: { findUnique: findUniqueMock },
+      } as any);
 
-      await expect(profileService.getProfilebyEmail('test@example.com')).rejects.toThrowError(NotFoundException);
+      await expect(
+        profileService.getProfilebyEmail('test@example.com'),
+      ).rejects.toThrowError(NotFoundException);
     });
 
     it('should return user profile with phoneNo and address as undefined if they do not exist in the alumni object', async () => {
       const mockUser = {
         name: 'John Doe',
         alumni: {
-          enrollmentYear: 2020
-        }
+          enrollmentYear: 2020,
+        },
       };
 
       const findUniqueMock = jest.fn().mockResolvedValue(mockUser);
-      const profileService = new ProfileService({ user: { findUnique: findUniqueMock } } as any);
+      const profileService = new ProfileService({
+        user: { findUnique: findUniqueMock },
+      } as any);
 
       const result = await profileService.getProfilebyEmail('test@example.com');
 
@@ -154,6 +175,3 @@ describe('ProfileService', () => {
     });
   });
 });
-
-
-  
