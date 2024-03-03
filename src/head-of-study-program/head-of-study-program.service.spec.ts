@@ -162,7 +162,7 @@ describe('HeadOfStudyProgramService', () => {
     // if successful
     it("should successfully delete many head of study programs", async () => {
       prismaMock.headStudyProgram.findMany.mockResolvedValue(allHeads);
-      prismaMock.user.findMany.mockResolvedValue(allUsers)
+      prismaMock.user.findMany.mockResolvedValue(allUsers);
       prismaMock.headStudyProgram.deleteMany.mockResolvedValue({ count: allHeadsId.length });
 
       expect(await headOfStudyProgramService.deleteMultiple(allHeadsId)).toEqual({
@@ -224,7 +224,7 @@ describe('HeadOfStudyProgramService', () => {
     it("should successfully delete a head of study program", async () => {
       const id = headOfStudyProgram.id;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
-      prismaMock.user.findUnique.mockResolvedValue(headUser)
+      prismaMock.user.findUnique.mockResolvedValue(headUser);
       prismaMock.headStudyProgram.delete.mockResolvedValue(headOfStudyProgram);
 
       expect(await headOfStudyProgramService.delete(id)).toEqual({
@@ -276,6 +276,7 @@ describe('HeadOfStudyProgramService', () => {
       const name = "New name";
       const studyProgramId = studyProgramNew.id;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+      prismaMock.user.findUnique.mockResolvedValue(headUser)
       prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgramNew);
       prismaMock.headStudyProgram.count.mockResolvedValue(0);
       prismaMock.headStudyProgram.update.mockResolvedValue({
@@ -303,6 +304,7 @@ describe('HeadOfStudyProgramService', () => {
       const name = "New name";
       const studyProgramId = headOfStudyProgram.studyProgramId;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+      prismaMock.user.findUnique.mockResolvedValue(headUser)
       prismaMock.user.update.mockResolvedValue({
         id: headUser.id,
         email: headUser.email,
@@ -324,6 +326,7 @@ describe('HeadOfStudyProgramService', () => {
       const id = headOfStudyProgram.id;
       const studyProgramId = studyProgramNew.id;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+      prismaMock.user.findUnique.mockResolvedValue(headUser)
       prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgramNew);
       prismaMock.headStudyProgram.count.mockResolvedValue(0);
       prismaMock.headStudyProgram.update.mockResolvedValue({
@@ -344,6 +347,7 @@ describe('HeadOfStudyProgramService', () => {
       const id = headOfStudyProgram.id;
       const studyProgramId = headOfStudyProgram.studyProgramId;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+      prismaMock.user.findUnique.mockResolvedValue(headUser)
       prismaMock.user.update.mockResolvedValue(headUser);
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
 
@@ -366,6 +370,7 @@ describe('HeadOfStudyProgramService', () => {
       const id = headOfStudyProgram.id;
       const invalidUUID = 'invalid-uuid';
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+      prismaMock.user.findUnique.mockResolvedValue(headUser)
       await expect(headOfStudyProgramService.update(id, { studyProgramId: invalidUUID })).rejects.toThrow(BadRequestException);
     });
   
@@ -384,6 +389,7 @@ describe('HeadOfStudyProgramService', () => {
       const id = headOfStudyProgram.id;
       const progIdNotExist = "3e38460a-d62f-41b3-a31a-38208de69d0d"
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+      prismaMock.user.findUnique.mockResolvedValue(headUser)
       prismaMock.studyProgram.findUnique.mockResolvedValue(null);
   
       await expect(headOfStudyProgramService.update(id, { studyProgramId: progIdNotExist }))
@@ -395,6 +401,7 @@ describe('HeadOfStudyProgramService', () => {
       const id = headOfStudyProgram.id;
       const progIdNotAvailable = studyProgramNew.id;
       prismaMock.headStudyProgram.findUnique.mockResolvedValue(headOfStudyProgram);
+      prismaMock.user.findUnique.mockResolvedValue(headUser)
       prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgramNew);
       prismaMock.headStudyProgram.count.mockResolvedValue(1); 
 
@@ -455,11 +462,10 @@ describe('HeadOfStudyProgramService', () => {
   describe('getManyHeadsByIds', () => {
     // if succeessful
     it('should return head of study programs', async () => {
-      const ids = allHeadsId;
       prismaMock.headStudyProgram.findMany.mockResolvedValue(allHeads);
-      prismaMock.user.findMany.mockResolvedValue(allUsers)
+      prismaMock.user.findMany.mockResolvedValue(allUsers);
       
-      expect(await headOfStudyProgramService.getManyHeadByIds(ids)).toEqual(allHeads);
+      expect(await headOfStudyProgramService.getManyHeadByIds(allHeadsId)).toEqual(allHeads);
     });
 
     // if not found
@@ -471,12 +477,12 @@ describe('HeadOfStudyProgramService', () => {
     });
 
     // if user not found
-    it('should return head of study programs', async () => {
+    it('should  throw NotFoundException if a head of study program does not exist', async () => {
       const ids = allHeadsId;
       prismaMock.headStudyProgram.findMany.mockResolvedValue(allHeads);
       prismaMock.user.findMany.mockResolvedValue([])
       
-      expect(await headOfStudyProgramService.getManyHeadByIds(ids)).rejects.toThrow(NotFoundException);
+      await expect(headOfStudyProgramService.getManyHeadByIds(ids)).rejects.toThrow(NotFoundException);
     });
   });
 
