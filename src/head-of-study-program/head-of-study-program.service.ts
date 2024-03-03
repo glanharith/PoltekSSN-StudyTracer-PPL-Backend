@@ -102,17 +102,23 @@ export class HeadOfStudyProgramService {
     const existingHeadOfStudyProgram = await this.prisma.headStudyProgram.findUnique({
       where: { id },
     });
+<<<<<<< HEAD
     const existingUser = await this.prisma.user.findUnique({
       where: { id },
     });
+=======
+>>>>>>> ac8e6f79c0a2c4eef8d54ba69f99442caa6aa62c
 
     // if not exist throw error, else return head
     if (!existingHeadOfStudyProgram) {
       throw new NotFoundException(`Head of Study Program with ID ${id} not found`);
     }
+<<<<<<< HEAD
     else if (!existingUser) {
       throw new NotFoundException(`User with ID ${id} not found`)
     }
+=======
+>>>>>>> ac8e6f79c0a2c4eef8d54ba69f99442caa6aa62c
     else {
       return existingHeadOfStudyProgram;
     };
@@ -124,19 +130,25 @@ export class HeadOfStudyProgramService {
     const existingHeadOfStudyPrograms = await this.prisma.headStudyProgram.findMany({
       where: { id: { in: ids } },
     });
+<<<<<<< HEAD
     const existingUsers = await this.prisma.user.findMany({
       where: { id: { in: ids} },
     });
     // console.log("Existing Users:", existingUsers);
     // console.log("id:", ids);
+=======
+>>>>>>> ac8e6f79c0a2c4eef8d54ba69f99442caa6aa62c
 
     // if not all exist throw error, else return heads
     if (existingHeadOfStudyPrograms.length !== ids.length) {
       throw new NotFoundException('Head of Study Program not all found');
     }
+<<<<<<< HEAD
     else if (existingUsers.length !== ids.length) {
       throw new NotFoundException('User not all found')
     }
+=======
+>>>>>>> ac8e6f79c0a2c4eef8d54ba69f99442caa6aa62c
     else {
       return existingHeadOfStudyPrograms;
     };
@@ -185,9 +197,12 @@ export class HeadOfStudyProgramService {
     await this.prisma.headStudyProgram.deleteMany({
       where: { id: { in: ids } },
     });
+<<<<<<< HEAD
     await this.prisma.user.deleteMany({
       where: { id: { in: ids } },
     });
+=======
+>>>>>>> ac8e6f79c0a2c4eef8d54ba69f99442caa6aa62c
 
     return { ids, message: 'Deleted successfully' };
   }
@@ -206,9 +221,12 @@ export class HeadOfStudyProgramService {
     await this.prisma.headStudyProgram.delete({
       where: { id },
     });
+<<<<<<< HEAD
     await this.prisma.user.delete({
       where: { id },
     });
+=======
+>>>>>>> ac8e6f79c0a2c4eef8d54ba69f99442caa6aa62c
 
     return { id, message: "Deleted successfully" };
   }

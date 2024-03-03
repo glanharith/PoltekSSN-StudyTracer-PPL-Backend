@@ -16,14 +16,32 @@ export class HeadOfStudyProgramController {
   async create(
     @Body() createHeadOfStudyProgramDto: CreateHeadOfStudyProgramDto,
   ) {
-    this.headOfStudyProgramService.create(createHeadOfStudyProgramDto);
+    await this.headOfStudyProgramService.create(createHeadOfStudyProgramDto);
     return response('Successfully created a new head of study program');
   }
 
   @Get()
   @IsAdmin()
   async findAll() {
-    return this.headOfStudyProgramService.findAll();
+    return await this.headOfStudyProgramService.findAll();
+  }
+
+  @Delete()
+  @IsAdmin()
+  async deleteMultiple(@Body('ids') ids: string[]) {
+    return this.headOfStudyProgramService.deleteMultiple(ids)
+  }
+
+  @Delete('/:id')
+  @IsAdmin()
+  async delete(@Param('id') id: string) {
+    return this.headOfStudyProgramService.delete(id);
+  }
+
+  @Patch('/:id')
+  @IsAdmin()
+  async update(@Param('id') id: string, @Body() updatedDto: UpdateHeadOfStudyProgramDto) {
+    return this.headOfStudyProgramService.update(id, updatedDto);
   }
 
   @Delete()

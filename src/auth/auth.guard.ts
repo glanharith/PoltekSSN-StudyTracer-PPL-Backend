@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -51,7 +52,7 @@ export class AuthGuard implements CanActivate {
 
       request['user'] = user;
     } catch (e: any) {
-      throw new UnauthorizedException();
+      throw new ForbiddenException();
     }
     return true;
   }
