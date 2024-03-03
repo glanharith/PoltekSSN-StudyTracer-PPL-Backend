@@ -2,10 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HeadOfStudyProgramService } from './head-of-study-program.service';
 import { DeepMockProxy } from 'jest-mock-extended';
 import { PrismaClient, HeadStudyProgram, StudyProgram, User } from '@prisma/client';
-import { PrismaClient, HeadStudyProgram, StudyProgram, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { createPrismaMock } from 'src/prisma/prisma.mock';
 import { hash, secure, unsecure } from 'src/common/util/security';
@@ -30,7 +28,6 @@ describe('HeadOfStudyProgramService', () => {
 
   const studyProgram: StudyProgram = {
     id: '5e2633ba-435d-41e8-8432-efa2832ce563',
-    id: '5e2633ba-435d-41e8-8432-efa2832ce563',
     name: 'Study Program 2',
   };
 
@@ -42,17 +39,7 @@ describe('HeadOfStudyProgramService', () => {
   const studyProgramNew: StudyProgram = {
     id: '53509990-9168-4fae-a963-d9c5aec1232a',
     name: 'Study Program New',
-  }
-
-  const studyProgramTest: StudyProgram = {
-    id: '71ebafd1-ba14-44af-97d6-da882a655076',
-    name: 'Study Program Test',
   };
-
-  const studyProgramNew: StudyProgram = {
-    id: '53509990-9168-4fae-a963-d9c5aec1232a',
-    name: 'Study Program New',
-  }
 
   const registerKaprodiDTO: CreateHeadOfStudyProgramDto = {
     email: 'kaprodi@gmail.com',

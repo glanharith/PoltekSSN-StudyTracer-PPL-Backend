@@ -43,22 +43,4 @@ export class HeadOfStudyProgramController {
   async update(@Param('id') id: string, @Body() updatedDto: UpdateHeadOfStudyProgramDto) {
     return this.headOfStudyProgramService.update(id, updatedDto);
   }
-
-  @Delete()
-  @IsAdmin()
-  async deleteMultiple(@Body('ids') ids: string[]) {
-    return this.headOfStudyProgramService.deleteMultiple(ids)
-  }
-
-  @Delete('/:id')
-  @IsAdmin()
-  async delete(@Param('id') id: string) {
-    return this.headOfStudyProgramService.delete(id);
-  }
-
-  @Patch('/:id')
-  @IsAdmin()
-  async update(@Param('id') id: string, @Body() updatedDto: UpdateHeadOfStudyProgramDto) {
-    return this.headOfStudyProgramService.update(id, updatedDto);
-  }
 }
