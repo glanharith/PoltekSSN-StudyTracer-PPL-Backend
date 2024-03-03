@@ -56,19 +56,16 @@ export class ProfileService {
     });
 
     if (!user) throw new NotFoundException('User not found');
-    const decryptPhoneNo = user?.alumni?.phoneNo
-      ? await unsecure(user?.alumni?.phoneNo)
-      : undefined;
-    const decryptAddress = user.alumni?.address
-      ? await unsecure(user.alumni?.address)
-      : undefined;
+    if (!user.alumni) throw new NotFoundException('User not found');
+    const decryptPhoneNo = await unsecure(user.alumni.phoneNo);
+    const decryptAddress = await unsecure(user.alumni.address);
 
     return {
       name: user.name,
       alumni: {
         phoneNo: decryptPhoneNo,
         address: decryptAddress,
-        enrollmentYear: user.alumni?.enrollmentYear,
+        enrollmentYear: user.alumni.enrollmentYear,
       },
     };
   }
