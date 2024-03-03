@@ -16,14 +16,14 @@ export class HeadOfStudyProgramController {
   async create(
     @Body() createHeadOfStudyProgramDto: CreateHeadOfStudyProgramDto,
   ) {
-    this.headOfStudyProgramService.create(createHeadOfStudyProgramDto);
+    await this.headOfStudyProgramService.create(createHeadOfStudyProgramDto);
     return response('Successfully created a new head of study program');
   }
 
   @Get()
   @IsAdmin()
   async findAll() {
-    return this.headOfStudyProgramService.findAll();
+    return await this.headOfStudyProgramService.findAll();
   }
 
   @Delete()
