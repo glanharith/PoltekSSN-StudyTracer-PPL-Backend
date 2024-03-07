@@ -78,6 +78,7 @@ export class HeadOfStudyProgramService {
             studyProgram: {
               select: {
                 name: true,
+                id: true
               },
             },
           },
