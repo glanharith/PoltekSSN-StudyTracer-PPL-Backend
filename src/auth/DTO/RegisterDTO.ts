@@ -5,6 +5,8 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
 
 export class RegisterDTO {
@@ -19,6 +21,8 @@ export class RegisterDTO {
 
   @IsString()
   @IsNotEmpty()
+  @MinLength(12)
+  @MaxLength(128)
   password: string;
 
   @IsIn(['ALUMNI', 'ADMIN', 'HEAD_STUDY_PROGRAM'])
