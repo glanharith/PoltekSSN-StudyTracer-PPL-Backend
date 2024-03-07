@@ -25,7 +25,7 @@ describe('ZxcvbnService', () => {
 
   describe('onModuleInit', () => {
     it('should set up zxcvbnOptions with custom options', () => {
-      service.onModuleInit();
+      service.onApplicationBootstrap();
 
       expect(zxcvbnOptions.addMatcher).toHaveBeenCalledWith(
         'pwned',
