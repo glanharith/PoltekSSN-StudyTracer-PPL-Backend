@@ -16,10 +16,8 @@ describe('ProfileService', () => {
 
   describe('edit', () => {
     it('should update profile data with hashed password and secured phoneNo and address if they exist', async () => {
-      // Mocking PrismaService user update method
       prismaService.user.update = jest.fn().mockResolvedValue({});
 
-      // Mocking hash, secure, and unsecure functions
       (hash as jest.Mock).mockResolvedValue('hashedPassword');
       (secure as jest.Mock).mockImplementation((value) =>
         Promise.resolve('secured' + value),
@@ -87,8 +85,40 @@ describe('ProfileService', () => {
         },
       });
     });
-
-    // Add more test cases to cover other scenarios if necessary
+    it('should update profile data with unchanged password, phoneNo, and address if they are null or undefined in the input', async () => {
+      // Mocking PrismaService user update method
+      prismaService.user.update = jest.fn().mockResolvedValue({});
+    
+      // Mocking hash function
+      (hash as jest.Mock).mockResolvedValue('hashedPassword');
+    
+      const result = await profileService.edit(
+        {
+          name: 'John Doe',
+          password: undefined,
+          phoneNo: undefined,
+          address: undefined,
+          enrollmentYear: 2020,
+        },
+        'test@example.com',
+      );
+    
+      expect(result).toEqual({});
+      expect(prismaService.user.update).toHaveBeenCalledWith({
+        where: { email: 'test@example.com' },
+        data: {
+          name: 'John Doe',
+          password: undefined, 
+          alumni: {
+            update: {
+              phoneNo: undefined,
+              address: undefined, 
+              enrollmentYear: 2020,
+            },
+          },
+        },
+      });
+    });
   });
 
   describe('getProfilebyEmail', () => {

@@ -10,7 +10,7 @@ export class ProfileService {
     { name, password, phoneNo, address, enrollmentYear }: ProfileDTO,
     email: string,
   ): Promise<any> {
-    const hashedPassword = await hash(password);
+    const hashedPassword = password ? await hash(password) : undefined;
     const securedPhoneNo = phoneNo ? await secure(phoneNo) : undefined;
     const securedAddress = address ? await secure(address) : undefined;
     return this.prisma.user.update({

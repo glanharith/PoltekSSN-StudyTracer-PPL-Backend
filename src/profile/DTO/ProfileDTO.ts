@@ -7,7 +7,7 @@ export class ProfileDTO {
 
   @IsString()
   @IsOptional()
-  password: string;
+  password?: string;
 
   @IsString()
   @IsOptional()
