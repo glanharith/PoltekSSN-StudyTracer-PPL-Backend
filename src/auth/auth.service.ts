@@ -4,12 +4,14 @@ import { hash, secure } from 'src/common/util/security';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { compare } from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { ZxcvbnService } from 'src/zxcvbn/zxcvbn.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly zxcvbnService: ZxcvbnService,
   ) {}
 
   async register({
@@ -37,6 +39,14 @@ export class AuthService {
     if (user) {
       throw new BadRequestException({
         message: 'User with given email already exists',
+      });
+    }
+
+    const passwordScore = await this.zxcvbnService.getScore(password);
+
+    if (passwordScore <= 2) {
+      throw new BadRequestException({
+        message: 'Password not strong enough',
       });
     }
 
