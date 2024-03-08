@@ -589,22 +589,33 @@ describe('HeadOfStudyProgramService', () => {
   describe('isStudyProgramAvailable', () => {
     // if available
     it('should return true if study program is available', async () => {
+      const id = headOfStudyProgram.id;
       const studyProgramId = studyProgramNew.id;
       prismaMock.headStudyProgram.count.mockResolvedValue(0);
 
       expect(
-        await headOfStudyProgramService.isStudyProgramAvailable(studyProgramId),
+        await headOfStudyProgramService.isStudyProgramAvailable(id, studyProgramId),
       ).toEqual(true);
     });
 
+    // if the selected study program is the current user's
+    it('should return true that it is its own study program', async () => {
+      const id = headOfStudyProgram.id;
+      const studyProgramId = headOfStudyProgram.studyProgramId;
+      prismaMock.headStudyProgram.count.mockResolvedValue(0);
+
+      expect(await headOfStudyProgramService.isStudyProgramAvailable(id, studyProgramId)).toEqual(true);
+    })
+
     // if not available
     it('should return false if study program is not available', async () => {
-      const studyProgramIdNotAvail = studyProgram.id;
+      const id = headOfStudyProgram.id;
+      const studyProgramIdNotAvail = studyProgramTest.id;
       prismaMock.headStudyProgram.count.mockResolvedValue(1);
 
       expect(
         await headOfStudyProgramService.isStudyProgramAvailable(
-          studyProgramIdNotAvail,
+          id, studyProgramIdNotAvail,
         ),
       ).toEqual(false);
     });

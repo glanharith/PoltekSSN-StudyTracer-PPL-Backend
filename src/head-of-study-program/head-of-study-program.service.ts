@@ -78,6 +78,7 @@ export class HeadOfStudyProgramService {
             studyProgram: {
               select: {
                 name: true,
+                id: true
               },
             },
           },
@@ -157,10 +158,14 @@ export class HeadOfStudyProgramService {
   }
 
   // Check availability of study program
-  async isStudyProgramAvailable(studyProgramId: string): Promise<boolean> {
+  async isStudyProgramAvailable(id, studyProgramId: string): Promise<boolean> {
     // take from database
     const count = await this.prisma.headStudyProgram.count({
-      where: { studyProgramId: studyProgramId },
+      where: { AND: [
+        { studyProgramId: studyProgramId },
+        { id: { not: id } } // exclude the current id
+        ], 
+      },
     });
 
     // boolean: study program isn't taken => true
@@ -245,7 +250,7 @@ export class HeadOfStudyProgramService {
       await this.getStudyProgramById(updateDto.studyProgramId);
       
       // check if study program is available, if not throw error
-      const isAvailable = await this.isStudyProgramAvailable(updateDto.studyProgramId);
+      const isAvailable = await this.isStudyProgramAvailable(id, updateDto.studyProgramId);
       if (!isAvailable) {
         throw new BadRequestException(`Study Program with ID ${updateDto.studyProgramId} is not available`)
       }
