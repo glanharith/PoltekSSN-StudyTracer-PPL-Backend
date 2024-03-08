@@ -43,6 +43,8 @@ describe('AuthService', () => {
     const studyProgram: StudyProgram = {
       id: 'studyprogram1',
       name: 'Study Program 1',
+      code: 'code',
+      level: 'D3',
     };
 
     describe('register admin', () => {
