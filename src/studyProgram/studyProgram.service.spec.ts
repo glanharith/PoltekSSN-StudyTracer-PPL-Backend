@@ -32,18 +32,28 @@ describe('StudyProgramService', () => {
   const studyProgram: StudyProgram = {
     id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
     name: 'Computer Science',
+    code: 'code',
+    level: 'D3',
   };
   const updatedStudyProgram: StudyProgram = {
     id: studyProgram.id,
     name: 'Information Systems',
+    code: 'code',
+    level: 'D3',
   };
   const studyProgramWithHead: StudyProgram & {
     headStudyProgram: HeadStudyProgram[];
   } & { alumni: Alumni[] } = {
     id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
     name: 'Computer Science',
+    code: 'code',
+    level: 'D3',
     headStudyProgram: [
-      { id: '1', studyProgramId: '287ed51b-df85-43ab-96a3-13bb513e68c5' },
+      {
+        id: '1',
+        studyProgramId: '287ed51b-df85-43ab-96a3-13bb513e68c5',
+        isActive: true,
+      },
     ],
     alumni: [],
   };
@@ -52,6 +62,8 @@ describe('StudyProgramService', () => {
   } & { alumni: Alumni[] } = {
     id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
     name: 'Computer Science',
+    code: 'code',
+    level: 'D3',
     headStudyProgram: [],
     alumni: [
       {
@@ -70,6 +82,8 @@ describe('StudyProgramService', () => {
   } & { alumni: Alumni[] } = {
     id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
     name: 'Computer Science',
+    code: 'code',
+    level: 'D3',
     headStudyProgram: [],
     alumni: [],
   };
@@ -78,6 +92,9 @@ describe('StudyProgramService', () => {
   } & { alumni: Alumni[] } = {
     id: '676sd2vc-df85-43ab-96a3-13bb513e68c5',
     name: 'Information System',
+
+    code: 'code',
+    level: 'D3',
     headStudyProgram: [],
     alumni: [],
   };
