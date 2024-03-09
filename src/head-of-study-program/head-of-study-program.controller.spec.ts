@@ -75,7 +75,7 @@ describe('HeadOfStudyProgramController', () => {
       headStudyProgram: {
         studyProgram: {
           name: studyProgram.name,
-          id: studyProgram.id
+          id: studyProgram.id,
         },
       },
       email: registerKaprodiDTO.email,

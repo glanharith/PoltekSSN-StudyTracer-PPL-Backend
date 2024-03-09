@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfileDTO } from './DTO';
 import { decrypt, hash, secure, unsecure } from 'src/common/util/security';
@@ -9,27 +14,37 @@ export class ProfileService {
   constructor(private readonly prisma: PrismaService) {}
 
   async edit(
-    { name, password, currentPassword,phoneNo, address, enrollmentYear }: ProfileDTO,
+    {
+      name,
+      password,
+      currentPassword,
+      phoneNo,
+      address,
+      enrollmentYear,
+    }: ProfileDTO,
     email: string,
   ): Promise<any> {
     const user = await this.prisma.user.findUnique({
-      where:{
+      where: {
         email,
-      }
-    })
+      },
+    });
 
     if (!user) throw new NotFoundException('User not found');
-    if ((currentPassword === undefined && password !== undefined) || (currentPassword !== undefined && password === undefined)) {
-      throw new BadRequestException('Both current password and new password must be provided'
+    if (
+      (currentPassword === undefined && password !== undefined) ||
+      (currentPassword !== undefined && password === undefined)
+    ) {
+      throw new BadRequestException(
+        'Both current password and new password must be provided',
       );
     }
-    if(currentPassword){
-      if (!await compare(currentPassword, user.password)){
-        throw new BadRequestException('Invalid password'
-        );
+    if (currentPassword) {
+      if (!(await compare(currentPassword, user.password))) {
+        throw new BadRequestException('Invalid password');
       }
     }
-    
+
     const hashedPassword = password ? await hash(password) : undefined;
     const securedPhoneNo = phoneNo ? await secure(phoneNo) : undefined;
     const securedAddress = address ? await secure(address) : undefined;
@@ -50,7 +65,6 @@ export class ProfileService {
       },
     });
   }
-
 
   async getProfilebyEmail(email: string): Promise<any> {
     const user = await this.prisma.user.findUnique({

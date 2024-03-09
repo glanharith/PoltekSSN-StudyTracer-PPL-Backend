@@ -594,7 +594,10 @@ describe('HeadOfStudyProgramService', () => {
       prismaMock.headStudyProgram.count.mockResolvedValue(0);
 
       expect(
-        await headOfStudyProgramService.isStudyProgramAvailable(id, studyProgramId),
+        await headOfStudyProgramService.isStudyProgramAvailable(
+          id,
+          studyProgramId,
+        ),
       ).toEqual(true);
     });
 
@@ -604,8 +607,13 @@ describe('HeadOfStudyProgramService', () => {
       const studyProgramId = headOfStudyProgram.studyProgramId;
       prismaMock.headStudyProgram.count.mockResolvedValue(0);
 
-      expect(await headOfStudyProgramService.isStudyProgramAvailable(id, studyProgramId)).toEqual(true);
-    })
+      expect(
+        await headOfStudyProgramService.isStudyProgramAvailable(
+          id,
+          studyProgramId,
+        ),
+      ).toEqual(true);
+    });
 
     // if not available
     it('should return false if study program is not available', async () => {
@@ -615,7 +623,8 @@ describe('HeadOfStudyProgramService', () => {
 
       expect(
         await headOfStudyProgramService.isStudyProgramAvailable(
-          id, studyProgramIdNotAvail,
+          id,
+          studyProgramIdNotAvail,
         ),
       ).toEqual(false);
     });

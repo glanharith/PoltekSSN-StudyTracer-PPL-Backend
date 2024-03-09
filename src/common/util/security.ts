@@ -54,7 +54,7 @@ export const decrypt = async (encryptedData: string): Promise<string> => {
   });
 };
 
-export const hash = async (data: string) => //dadda
+export const hash = async (data: string) =>
   bcryptHash(data, process.env.HASH_SALT as string);
 
 export const secure = async (data: string) => {
