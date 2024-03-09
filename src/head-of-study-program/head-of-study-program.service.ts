@@ -60,6 +60,7 @@ export class HeadOfStudyProgramService {
         headStudyProgram: {
           create: {
             studyProgramId,
+            isActive: true,
           },
         },
       },

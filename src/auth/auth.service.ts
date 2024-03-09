@@ -145,6 +145,20 @@ export class AuthService {
         message: 'Invalid email or password',
       });
     }
+
+    if (user.role == 'HEAD_STUDY_PROGRAM') {
+      const kaprodi = await this.prisma.headStudyProgram.findFirst({
+        where: {
+          user,
+        },
+      });
+
+      if (kaprodi?.isActive == false) {
+        throw new BadRequestException({
+          message: 'The Head of Study Program Account is no Longer Active',
+        });
+      }
+    }
     if (await compare(password, user.password)) {
       const payload = {
         sub: user.id,
