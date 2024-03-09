@@ -232,7 +232,12 @@ export class HeadOfStudyProgramService {
   async update(
     id: string,
     updateDto: UpdateHeadOfStudyProgramDto,
-  ): Promise<{ id: string; studyProgramId: string; message: string }> {
+  ): Promise<{
+    id: string;
+    studyProgramId: string;
+    isActive: boolean;
+    message: string;
+  }> {
     let updated = false;
     // check if id is uuid
     if (!isUUID(id)) {
@@ -293,15 +298,18 @@ export class HeadOfStudyProgramService {
       updated = true;
     }
 
+    const changeActive = updateDto.isActive as boolean;
     if (updated) {
       return {
         id,
+        isActive: changeActive,
         studyProgramId: msgStudyProgramId,
         message: 'Updated successfully',
       };
     } else {
       return {
         id,
+        isActive: changeActive,
         studyProgramId: msgStudyProgramId,
         message: 'No changes were made',
       };
