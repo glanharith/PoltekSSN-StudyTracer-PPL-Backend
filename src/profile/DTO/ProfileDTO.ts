@@ -11,6 +11,10 @@ export class ProfileDTO {
 
   @IsString()
   @IsOptional()
+  currentPassword?: string;  
+
+  @IsString()
+  @IsOptional()
   phoneNo?: string;
 
   @IsString()
