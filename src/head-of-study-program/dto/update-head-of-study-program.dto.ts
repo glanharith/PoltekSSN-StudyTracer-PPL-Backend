@@ -11,10 +11,6 @@ export class UpdateHeadOfStudyProgramDto {
   @IsString()
   @MinLength(1, { message: 'Name must not be empty' })
   name?: string;
-  @IsOptional()
-  @IsString()
-  @MinLength(1, { message: 'Name must not be empty' })
-  name?: string;
 
   @IsOptional()
   @IsUUID()
@@ -23,8 +19,4 @@ export class UpdateHeadOfStudyProgramDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
-  @IsOptional()
-  @IsUUID()
-  studyProgramId?: string;
 }
-
