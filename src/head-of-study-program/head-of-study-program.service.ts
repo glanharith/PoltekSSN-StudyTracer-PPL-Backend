@@ -51,7 +51,7 @@ export class HeadOfStudyProgramService {
     const securedEmail = await secure(email);
     const hashedPassword = await hash(password);
 
-    const userRegist = await this.prisma.user.create({
+    return await this.prisma.user.create({
       data: {
         email: securedEmail,
         name,
@@ -65,8 +65,6 @@ export class HeadOfStudyProgramService {
         },
       },
     });
-
-    return userRegist;
   }
 
   async findAll() {
