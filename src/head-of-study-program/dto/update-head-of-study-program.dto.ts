@@ -1,6 +1,16 @@
-import { MinLength, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  MinLength,
+  IsOptional,
+  IsString,
+  IsUUID,
+  IsBoolean,
+} from 'class-validator';
 
 export class UpdateHeadOfStudyProgramDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(1, { message: 'Name must not be empty' })
+  name?: string;
   @IsOptional()
   @IsString()
   @MinLength(1, { message: 'Name must not be empty' })
@@ -9,4 +19,12 @@ export class UpdateHeadOfStudyProgramDto {
   @IsOptional()
   @IsUUID()
   studyProgramId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+  @IsOptional()
+  @IsUUID()
+  studyProgramId?: string;
 }
+

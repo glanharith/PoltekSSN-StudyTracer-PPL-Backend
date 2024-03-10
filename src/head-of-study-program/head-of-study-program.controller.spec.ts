@@ -77,6 +77,7 @@ describe('HeadOfStudyProgramController', () => {
           name: studyProgram.name,
           id: studyProgram.id,
         },
+        isActive: true,
       },
       email: registerKaprodiDTO.email,
     },
@@ -207,8 +208,10 @@ describe('HeadOfStudyProgramController', () => {
     it('should successfully update a head of study program', async () => {
       const id = headOfStudyProgram.id;
       const studyProgramId = studyProgramNew.id;
+      const isActive = headOfStudyProgram.isActive;
       const response = {
         id: id,
+        isActive: isActive,
         studyProgramId: studyProgramId,
         message: 'Program study updated successfully',
       };
