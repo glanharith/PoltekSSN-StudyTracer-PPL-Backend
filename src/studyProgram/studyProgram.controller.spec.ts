@@ -26,6 +26,8 @@ describe('StudyProgramController', () => {
 
   const studyProgramDTO: StudyProgramDTO = {
     name: 'Computer Science',
+    code: 'code',
+    level: 'D3',
   };
   const studyProgram: StudyProgram = {
     id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
