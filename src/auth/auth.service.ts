@@ -153,7 +153,13 @@ export class AuthService {
         },
       });
 
-      if (kaprodi?.isActive == false) {
+      if (!kaprodi) {
+        throw new BadRequestException({
+          message: 'Invalid Head of Study Program',
+        });
+      }
+
+      if (kaprodi.isActive == false) {
         throw new BadRequestException({
           message: 'The Head of Study Program Account is no Longer Active',
         });
