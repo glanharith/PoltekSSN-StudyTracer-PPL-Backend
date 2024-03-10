@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Delete, Param, Patch, } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Delete,
+  Param,
+  Patch,
+} from '@nestjs/common';
 import { HeadOfStudyProgramService } from './head-of-study-program.service';
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
 import { IsAdmin } from 'src/common/decorator';
@@ -29,7 +37,7 @@ export class HeadOfStudyProgramController {
   @Delete()
   @IsAdmin()
   async deleteMultiple(@Body('ids') ids: string[]) {
-    return this.headOfStudyProgramService.deleteMultiple(ids)
+    return this.headOfStudyProgramService.deleteMultiple(ids);
   }
 
   @Delete('/:id')
@@ -40,7 +48,10 @@ export class HeadOfStudyProgramController {
 
   @Patch('/:id')
   @IsAdmin()
-  async update(@Param('id') id: string, @Body() updatedDto: UpdateHeadOfStudyProgramDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() updatedDto: UpdateHeadOfStudyProgramDto,
+  ) {
     return this.headOfStudyProgramService.update(id, updatedDto);
   }
 }

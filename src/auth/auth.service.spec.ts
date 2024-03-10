@@ -12,7 +12,6 @@ import { ZxcvbnService } from 'src/zxcvbn/zxcvbn.service';
 import { ZxcvbnModule } from 'src/zxcvbn/zxcvbn.module';
 
 jest.mock('src/zxcvbn/zxcvbn.service');
-
 describe('AuthService', () => {
   let authService: AuthService;
   let zxcvbnService: jest.Mocked<ZxcvbnService>;
@@ -260,6 +259,32 @@ describe('AuthService', () => {
       expect(result).toEqual(expect.any(String));
     });
 
+    it('should login kaprodi', async () => {
+      const adminUser: RegisterDTO = {
+        email: 'admin@gmail.com',
+        name: 'Test Admin',
+        password: 'passwordadmin',
+        role: 'HEAD_STUDY_PROGRAM',
+      };
+
+      const hashedPassword = await hash(adminUser.password);
+
+      prismaMock.user.findFirst.mockResolvedValue({
+        ...adminUser,
+        id: 'id',
+        password: hashedPassword,
+      });
+
+      prismaMock.headStudyProgram.findFirst.mockResolvedValue({
+        id: 'id',
+        studyProgramId: 'id',
+        isActive: true,
+      });
+
+      const result = await authService.login(loginDTO);
+      expect(result).toEqual(expect.any(String));
+    });
+
     it('should throw BadRequest if user not found', async () => {
       prismaMock.user.findFirst.mockResolvedValue(null);
 
@@ -278,6 +303,54 @@ describe('AuthService', () => {
       });
 
       await expect(authService.login(wrongPasswordDTO)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw error when unauthorized kaprodi login', async () => {
+      const adminUser: RegisterDTO = {
+        email: 'admin@gmail.com',
+        name: 'Test Admin',
+        password: 'passwordadmin',
+        role: 'HEAD_STUDY_PROGRAM',
+      };
+
+      const hashedPassword = await hash(adminUser.password);
+
+      prismaMock.user.findFirst.mockResolvedValue({
+        ...adminUser,
+        id: 'id',
+        password: hashedPassword,
+      });
+
+      await expect(authService.login(loginDTO)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw error when inactive kaprodi login', async () => {
+      const adminUser: RegisterDTO = {
+        email: 'admin@gmail.com',
+        name: 'Test Admin',
+        password: 'passwordadmin',
+        role: 'HEAD_STUDY_PROGRAM',
+      };
+
+      const hashedPassword = await hash(adminUser.password);
+
+      prismaMock.user.findFirst.mockResolvedValue({
+        ...adminUser,
+        id: 'id',
+        password: hashedPassword,
+      });
+
+      prismaMock.headStudyProgram.findFirst.mockResolvedValue({
+        id: 'id',
+        studyProgramId: 'id',
+        isActive: false,
+      });
+
+      await expect(authService.login(loginDTO)).rejects.toThrow(
         BadRequestException,
       );
     });
