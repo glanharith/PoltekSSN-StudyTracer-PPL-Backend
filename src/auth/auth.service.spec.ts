@@ -8,8 +8,13 @@ import { BadRequestException } from '@nestjs/common';
 import { DeepMockProxy } from 'jest-mock-extended';
 import { createPrismaMock } from 'src/prisma/prisma.mock';
 import { hash } from 'src/common/util/security';
+import { ZxcvbnService } from 'src/zxcvbn/zxcvbn.service';
+import { ZxcvbnModule } from 'src/zxcvbn/zxcvbn.module';
+
+jest.mock('src/zxcvbn/zxcvbn.service');
 describe('AuthService', () => {
   let authService: AuthService;
+  let zxcvbnService: jest.Mocked<ZxcvbnService>;
   let prismaMock: DeepMockProxy<PrismaClient>;
 
   beforeEach(async () => {
@@ -21,6 +26,7 @@ describe('AuthService', () => {
           secret: process.env.JWT_SECRET,
           signOptions: { expiresIn: process.env.JWT_EXPIRY },
         }),
+        ZxcvbnModule,
       ],
       providers: [
         AuthService,
@@ -29,6 +35,7 @@ describe('AuthService', () => {
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
+    zxcvbnService = module.get<jest.Mocked<ZxcvbnService>>(ZxcvbnService);
   });
 
   describe('register', () => {
@@ -53,6 +60,7 @@ describe('AuthService', () => {
           id: 'id',
           ...registerAdminDTO,
         });
+        zxcvbnService.getScore.mockResolvedValue(5);
 
         await authService.register(registerAdminDTO);
         expect(prismaMock.user.create).toBeCalledTimes(1);
@@ -92,6 +100,7 @@ describe('AuthService', () => {
           id: 'id',
           ...registerAlumniDTO,
         });
+        zxcvbnService.getScore.mockResolvedValue(5);
 
         await authService.register(registerAlumniDTO);
         expect(prismaMock.user.create).toBeCalledTimes(1);
@@ -112,6 +121,7 @@ describe('AuthService', () => {
       it('should throw BadRequest if study program not exists', async () => {
         prismaMock.user.findFirst.mockResolvedValue(null);
         prismaMock.studyProgram.findUnique.mockResolvedValue(null);
+        zxcvbnService.getScore.mockResolvedValue(5);
 
         await expect(authService.register(registerAlumniDTO)).rejects.toThrow(
           BadRequestException,
@@ -136,6 +146,7 @@ describe('AuthService', () => {
           id: 'id',
           ...registerHeadDTO,
         });
+        zxcvbnService.getScore.mockResolvedValue(5);
 
         await authService.register(registerHeadDTO);
         expect(prismaMock.user.create).toBeCalledTimes(1);
@@ -156,6 +167,7 @@ describe('AuthService', () => {
       it('should throw BadRequest if study program not exists', async () => {
         prismaMock.user.findFirst.mockResolvedValue(null);
         prismaMock.studyProgram.findUnique.mockResolvedValue(null);
+        zxcvbnService.getScore.mockResolvedValue(5);
 
         await expect(authService.register(registerHeadDTO)).rejects.toThrow(
           BadRequestException,
@@ -182,6 +194,7 @@ describe('AuthService', () => {
         const { studyProgramId, ...missingFieldsDTO } = registerAlumniDTO;
 
         prismaMock.user.findFirst.mockResolvedValue(null);
+        zxcvbnService.getScore.mockResolvedValue(5);
 
         await expect(authService.register(missingFieldsDTO)).rejects.toThrow(
           BadRequestException,
@@ -201,8 +214,19 @@ describe('AuthService', () => {
 
         prismaMock.user.findFirst.mockResolvedValue(null);
         prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgram);
+        zxcvbnService.getScore.mockResolvedValue(5);
 
         await expect(authService.register(missingFieldsDTO)).rejects.toThrow(
+          BadRequestException,
+        );
+        expect(prismaMock.user.create).toBeCalledTimes(0);
+      });
+
+      it('should throw BadRequest if password not strong enough', async () => {
+        prismaMock.user.findFirst.mockResolvedValue(null);
+        zxcvbnService.getScore.mockResolvedValue(2);
+
+        await expect(authService.register(registerAlumniDTO)).rejects.toThrow(
           BadRequestException,
         );
         expect(prismaMock.user.create).toBeCalledTimes(0);

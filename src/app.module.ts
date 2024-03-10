@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { StudyProgramModule } from './studyProgram/studyProgram.module';
 import { ProfileModule } from './profile/profile.module';
 import { HeadOfStudyProgramModule } from './head-of-study-program/head-of-study-program.module';
+import { ZxcvbnModule } from './zxcvbn/zxcvbn.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { HeadOfStudyProgramModule } from './head-of-study-program/head-of-study-
     StudyProgramModule,
     ProfileModule,
     HeadOfStudyProgramModule,
+    ZxcvbnModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
