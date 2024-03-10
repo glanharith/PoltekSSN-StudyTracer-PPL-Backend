@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Request } from '@nestjs/common';
+import { Body, Controller, Get, Patch } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { ProfileDTO } from './DTO';
 import { response } from 'src/common/util/response';
