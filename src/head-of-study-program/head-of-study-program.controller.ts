@@ -31,7 +31,7 @@ export class HeadOfStudyProgramController {
   @Get()
   @IsAdmin()
   async findAll() {
-    return await this.headOfStudyProgramService.findAll();
+    return this.headOfStudyProgramService.findAll();
   }
 
   @Delete()
