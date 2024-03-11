@@ -16,6 +16,7 @@ import { IsAdmin, IsPublic } from 'src/common/decorator';
 export class StudyProgramController {
   constructor(private readonly studyProgramService: StudyProgramService) {}
 
+  @IsPublic()
   @IsAdmin()
   @Post()
   async createStudyProgram(@Body() programDTO: StudyProgramDTO) {
@@ -23,6 +24,8 @@ export class StudyProgramController {
     return response('Successfully created a new study program');
   }
 
+  @IsPublic()
+  @IsAdmin()
   @IsAdmin()
   @Patch('/:id')
   async updateStudyProgram(

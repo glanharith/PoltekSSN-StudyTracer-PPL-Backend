@@ -7,7 +7,7 @@ export class StudyProgramDTO {
   name: string;
 
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   code: string;
 
   @IsIn(['D3', 'D4'])
