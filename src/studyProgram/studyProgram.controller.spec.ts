@@ -30,10 +30,14 @@ describe('StudyProgramController', () => {
   const studyProgram: StudyProgram = {
     id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
     name: 'Computer Science',
+    code: 'code',
+    level: 'D3',
   };
   const studyProgram2: StudyProgram = {
     id: '221cf51e-df85-43ab-96a3-13bb513e77d3',
     name: 'Information System',
+    code: 'code',
+    level: 'D3',
   };
   const allStudyPrograms: StudyProgram[] = [studyProgram, studyProgram2];
 
@@ -141,7 +145,6 @@ describe('StudyProgramController', () => {
         message: 'Successfully deleted study programs',
       });
     });
-
 
     it('should throw NotFoundException if there is any study program that is not found', async () => {
       const haveANonExistentId = ['nonexistent-id', studyProgram.id];

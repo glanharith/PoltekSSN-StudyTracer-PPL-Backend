@@ -64,12 +64,13 @@ export class StudyProgramService {
 
   async delete(id: string): Promise<StudyProgram> {
     await this.getStudyProgramById(id);
-    const studyProgram = await this.prisma.studyProgram.delete({
+    await this.checkStudyProgramsUsed([id]);
+    const studyPrograms = await this.prisma.studyProgram.delete({
       where: {
         id: id,
-      }
+      },
     });
-    return studyProgram;
+    return studyPrograms;
   }
 
   async getMultipleStudyProgramsById(ids: string[]): Promise<StudyProgram[]> {
@@ -81,14 +82,15 @@ export class StudyProgramService {
       },
     });
 
-    if (studyPrograms.length !=  ids.length) {
-      throw new NotFoundException('Study programs not found');
+    if (studyPrograms.length != ids.length) {
+      throw new NotFoundException('Study program not found');
     }
     return studyPrograms;
   }
 
   async deleteMultiple(ids: string[]): Promise<StudyProgram[]> {
     const studyPrograms = await this.getMultipleStudyProgramsById(ids);
+    await this.checkStudyProgramsUsed(ids);
     await this.prisma.studyProgram.deleteMany({
       where: {
         id: {
@@ -98,5 +100,64 @@ export class StudyProgramService {
     });
 
     return studyPrograms;
+  }
+
+  async hasHeadStudyProgram(studyProgramId: string): Promise<boolean> {
+    await this.getStudyProgramById(studyProgramId);
+    const studyProgram = await this.prisma.studyProgram.findUnique({
+      where: { id: studyProgramId },
+      include: { headStudyProgram: true },
+    });
+
+    if (!studyProgram) {
+      return false;
+    }
+
+    return studyProgram.headStudyProgram.length > 0;
+  }
+
+  async hasAlumni(studyProgramId: string): Promise<boolean> {
+    await this.getStudyProgramById(studyProgramId);
+    const studyProgram = await this.prisma.studyProgram.findUnique({
+      where: { id: studyProgramId },
+      include: { alumni: true },
+    });
+
+    if (!studyProgram) {
+      return false;
+    }
+
+    return studyProgram.alumni.length > 0;
+  }
+
+  async isStudyProgramUsed(studyProgramId: string): Promise<boolean> {
+    const hasHeadStudyProgram = await this.hasHeadStudyProgram(studyProgramId);
+    const hasAlumni = await this.hasAlumni(studyProgramId);
+
+    return hasHeadStudyProgram || hasAlumni;
+  }
+
+  async checkStudyProgramsUsed(
+    studyProgramIds: string[],
+  ): Promise<StudyProgram[]> {
+    const usedStudyPrograms: StudyProgram[] = [];
+    for (const studyProgramId of studyProgramIds) {
+      const isUsed = await this.isStudyProgramUsed(studyProgramId);
+      if (isUsed) {
+        const studyProgram = await this.getStudyProgramById(studyProgramId);
+        usedStudyPrograms.push(studyProgram);
+      }
+    }
+
+    if (usedStudyPrograms.length !== 0) {
+      const usedStudyProgramNames = usedStudyPrograms
+        .map((studyProgram) => studyProgram.name)
+        .join(', ');
+      throw new ConflictException(
+        `Program studi ${usedStudyProgramNames} terhubung dengan data kaprodi atau alumni`,
+      );
+    }
+
+    return usedStudyPrograms;
   }
 }
