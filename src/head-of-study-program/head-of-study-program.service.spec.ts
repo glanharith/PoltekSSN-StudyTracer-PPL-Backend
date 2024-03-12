@@ -136,6 +136,17 @@ describe('HeadOfStudyProgramService', () => {
         expect(prismaMock.user.create).toBeCalledTimes(0);
       });
 
+      it('should throw BadRequest if kaprodi with same study program is exist', async () => {
+        prismaMock.user.findFirst.mockResolvedValue(null);
+        prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgram);
+        prismaMock.headStudyProgram.count.mockResolvedValue(1);
+
+        await expect(
+          headOfStudyProgramService.create(registerKaprodiDTO),
+        ).rejects.toThrow(BadRequestException);
+        expect(prismaMock.user.create).toBeCalledTimes(0);
+      });
+
       it('should throw BadRequest if head of study program not exists', async () => {
         prismaMock.user.findFirst.mockResolvedValue(null);
         prismaMock.studyProgram.findUnique.mockResolvedValue(null);
