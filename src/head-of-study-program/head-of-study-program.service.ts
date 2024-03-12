@@ -48,6 +48,19 @@ export class HeadOfStudyProgramService {
       });
     }
 
+    const isAvailable = await this.prisma.headStudyProgram.count({
+      where: {
+        studyProgramId,
+        isActive: true,
+      },
+    });
+
+    if (isAvailable >= 1) {
+      throw new BadRequestException({
+        message: 'There is an existing head of study program',
+      });
+    }
+
     const securedEmail = await secure(email);
     const hashedPassword = await hash(password);
 
@@ -166,7 +179,7 @@ export class HeadOfStudyProgramService {
     const count = await this.prisma.headStudyProgram.count({
       where: {
         AND: [
-          { studyProgramId: studyProgramId },
+          { studyProgramId: studyProgramId, isActive: true },
           { id: { not: id } }, // exclude the current id
         ],
       },
