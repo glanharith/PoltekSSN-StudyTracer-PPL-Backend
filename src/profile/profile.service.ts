@@ -1,12 +1,11 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException,
-  UnauthorizedException,
+  NotFoundException
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfileDTO } from './DTO';
-import { decrypt, hash, secure, unsecure } from 'src/common/util/security';
+import {  hash, secure, unsecure } from 'src/common/util/security';
 import { compare } from 'bcrypt';
 
 @Injectable()
@@ -48,7 +47,7 @@ export class ProfileService {
     const hashedPassword = password ? await hash(password) : undefined;
     const securedPhoneNo = phoneNo ? await secure(phoneNo) : undefined;
     const securedAddress = address ? await secure(address) : undefined;
-    return await this.prisma.user.update({
+    return this.prisma.user.update({
       where: {
         email,
       },
