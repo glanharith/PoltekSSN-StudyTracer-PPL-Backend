@@ -5,15 +5,18 @@ import {
 } from '@nestjs/common';
 import { StudyProgram } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { StudyProgramDTO } from './DTO';
 
 @Injectable()
 export class StudyProgramService {
   constructor(private readonly prisma: PrismaService) {}
-  async create(studyProgramName: string): Promise<StudyProgram> {
-    if (await this.isStudyProgramNameAvailable(studyProgramName)) {
+  async create({ name, code, level }: StudyProgramDTO): Promise<StudyProgram> {
+    if (await this.isStudyProgramNameAvailable('', name)) {
       const newStudyProgram = await this.prisma.studyProgram.create({
         data: {
-          name: studyProgramName,
+          name: name,
+          code: code,
+          level: level,
         },
       });
       return newStudyProgram;
@@ -21,15 +24,20 @@ export class StudyProgramService {
     throw new ConflictException('Study program name already exists');
   }
 
-  async update(id: string, name: string): Promise<StudyProgram> {
+  async update(
+    id: string,
+    { name, code, level }: StudyProgramDTO,
+  ): Promise<StudyProgram> {
     await this.getStudyProgramById(id);
-    if (await this.isStudyProgramNameAvailable(name)) {
+    if (await this.isStudyProgramNameAvailable(id, name)) {
       const updatedStudyProgram = await this.prisma.studyProgram.update({
         where: {
           id: id,
         },
         data: {
           name: name,
+          code: code,
+          level: level,
         },
       });
       return updatedStudyProgram;
@@ -48,10 +56,11 @@ export class StudyProgramService {
     return studyProgram;
   }
 
-  async isStudyProgramNameAvailable(name: string): Promise<boolean> {
+  async isStudyProgramNameAvailable(id: string, name: string) {
     const count = await this.prisma.studyProgram.count({
       where: {
         name: name,
+        NOT: { id: id },
       },
     });
 
