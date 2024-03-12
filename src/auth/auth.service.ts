@@ -93,8 +93,8 @@ export class AuthService {
         });
       }
 
-      const securedPhoneNo = await secure(phoneNo!);
-      const securedAddress = await secure(address!);
+      const securedPhoneNo = await secure(phoneNo);
+      const securedAddress = await secure(address);
 
       await this.prisma.user.create({
         data: {
@@ -169,7 +169,7 @@ export class AuthService {
         });
       }
 
-      if (kaprodi.isActive == false) {
+      if (!kaprodi.isActive) {
         throw new BadRequestException({
           message: 'The Head of Study Program Account is no Longer Active',
         });
