@@ -119,18 +119,18 @@ describe('StudyProgramService', () => {
       prismaMock.studyProgram.create.mockResolvedValue(studyProgram);
       prismaMock.studyProgram.count.mockResolvedValue(0);
 
-      expect(
-        (await studyProgramService.create(studyProgram.name)).name,
-      ).toEqual(studyProgram.name);
+      expect((await studyProgramService.create(studyProgram)).name).toEqual(
+        studyProgram.name,
+      );
       expect(prismaMock.studyProgram.create).toHaveBeenCalledTimes(1);
     });
 
     it('should throw ConflictException if a study program of the same name already exists', async () => {
       prismaMock.studyProgram.count.mockResolvedValue(1);
 
-      await expect(
-        studyProgramService.create(studyProgram.name),
-      ).rejects.toThrow(ConflictException);
+      await expect(studyProgramService.create(studyProgram)).rejects.toThrow(
+        ConflictException,
+      );
       expect(prismaMock.studyProgram.create).toHaveBeenCalledTimes(0);
     });
   });
@@ -141,6 +141,7 @@ describe('StudyProgramService', () => {
 
       expect(
         await studyProgramService.isStudyProgramNameAvailable(
+          studyProgram.id,
           studyProgram.name,
         ),
       ).toEqual(true);
@@ -151,6 +152,7 @@ describe('StudyProgramService', () => {
 
       expect(
         await studyProgramService.isStudyProgramNameAvailable(
+          studyProgram.id,
           studyProgram.name,
         ),
       ).toEqual(false);
@@ -164,10 +166,7 @@ describe('StudyProgramService', () => {
       prismaMock.studyProgram.update.mockResolvedValue(updatedStudyProgram);
 
       expect(
-        await studyProgramService.update(
-          studyProgram.id,
-          updatedStudyProgram.name,
-        ),
+        await studyProgramService.update(studyProgram.id, updatedStudyProgram),
       ).toEqual(updatedStudyProgram);
       expect(prismaMock.studyProgram.update).toHaveBeenCalledTimes(1);
     });
@@ -176,7 +175,7 @@ describe('StudyProgramService', () => {
       prismaMock.studyProgram.findUnique.mockResolvedValue(null);
 
       await expect(
-        studyProgramService.update(studyProgram.id, updatedStudyProgram.name),
+        studyProgramService.update(studyProgram.id, updatedStudyProgram),
       ).rejects.toThrow(NotFoundException);
       expect(prismaMock.studyProgram.update).toHaveBeenCalledTimes(0);
     });
@@ -186,7 +185,7 @@ describe('StudyProgramService', () => {
       prismaMock.studyProgram.count.mockResolvedValue(1);
 
       await expect(
-        studyProgramService.update(studyProgram.id, updatedStudyProgram.name),
+        studyProgramService.update(studyProgram.id, updatedStudyProgram),
       ).rejects.toThrow(ConflictException);
       expect(prismaMock.studyProgram.update).toHaveBeenCalledTimes(0);
     });

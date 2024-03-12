@@ -19,7 +19,7 @@ export class StudyProgramController {
   @IsAdmin()
   @Post()
   async createStudyProgram(@Body() programDTO: StudyProgramDTO) {
-    await this.studyProgramService.create(programDTO.name);
+    await this.studyProgramService.create(programDTO);
     return response('Successfully created a new study program');
   }
 
@@ -29,7 +29,7 @@ export class StudyProgramController {
     @Param('id') id: string,
     @Body() programDTO: StudyProgramDTO,
   ) {
-    await this.studyProgramService.update(id, programDTO.name);
+    await this.studyProgramService.update(id, programDTO);
     return response('Successfully updated a study program');
   }
 
