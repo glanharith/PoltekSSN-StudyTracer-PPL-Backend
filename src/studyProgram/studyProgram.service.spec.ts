@@ -53,6 +53,7 @@ describe('StudyProgramService', () => {
         id: '1',
         studyProgramId: '287ed51b-df85-43ab-96a3-13bb513e68c5',
         isActive: true,
+        nip: 'nip',
       },
     ],
     alumni: [],
@@ -74,6 +75,7 @@ describe('StudyProgramService', () => {
         enrollmentYear: 2020,
         graduateYear: 2025,
         studyProgramId: '287ed51b-df85-43ab-96a3-13bb513e68c5',
+        npm: 'npm',
       },
     ],
   };

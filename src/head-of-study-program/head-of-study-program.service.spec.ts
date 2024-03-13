@@ -63,12 +63,14 @@ describe('HeadOfStudyProgramService', () => {
     id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
     studyProgramId: studyProgram.id,
     isActive: true,
+    nip: 'nip',
   };
 
   const headOfStudyProgram2: HeadStudyProgram = {
     id: 'a11960cf-aefe-4e1d-8388-6327e5ca5131',
     studyProgramId: studyProgramTest.id,
     isActive: true,
+    nip: 'nip',
   };
 
   const headUser: User = {
@@ -115,6 +117,7 @@ describe('HeadOfStudyProgramService', () => {
           id: 'id',
           studyProgramId: registerKaprodiDTO.studyProgramId,
           isActive: true,
+          nip: 'nip',
         });
 
         await headOfStudyProgramService.create(registerKaprodiDTO);
@@ -328,6 +331,7 @@ describe('HeadOfStudyProgramService', () => {
         id: headOfStudyProgram.id,
         studyProgramId: studyProgramNew.id,
         isActive: true,
+        nip: 'nip',
       });
       prismaMock.user.update.mockResolvedValue({
         id: headUser.id,
@@ -390,6 +394,7 @@ describe('HeadOfStudyProgramService', () => {
         id: headOfStudyProgram.id,
         studyProgramId: studyProgramNew.id,
         isActive: true,
+        nip: 'nip',
       });
       prismaMock.user.update.mockResolvedValue(headUser);
 

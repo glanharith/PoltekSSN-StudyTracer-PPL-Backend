@@ -60,12 +60,14 @@ describe('HeadOfStudyProgramController', () => {
     id: '1',
     studyProgramId: studyProgram.id,
     isActive: true,
+    nip: 'nip',
   };
 
   const headOfStudyProgram2: HeadStudyProgram = {
     id: '2',
     studyProgramId: studyProgramTest.id,
     isActive: true,
+    nip: 'nip',
   };
 
   const cleanData = [

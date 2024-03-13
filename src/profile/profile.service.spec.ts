@@ -32,6 +32,7 @@ describe('ProfileService', () => {
     enrollmentYear: 2021,
     graduateYear: 2025,
     studyProgramId: '1',
+    npm: 'npm',
   };
   const user: User = {
     id: '287ed51b-df85-43ab-96a3-13bb513e68c5',

@@ -279,6 +279,7 @@ describe('AuthService', () => {
         id: 'id',
         studyProgramId: 'id',
         isActive: true,
+        nip: 'nip',
       });
 
       const result = await authService.login(loginDTO);
@@ -348,6 +349,7 @@ describe('AuthService', () => {
         id: 'id',
         studyProgramId: 'id',
         isActive: false,
+        nip: 'nip',
       });
 
       await expect(authService.login(loginDTO)).rejects.toThrow(
