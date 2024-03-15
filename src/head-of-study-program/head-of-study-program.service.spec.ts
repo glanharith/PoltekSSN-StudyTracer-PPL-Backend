@@ -140,7 +140,7 @@ describe('HeadOfStudyProgramService', () => {
         expect(prismaMock.user.create).toBeCalledTimes(0);
       });
 
-      it('should throw BadRequest if kaprodi with same study program is exist', async () => {
+      it('should throw BadRequest if kaprodi with same nip is exist', async () => {
         prismaMock.user.findFirst.mockResolvedValue(null);
         prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgram);
         prismaMock.headStudyProgram.findFirst.mockResolvedValue(
