@@ -3,6 +3,7 @@ import {
   IsIn,
   IsNotEmpty,
   IsNumber,
+  IsNumberString,
   IsOptional,
   IsString,
   MaxLength,
@@ -55,7 +56,7 @@ export class RegisterDTO {
   @IsOptional()
   studyProgramId?: string;
 
-  @IsString()
+  @IsNumberString()
   @IsOptional()
   @MaxLength(10)
   npm?: string;
