@@ -45,7 +45,7 @@ export class HeadOfStudyProgramService {
 
     if (head) {
       throw new BadRequestException({
-        message: 'Head of study program with that nip already exists',
+        message: 'Head of study program with given nip already exists',
       });
     }
 
