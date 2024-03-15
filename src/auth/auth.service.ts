@@ -25,6 +25,7 @@ export class AuthService {
     enrollmentYear,
     graduateYear,
     studyProgramId,
+    npm,
   }: RegisterDTO) {
     const emailHash = await hash(email);
 
@@ -86,10 +87,29 @@ export class AuthService {
         },
       });
     } else if (role === 'ALUMNI') {
-      if (!phoneNo || !address || !gender || !enrollmentYear || !graduateYear) {
+      if (
+        !phoneNo ||
+        !address ||
+        !gender ||
+        !enrollmentYear ||
+        !graduateYear ||
+        !npm
+      ) {
         throw new BadRequestException({
           message:
-            'Fields required for alumni register: phoneNo, address, gender, enrollmentYear, graduateYear',
+            'Fields required for alumni register: phoneNo, address, gender, enrollmentYear, graduateYear, npm',
+        });
+      }
+
+      const alumni = await this.prisma.alumni.findFirst({
+        where: {
+          npm,
+        },
+      });
+
+      if (alumni) {
+        throw new BadRequestException({
+          message: 'Alumni with given npm is already exists',
         });
       }
 

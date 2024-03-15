@@ -54,4 +54,9 @@ export class RegisterDTO {
   @IsString()
   @IsOptional()
   studyProgramId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(10)
+  npm?: string;
 }
