@@ -57,6 +57,7 @@ describe('HeadOfStudyProgramService', () => {
     name: 'Test kaprodi',
     password: 'passwordKaprpdi',
     studyProgramId: studyProgram.id,
+    nip: '123123',
   };
 
   const headOfStudyProgram: HeadStudyProgram = {
@@ -132,6 +133,19 @@ describe('HeadOfStudyProgramService', () => {
           password: 'passwordKaprpdi',
           role: 'HEAD_STUDY_PROGRAM',
         });
+
+        await expect(
+          headOfStudyProgramService.create(registerKaprodiDTO),
+        ).rejects.toThrow(BadRequestException);
+        expect(prismaMock.user.create).toBeCalledTimes(0);
+      });
+
+      it('should throw BadRequest if kaprodi with same study program is exist', async () => {
+        prismaMock.user.findFirst.mockResolvedValue(null);
+        prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgram);
+        prismaMock.headStudyProgram.findFirst.mockResolvedValue(
+          headOfStudyProgram,
+        );
 
         await expect(
           headOfStudyProgramService.create(registerKaprodiDTO),

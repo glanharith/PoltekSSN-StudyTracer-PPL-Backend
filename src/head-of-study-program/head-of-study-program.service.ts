@@ -19,6 +19,7 @@ export class HeadOfStudyProgramService {
     name,
     password,
     studyProgramId,
+    nip,
   }: CreateHeadOfStudyProgramDto) {
     const emailHash = await hash(email);
 
@@ -33,6 +34,18 @@ export class HeadOfStudyProgramService {
     if (user) {
       throw new BadRequestException({
         message: 'User with given email already exists',
+      });
+    }
+
+    const head = await this.prisma.headStudyProgram.findFirst({
+      where: {
+        nip,
+      },
+    });
+
+    if (head) {
+      throw new BadRequestException({
+        message: 'Head of study program with that nip already exists',
       });
     }
 
@@ -74,6 +87,7 @@ export class HeadOfStudyProgramService {
           create: {
             studyProgramId,
             isActive: true,
+            nip,
           },
         },
       },

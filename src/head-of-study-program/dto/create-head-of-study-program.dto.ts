@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class CreateHeadOfStudyProgramDto {
   @IsNotEmpty()
@@ -16,4 +16,9 @@ export class CreateHeadOfStudyProgramDto {
   @IsString()
   @IsNotEmpty()
   password: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(10)
+  nip: string;
 }
