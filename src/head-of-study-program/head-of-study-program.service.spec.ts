@@ -63,21 +63,21 @@ describe('HeadOfStudyProgramService', () => {
     name: 'Test kaprodi',
     password: 'passwordKaprpdi',
     studyProgramId: studyProgram.id,
-    nip: '123123',
+    nip: '123',
   };
 
   const headOfStudyProgram: HeadStudyProgram = {
     id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
     studyProgramId: studyProgram.id,
     isActive: true,
-    nip: 'nip',
+    nip: '123',
   };
 
   const headOfStudyProgram2: HeadStudyProgram = {
     id: 'a11960cf-aefe-4e1d-8388-6327e5ca5131',
     studyProgramId: studyProgramTest.id,
     isActive: true,
-    nip: 'nip',
+    nip: '123',
   };
 
   const headUser: User = {
