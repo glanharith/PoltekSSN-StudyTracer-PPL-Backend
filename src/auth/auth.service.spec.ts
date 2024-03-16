@@ -85,6 +85,7 @@ describe('AuthService', () => {
         name: 'Test Alumni',
         password: 'passwordalumni',
         role: 'ALUMNI',
+        npm: 'npm',
         phoneNo: '081234567890',
         address: 'address',
         gender: 'MALE',
@@ -122,6 +123,27 @@ describe('AuthService', () => {
         prismaMock.user.findFirst.mockResolvedValue(null);
         prismaMock.studyProgram.findUnique.mockResolvedValue(null);
         zxcvbnService.getScore.mockResolvedValue(5);
+
+        await expect(authService.register(registerAlumniDTO)).rejects.toThrow(
+          BadRequestException,
+        );
+        expect(prismaMock.user.create).toBeCalledTimes(0);
+      });
+
+      it('should throw BadRequest if alumni with given npm is already exists', async () => {
+        prismaMock.user.findFirst.mockResolvedValue(null);
+        prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgram);
+        zxcvbnService.getScore.mockResolvedValue(5);
+        prismaMock.alumni.findFirst.mockResolvedValue({
+          id: 'id',
+          npm: 'npm',
+          phoneNo: '081234567890',
+          address: 'address',
+          gender: 'MALE',
+          enrollmentYear: 2019,
+          graduateYear: 2023,
+          studyProgramId: studyProgram.id,
+        });
 
         await expect(authService.register(registerAlumniDTO)).rejects.toThrow(
           BadRequestException,
@@ -185,6 +207,7 @@ describe('AuthService', () => {
         phoneNo: '081234567890',
         address: 'address',
         gender: 'MALE',
+        npm: 'npm',
         enrollmentYear: 2019,
         graduateYear: 2023,
         studyProgramId: studyProgram.id,
@@ -209,6 +232,7 @@ describe('AuthService', () => {
           gender,
           enrollmentYear,
           graduateYear,
+          npm,
           ...missingFieldsDTO
         } = registerAlumniDTO;
 
