@@ -9,10 +9,14 @@ import { HeadStudyProgram, StudyProgram } from '@prisma/client';
 import { hash, secure, unsecure } from 'src/common/util/security';
 import { UpdateHeadOfStudyProgramDto } from './dto/update-head-of-study-program.dto';
 import { isUUID } from 'class-validator';
+import { ZxcvbnService } from 'src/zxcvbn/zxcvbn.service';
 
 @Injectable()
 export class HeadOfStudyProgramService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly zxcvbnService: ZxcvbnService,
+  ) {}
 
   async create({
     email,
@@ -45,7 +49,7 @@ export class HeadOfStudyProgramService {
 
     if (head) {
       throw new BadRequestException({
-        message: 'Head of study program with that nip already exists',
+        message: 'Head of study program with given nip already exists',
       });
     }
 
@@ -71,6 +75,14 @@ export class HeadOfStudyProgramService {
     if (isAvailable >= 1) {
       throw new BadRequestException({
         message: 'There is an existing head of study program',
+      });
+    }
+
+    const passwordScore = await this.zxcvbnService.getScore(password);
+
+    if (passwordScore <= 2) {
+      throw new BadRequestException({
+        message: 'Password not strong enough',
       });
     }
 
@@ -112,6 +124,7 @@ export class HeadOfStudyProgramService {
               },
             },
             isActive: true,
+            nip: true,
           },
         },
       },
