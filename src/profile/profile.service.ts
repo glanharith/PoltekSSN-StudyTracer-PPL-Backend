@@ -1,11 +1,11 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfileDTO } from './DTO';
-import {  hash, secure, unsecure } from 'src/common/util/security';
+import { hash, secure, unsecure } from 'src/common/util/security';
 import { compare } from 'bcrypt';
 
 @Injectable()
@@ -79,6 +79,7 @@ export class ProfileService {
         alumni: {
           select: {
             id: false,
+            npm: true,
             phoneNo: true,
             address: true,
             gender: false,
@@ -98,6 +99,7 @@ export class ProfileService {
     return {
       name: user.name,
       alumni: {
+        npm: user.alumni.npm,
         phoneNo: decryptPhoneNo,
         address: decryptAddress,
         enrollmentYear: user.alumni.enrollmentYear,
