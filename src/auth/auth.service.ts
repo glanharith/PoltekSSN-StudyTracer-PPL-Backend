@@ -127,6 +127,7 @@ export class AuthService {
               phoneNo: securedPhoneNo,
               address: securedAddress,
               gender,
+              npm,
               enrollmentYear,
               graduateYear,
               studyProgram: {
