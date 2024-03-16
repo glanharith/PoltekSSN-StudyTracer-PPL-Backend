@@ -81,6 +81,7 @@ describe('HeadOfStudyProgramController', () => {
           id: studyProgram.id,
         },
         isActive: true,
+        nip: '123',
       },
       email: registerKaprodiDTO.email,
     },

@@ -124,6 +124,7 @@ export class HeadOfStudyProgramService {
               },
             },
             isActive: true,
+            nip: true,
           },
         },
       },
