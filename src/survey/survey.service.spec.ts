@@ -3,7 +3,7 @@ import { SurveyService } from './survey.service';
 import { DeepMockProxy } from 'jest-mock-extended';
 import { Form, Option, PrismaClient, Question } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateSurveyDTO } from './DTO/CreateSurveyDTO';
+import { CreateSurveyDTO, OptionDTO, QuestionDTO } from './DTO/CreateSurveyDTO';
 import { createPrismaMock } from 'src/prisma/prisma.mock';
 import { BadRequestException } from '@nestjs/common';
 
@@ -24,102 +24,78 @@ describe('SurveyService', () => {
     surveyService = module.get<SurveyService>(SurveyService);
   });
 
-  const form: Form = {
-    id: 'formId',
-    type: 'CURRICULUM',
-    title: 'title',
-    description: 'description',
-    startTime: new Date(2024, 0, 1),
-    endTime: new Date(2024, 1, 1),
-    admissionYearFrom: null,
-    admissionYearTo: null,
-    graduateYearFrom: null,
-    graduateYearTo: null,
+  const optionRadio1: OptionDTO = {
+    label: 'Option Radio 1',
+    order: 1,
   };
 
-  const questionText: Question = {
-    id: 'questionTextId',
+  const optionRadio2: OptionDTO = {
+    label: 'Option Radio 2',
+    order: 2,
+  };
+
+  const optionCheckbox1: OptionDTO = {
+    label: 'Option Checkbox 1',
+    order: 1,
+  };
+
+  const optionCheckbox2: OptionDTO = {
+    label: 'Option Checkbox 2',
+    order: 2,
+  };
+
+  const questionText: QuestionDTO = {
     type: 'TEXT',
     question: 'Question Text',
-    rangeFrom: null,
-    rangeTo: null,
     order: 1,
-    formId: form.id,
   };
 
-  const questionRadio: Question = {
-    id: 'questionRadioId',
+  const questionRadio: QuestionDTO = {
     type: 'RADIO',
     question: 'Question Radio',
-    rangeFrom: null,
-    rangeTo: null,
     order: 2,
-    formId: form.id,
+    options: [optionRadio1, optionRadio2],
   };
 
-  const questionCheckbox: Question = {
-    id: 'questionCheckboxId',
+  const questionCheckbox: QuestionDTO = {
     type: 'CHECKBOX',
     question: 'Question Checkbox',
-    rangeFrom: null,
-    rangeTo: null,
     order: 3,
-    formId: form.id,
+    options: [optionCheckbox1, optionCheckbox2],
   };
 
-  const questionRange: Question = {
-    id: 'questionRangeId',
+  const questionRange: QuestionDTO = {
     type: 'RANGE',
     question: 'Question Range',
     rangeFrom: 1,
     rangeTo: 5,
     order: 4,
-    formId: form.id,
   };
 
-  const optionRadio1: Option = {
-    id: 'optionRadio1',
-    label: 'Option Radio 1',
-    questionId: questionRadio.id,
-    order: 1,
-  };
-
-  const optionRadio2: Option = {
-    id: 'optionRadio2',
-    label: 'Option Radio 2',
-    questionId: questionRadio.id,
-    order: 2,
-  };
-
-  const optionCheckbox1: Option = {
-    id: 'optionCheckbox1',
-    label: 'Option Checkbox 1',
-    questionId: questionCheckbox.id,
-    order: 1,
-  };
-
-  const optionCheckbox2: Option = {
-    id: 'optionCheckbox2',
-    label: 'Option Checkbox 2',
-    questionId: questionCheckbox.id,
-    order: 2,
+  const createSurveyDTO: CreateSurveyDTO = {
+    type: 'CURRICULUM',
+    title: 'title',
+    description: 'description',
+    startTime: new Date(2024, 0, 1),
+    endTime: new Date(2024, 1, 1),
+    questions: [questionText, questionRadio, questionCheckbox, questionRange],
   };
 
   describe('create survey', () => {
-    const createSurveyDTO = {
-      ...form,
-      questions: [
-        questionText,
-        { ...questionRadio, options: [optionRadio1, optionRadio2] },
-        { ...questionCheckbox, options: [optionCheckbox1, optionCheckbox2] },
-        questionRange,
-      ],
-    } as CreateSurveyDTO;
+    // const createSurveyDTO = {
+    //   ...form,
+    //   questions: [
+    //     questionText,
+    //     { ...questionRadio, options: [optionRadio1, optionRadio2] },
+    //     { ...questionCheckbox, options: [optionCheckbox1, optionCheckbox2] },
+    //     questionRange,
+    //   ],
+    // } as CreateSurveyDTO;
 
     it('should create survey successfully', async () => {
       prismaMock.$transaction.mockImplementation(async (callback) => {
         const prismaMockTx = createPrismaMock();
-        prismaMockTx.form.create.mockResolvedValue(form);
+        prismaMockTx.form.create.mockResolvedValue({ id: 'id' } as Form);
         await callback(prismaMockTx);
       });
 
@@ -166,15 +142,15 @@ describe('SurveyService', () => {
     });
 
     it('should validate question order', async () => {
-      const createSurveyDTOWithInvalidQuestionOrder = {
+      const createSurveyDTOWithInvalidQuestionOrder: CreateSurveyDTO = {
         ...createSurveyDTO,
         questions: [
           questionText,
-          { ...questionRadio, options: [optionRadio1, optionRadio2] },
-          { ...questionCheckbox, options: [optionCheckbox1, optionCheckbox2] },
+          questionRadio,
+          questionCheckbox,
           { ...questionRange, order: 1 },
         ],
-      } as CreateSurveyDTO;
+      };
 
       await expect(
         surveyService.createSurvey(createSurveyDTOWithInvalidQuestionOrder),
@@ -183,15 +159,15 @@ describe('SurveyService', () => {
     });
 
     it('should validate radio option', async () => {
-      const createSurveyDTOWithNoRadioOption = {
+      const createSurveyDTOWithNoRadioOption: CreateSurveyDTO = {
         ...createSurveyDTO,
         questions: [
           questionText,
           { ...questionRadio, options: [] },
-          { ...questionCheckbox, options: [optionCheckbox1, optionCheckbox2] },
+          questionCheckbox,
           questionRange,
         ],
-      } as CreateSurveyDTO;
+      };
 
       await expect(
         surveyService.createSurvey(createSurveyDTOWithNoRadioOption),
@@ -200,15 +176,15 @@ describe('SurveyService', () => {
     });
 
     it('should validate checkbox option', async () => {
-      const createSurveyDTOWithNoCheckboxOption = {
+      const createSurveyDTOWithNoCheckboxOption: CreateSurveyDTO = {
         ...createSurveyDTO,
         questions: [
           questionText,
-          { ...questionRadio, options: [optionRadio1, optionRadio2] },
+          questionRadio,
           { ...questionCheckbox, options: [] },
           questionRange,
         ],
-      } as CreateSurveyDTO;
+      };
 
       await expect(
         surveyService.createSurvey(createSurveyDTOWithNoCheckboxOption),
@@ -217,7 +193,7 @@ describe('SurveyService', () => {
     });
 
     it('should validate option order', async () => {
-      const createSurveyDTOWithInvalidOptionOrder = {
+      const createSurveyDTOWithInvalidOptionOrder: CreateSurveyDTO = {
         ...createSurveyDTO,
         questions: [
           questionText,
@@ -225,10 +201,10 @@ describe('SurveyService', () => {
             ...questionRadio,
             options: [optionRadio1, { ...optionRadio2, order: 1 }],
           },
-          { ...questionCheckbox, options: [optionCheckbox1, optionCheckbox2] },
+          questionCheckbox,
           questionRange,
         ],
-      } as CreateSurveyDTO;
+      };
 
       await expect(
         surveyService.createSurvey(createSurveyDTOWithInvalidOptionOrder),
@@ -237,18 +213,15 @@ describe('SurveyService', () => {
     });
 
     it('should validate rangeFrom and rangeTo', async () => {
-      const createSurveyDTOWithoutRange = {
+      const createSurveyDTOWithoutRange: CreateSurveyDTO = {
         ...createSurveyDTO,
         questions: [
           questionText,
-          {
-            ...questionRadio,
-            options: [optionRadio1, optionRadio2],
-          },
-          { ...questionCheckbox, options: [optionCheckbox1, optionCheckbox2] },
+          questionRadio,
+          questionCheckbox,
           { ...questionRange, rangeFrom: undefined, rangeTo: undefined },
         ],
-      } as CreateSurveyDTO;
+      };
 
       await expect(
         surveyService.createSurvey(createSurveyDTOWithoutRange),
@@ -257,18 +230,15 @@ describe('SurveyService', () => {
     });
 
     it('should validate range', async () => {
-      const createSurveyDTOWithInvalidRange = {
+      const createSurveyDTOWithInvalidRange: CreateSurveyDTO = {
         ...createSurveyDTO,
         questions: [
           questionText,
-          {
-            ...questionRadio,
-            options: [optionRadio1, optionRadio2],
-          },
-          { ...questionCheckbox, options: [optionCheckbox1, optionCheckbox2] },
+          questionRadio,
+          questionCheckbox,
           { ...questionRange, rangeFrom: 5, rangeTo: 1 },
         ],
-      } as CreateSurveyDTO;
+      };
 
       await expect(
         surveyService.createSurvey(createSurveyDTOWithInvalidRange),
