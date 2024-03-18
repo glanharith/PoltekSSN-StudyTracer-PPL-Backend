@@ -1,7 +1,7 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO } from './DTO/CreateSurveyDTO';
-import { IsPublic } from 'src/common/decorator';
+import { IsAdmin } from 'src/common/decorator';
 import { response } from 'src/common/util/response';
 
 @Controller('survey')
@@ -9,7 +9,7 @@ export class SurveyController {
   constructor(private readonly surveyService: SurveyService) {}
 
   @Post()
-  @IsPublic()
+  @IsAdmin()
   async createSurvey(@Body() createSurveyDTO: CreateSurveyDTO) {
     await this.surveyService.createSurvey(createSurveyDTO);
 
