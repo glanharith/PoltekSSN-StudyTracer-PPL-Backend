@@ -15,6 +15,9 @@ export class OptionDTO {
   @IsString()
   @IsNotEmpty()
   label: string;
+
+  @IsNumber()
+  order: number;
 }
 
 export class QuestionDTO {
