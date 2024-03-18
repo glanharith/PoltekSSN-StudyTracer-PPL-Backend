@@ -97,6 +97,7 @@ model Option {
   id         String @id @unique @default(uuid())
   label      String
   questionId String
+  order      Int
 
   question Question @relation(fields: [questionId], references: [id])
 }
