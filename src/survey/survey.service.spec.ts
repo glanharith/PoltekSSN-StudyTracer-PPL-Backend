@@ -82,16 +82,6 @@ describe('SurveyService', () => {
   };
 
   describe('create survey', () => {
-    // const createSurveyDTO = {
-    //   ...form,
-    //   questions: [
-    //     questionText,
-    //     { ...questionRadio, options: [optionRadio1, optionRadio2] },
-    //     { ...questionCheckbox, options: [optionCheckbox1, optionCheckbox2] },
-    //     questionRange,
-    //   ],
-    // } as CreateSurveyDTO;
-
     it('should create survey successfully', async () => {
       prismaMock.$transaction.mockImplementation(async (callback) => {
         const prismaMockTx = createPrismaMock();
