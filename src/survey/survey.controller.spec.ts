@@ -53,10 +53,7 @@ describe('SurveyController', () => {
       surveyServiceMock.delete.mockResolvedValue(id);
       const result = await surveyController.delete(id);
 
-      expect(result).toEqual({
-        id,
-        message: 'Deleted survey successfully'
-      });
+      expect(result).toEqual(id);
 
       expect(surveyServiceMock.delete).toHaveBeenCalledWith(id);
     });
