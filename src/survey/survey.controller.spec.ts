@@ -45,7 +45,7 @@ describe('SurveyController', () => {
     });
   });
 
-  describe('DELETE /survey', () => {
+  describe('DELETE /survey/:id', () => {
     const id = 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef';
     const nonExistentId = 'notExist';
 
