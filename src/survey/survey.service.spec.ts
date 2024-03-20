@@ -5,7 +5,7 @@ import { Form, PrismaClient } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSurveyDTO, OptionDTO, QuestionDTO } from './DTO/CreateSurveyDTO';
 import { createPrismaMock } from 'src/prisma/prisma.mock';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('SurveyService', () => {
   let surveyService: SurveyService;
@@ -79,6 +79,19 @@ describe('SurveyService', () => {
     startTime: new Date(2024, 0, 1),
     endTime: new Date(2024, 1, 1),
     questions: [questionText, questionRadio, questionCheckbox, questionRange],
+  };
+
+  const surveyTest: Form = {
+    id: '5e2633ba-435d-41e8-8432-efa2832ce563',
+    type: 'CURRICULUM',
+    title: 'A Survey',
+    description: 'lorem',
+    startTime: new Date(2024, 1, 2),
+    endTime: new Date(2024, 2, 2),
+    admissionYearFrom: 2019,
+    admissionYearTo: 2019,
+    graduateYearFrom: 2023,
+    graduateYearTo: 2023
   };
 
   describe('create survey', () => {
@@ -234,6 +247,53 @@ describe('SurveyService', () => {
         surveyService.createSurvey(createSurveyDTOWithInvalidRange),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
+    });
+  });
+
+  describe('delete', () => {
+    const id = surveyTest.id;
+    const nonExistentId = '5e2633ba-435d-41e8-8432-efa2832ce564';
+    const invalidUUID = 'invalid-uuid';
+
+    it('should successfully delete a survey', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(surveyTest);
+      prismaMock.form.delete.mockResolvedValue(surveyTest);
+
+      expect(await surveyService.delete(id)).toEqual(id);
+      expect(prismaMock.form.delete).toHaveBeenCalledWith({
+        where: {
+          id: surveyTest.id,
+        },
+      });
+    });
+
+    it('should throw NotFoundException if survey is not found', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(null);
+
+      await expect(
+        surveyService.delete(nonExistentId)
+      ).rejects.toThrow(NotFoundException);
+      expect(prismaMock.form.delete).toHaveBeenCalledTimes(0);
+    });
+
+    it('should throw BadRequestException if ID is not a valid UUID', async () => {
+      await expect(
+        surveyService.delete(invalidUUID)
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should not delete a survey if the current date is within the survey\'s active period', async () => {
+      jest.useFakeTimers().setSystemTime(new Date(2024, 1, 15));
+
+      prismaMock.form.findUnique.mockResolvedValue(surveyTest);
+
+      await expect(
+        surveyService.delete(id)
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prismaMock.form.delete).toHaveBeenCalledTimes(0);
+
+      jest.useRealTimers();
     });
   });
 });
