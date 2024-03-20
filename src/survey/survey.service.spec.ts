@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SurveyService } from './survey.service';
 import { DeepMockProxy } from 'jest-mock-extended';
-import { Form, Question, Option, PrismaClient, FormType } from '@prisma/client';
+import { Form, PrismaClient, FormType } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSurveyDTO, OptionDTO, QuestionDTO } from './DTO/CreateSurveyDTO';
 import { createPrismaMock } from 'src/prisma/prisma.mock';

@@ -2,7 +2,6 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSurveyDTO } from './DTO/CreateSurveyDTO';
 import { isUUID } from 'class-validator';
-import { Form } from '@prisma/client'
 
 @Injectable()
 export class SurveyService {
@@ -121,7 +120,7 @@ export class SurveyService {
       throw new BadRequestException(
         'Invalid ID format. ID must be a valid UUID'
       );
-    };
+    }
 
     const survey = await this.prisma.form.findUnique({
       where: { id }
@@ -139,7 +138,7 @@ export class SurveyService {
       throw new BadRequestException(
         'Cannot delete survey during its active period'
       );
-    };
+    }
 
     await this.prisma.form.delete({
       where: { id },
@@ -153,7 +152,7 @@ export class SurveyService {
       throw new BadRequestException(
         'Invalid ID format. ID must be a valid UUID'
       );
-    };
+    }
 
     const survey = await this.prisma.form.findUnique({
       where: { id },

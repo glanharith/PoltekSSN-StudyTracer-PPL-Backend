@@ -3,7 +3,7 @@ import { SurveyController } from './survey.controller';
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO } from './DTO/CreateSurveyDTO';
 import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { Form, Question, Option, FormType } from '@prisma/client';
+import { FormType } from '@prisma/client';
 
 jest.mock('./survey.service');
 
@@ -62,7 +62,7 @@ describe('SurveyController', () => {
     it('should throw NotFoundException for a non-existing survey', async () => {
       surveyServiceMock.deleteSurvey.mockRejectedValue(new NotFoundException('Survey not found'));
       
-      await expect(surveyController.deleteSurvey(id)).rejects.toThrow(
+      await expect(surveyController.deleteSurvey(nonExistentId)).rejects.toThrow(
         NotFoundException
       );
     });
