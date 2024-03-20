@@ -112,10 +112,29 @@ describe('SurveyController', () => {
     };
     
     it('should successfully return a survey', async () => {
-      surveyServiceMock.getSurvey.mockResolvedValue(survey)
+      surveyServiceMock.getSurvey.mockResolvedValue(survey);
 
-      const result = await surveyController.getSurvey
+      const result = await surveyController.getSurvey(survey.id);
+
+      expect(result).toEqual(survey);
     });
 
+    it('should return NotFoundException for non-existing survey', async () => {
+      surveyServiceMock.getSurvey.mockRejectedValue(new NotFoundException('Survey not found'));
+
+      await expect(surveyController.getSurvey(id)).rejects.toThrow(
+        NotFoundException
+      );
+    });
+
+    it('should handle errors during get', async () => {
+      surveyServiceMock.getSurvey.mockRejectedValue(
+        new InternalServerErrorException('Error while retrieving survey')
+      );
+
+      await expect(surveyController.getSurvey(id)).rejects.toThrow(
+        InternalServerErrorException
+      );
+    });
   });
 });
