@@ -9,6 +9,7 @@ import { StudyProgramModule } from './studyProgram/studyProgram.module';
 import { ProfileModule } from './profile/profile.module';
 import { HeadOfStudyProgramModule } from './head-of-study-program/head-of-study-program.module';
 import { ZxcvbnModule } from './zxcvbn/zxcvbn.module';
+import { SurveyModule } from './survey/survey.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ZxcvbnModule } from './zxcvbn/zxcvbn.module';
     ProfileModule,
     HeadOfStudyProgramModule,
     ZxcvbnModule,
+    SurveyModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
