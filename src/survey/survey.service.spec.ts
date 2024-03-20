@@ -259,7 +259,7 @@ describe('SurveyService', () => {
       prismaMock.form.findUnique.mockResolvedValue(surveyTest);
       prismaMock.form.delete.mockResolvedValue(surveyTest);
 
-      expect(await surveyService.delete(id)).toEqual(id);
+      expect(await surveyService.deleteSurvey(id)).toEqual(id);
       expect(prismaMock.form.delete).toHaveBeenCalledWith({
         where: {
           id: surveyTest.id,
@@ -271,14 +271,14 @@ describe('SurveyService', () => {
       prismaMock.form.findUnique.mockResolvedValue(null);
 
       await expect(
-        surveyService.delete(nonExistentId)
+        surveyService.deleteSurvey(nonExistentId)
       ).rejects.toThrow(NotFoundException);
       expect(prismaMock.form.delete).toHaveBeenCalledTimes(0);
     });
 
     it('should throw BadRequestException if ID is not a valid UUID', async () => {
       await expect(
-        surveyService.delete(invalidUUID)
+        surveyService.deleteSurvey(invalidUUID)
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -288,7 +288,7 @@ describe('SurveyService', () => {
       prismaMock.form.findUnique.mockResolvedValue(surveyTest);
 
       await expect(
-        surveyService.delete(id)
+        surveyService.deleteSurvey(id)
       ).rejects.toThrow(BadRequestException);
 
       expect(prismaMock.form.delete).toHaveBeenCalledTimes(0);

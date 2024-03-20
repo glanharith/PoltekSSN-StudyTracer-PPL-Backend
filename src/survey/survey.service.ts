@@ -115,7 +115,7 @@ export class SurveyService {
     });
   }
 
-  async delete(id: string): Promise<string> {
+  async deleteSurvey(id: string): Promise<string> {
     if (!isUUID(id)) {
       throw new BadRequestException(
         'Invalid ID format. ID must be a valid UUID'

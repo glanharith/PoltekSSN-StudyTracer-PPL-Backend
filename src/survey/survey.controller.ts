@@ -18,7 +18,7 @@ export class SurveyController {
 
   @Delete()
   @IsAdmin()
-  async delete(@Param('id') id: string) {
-    return this.surveyService.delete(id);
+  async deleteSurvey(@Param('id') id: string) {
+    return this.surveyService.deleteSurvey(id);
   }
 }
