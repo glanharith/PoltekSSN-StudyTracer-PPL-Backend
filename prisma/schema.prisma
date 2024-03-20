@@ -88,7 +88,7 @@ model Question {
   order     Int
   formId    String
 
-  form    Form     @relation(fields: [formId], references: [id])
+  form    Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
   option  Option[]
   answers Answer[]
 }
@@ -99,7 +99,7 @@ model Option {
   questionId String
   order      Int
 
-  question Question @relation(fields: [questionId], references: [id])
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model Response {
