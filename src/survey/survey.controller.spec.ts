@@ -3,7 +3,7 @@ import { SurveyController } from './survey.controller';
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO } from './DTO/CreateSurveyDTO';
 import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { Form, Question, Option } from '@prisma/client';
+import { Form, Question, Option, FormType } from '@prisma/client';
 
 jest.mock('./survey.service');
 
@@ -99,7 +99,7 @@ describe('SurveyController', () => {
     
     const survey = {
       id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
-      type: 'CURRICULUM',
+      type: FormType.CURRICULUM,
       title: 'Test Survey',
       description: 'This is a testing survey',
       startTime: new Date(2024, 1, 2),
@@ -122,7 +122,7 @@ describe('SurveyController', () => {
     it('should return NotFoundException for non-existing survey', async () => {
       surveyServiceMock.getSurvey.mockRejectedValue(new NotFoundException('Survey not found'));
 
-      await expect(surveyController.getSurvey(id)).rejects.toThrow(
+      await expect(surveyController.getSurvey(survey.id)).rejects.toThrow(
         NotFoundException
       );
     });
@@ -132,7 +132,7 @@ describe('SurveyController', () => {
         new InternalServerErrorException('Error while retrieving survey')
       );
 
-      await expect(surveyController.getSurvey(id)).rejects.toThrow(
+      await expect(surveyController.getSurvey(survey.id)).rejects.toThrow(
         InternalServerErrorException
       );
     });

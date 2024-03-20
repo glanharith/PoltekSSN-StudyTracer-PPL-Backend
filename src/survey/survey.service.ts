@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSurveyDTO } from './DTO/CreateSurveyDTO';
 import { isUUID } from 'class-validator';
+import { Form } from '@prisma/client'
 
 @Injectable()
 export class SurveyService {
@@ -145,5 +146,30 @@ export class SurveyService {
     });
 
     return id;
+  }
+
+  async getSurvey(id: string): Promise<Record<string, any>> {
+    if (!isUUID(id)) {
+      throw new BadRequestException(
+        'Invalid ID format. ID must be a valid UUID'
+      );
+    };
+
+    const survey = await this.prisma.form.findUnique({
+      where: { id },
+      include: {
+        questions: {
+          include: {
+            option: true,
+          },
+        },
+      },
+    });
+
+    if (!survey) {
+      throw new NotFoundException(`Survey with ID ${id} not found`);
+    }
+
+    return survey;
   }
 }
