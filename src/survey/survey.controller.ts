@@ -16,13 +16,13 @@ export class SurveyController {
     return response('Survey successfully created');
   }
 
-  @Delete()
+  @Delete('/:id')
   @IsAdmin()
   async deleteSurvey(@Param('id') id: string) {
     return this.surveyService.deleteSurvey(id);
   }
 
-  @Get()
+  @Get('/:id')
   @IsAdmin()
   async getSurvey(@Param('id') id: string) {
     return this.surveyService.getSurvey(id);
