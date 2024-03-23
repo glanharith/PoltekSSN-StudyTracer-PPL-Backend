@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SurveyController } from './survey.controller';
 import { SurveyService } from './survey.service';
-import { CreateSurveyDTO, EditSurveyDTO } from './DTO/CreateSurveyDTO';
+import { CreateSurveyDTO, EditSurveyDTO } from './DTO/SurveyDTO';
 
 jest.mock('./survey.service');
 

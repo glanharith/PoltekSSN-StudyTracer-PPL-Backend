@@ -1,6 +1,6 @@
 import { Body, Controller, Post, Patch, Param } from '@nestjs/common';
 import { SurveyService } from './survey.service';
-import { CreateSurveyDTO, EditSurveyDTO } from './DTO/CreateSurveyDTO';
+import { CreateSurveyDTO, EditSurveyDTO } from './DTO/SurveyDTO';
 // import { IsAdmin } from 'src/common/decorator';
 import { IsPublic } from 'src/common/decorator';
 import { response } from 'src/common/util/response';

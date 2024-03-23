@@ -5,7 +5,7 @@ import {
   EditSurveyDTO,
   QuestionDTO,
   SurveyDTO,
-} from './DTO/CreateSurveyDTO';
+} from './DTO/SurveyDTO';
 
 @Injectable()
 export class SurveyService {

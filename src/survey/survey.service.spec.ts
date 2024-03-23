@@ -8,7 +8,7 @@ import {
   OptionDTO,
   QuestionDTO,
   EditSurveyDTO,
-} from './DTO/CreateSurveyDTO';
+} from './DTO/SurveyDTO';
 import { createPrismaMock } from 'src/prisma/prisma.mock';
 import { BadRequestException } from '@nestjs/common';
 
