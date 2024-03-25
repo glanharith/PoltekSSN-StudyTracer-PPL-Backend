@@ -1,7 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO } from './DTO/CreateSurveyDTO';
-import { IsAdmin } from 'src/common/decorator';
+import { IsAdmin, IsAlumni, IsPublic } from 'src/common/decorator';
 import { response } from 'src/common/util/response';
 
 @Controller('survey')
@@ -14,5 +14,11 @@ export class SurveyController {
     await this.surveyService.createSurvey(createSurveyDTO);
 
     return response('Survey successfully created');
+  }
+
+  @Get()
+  @IsAlumni()
+  async getSurvey() {
+    return this.surveyService.getAllAvailableAlumniSurvey();
   }
 }

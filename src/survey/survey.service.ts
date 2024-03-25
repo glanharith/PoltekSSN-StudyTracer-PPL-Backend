@@ -113,4 +113,24 @@ export class SurveyService {
       }
     });
   }
+
+  async getAllAvailableAlumniSurvey() {
+    const now = new Date();
+    return this.prisma.form.findMany({
+      where: {
+        startTime: {
+          lte: now,
+        },
+        endTime: {
+          gt: now,
+        },
+      },
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        description: true,
+      },
+    });
+  }
 }
