@@ -135,6 +135,27 @@ export class SurveyService {
 
     this.validateQuestions([...newQuestions, ...updateQuestions]);
 
+    const existingQuestions = await this.prisma.question.findMany({
+      select: {
+        id: true,
+      },
+      where: {
+        formId: id,
+      },
+    });
+
+    const existingQuestionIdSet = new Set(existingQuestions.map((q) => q.id));
+    const updateQuestionIds = updateQuestions.map((q) => q.id);
+    const deleteQuestionIds = deleteQuestions.map((q) => q.id);
+
+    [...updateQuestionIds, ...deleteQuestionIds].forEach((q) => {
+      if (!existingQuestionIdSet.has(q!!)) {
+        throw new BadRequestException({
+          message: 'Failed to update or delete question: Question not found',
+        });
+      }
+    });
+
     await this.prisma.$transaction(async (tx) => {
       await tx.form.update({
         where: {
@@ -143,25 +164,6 @@ export class SurveyService {
         data: {
           ...form,
         },
-      });
-
-      const existingQuestions = await tx.question.findMany({
-        select: {
-          id: true,
-        },
-        where: {
-          formId: id,
-        },
-      });
-
-      const existingQuestionIdSet = new Set(existingQuestions.map((q) => q.id));
-
-      [...updateQuestions, ...deleteQuestions].forEach((q) => {
-        if (!existingQuestionIdSet.has(q.id!!)) {
-          throw new BadRequestException({
-            message: 'Failed to update or delete question: Question not found',
-          });
-        }
       });
 
       for (const q of newQuestions) {
@@ -197,13 +199,13 @@ export class SurveyService {
         });
       }
 
-      for (const q of deleteQuestions) {
-        await tx.question.delete({
-          where: {
-            id: q.id,
+      await tx.question.deleteMany({
+        where: {
+          id: {
+            in: deleteQuestionIds,
           },
-        });
-      }
+        },
+      });
     });
   }
 }

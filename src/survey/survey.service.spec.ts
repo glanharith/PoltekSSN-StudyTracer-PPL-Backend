@@ -306,20 +306,20 @@ describe('SurveyService', () => {
 
   describe('edit survey', () => {
     it('should edit survey successfully', async () => {
+      const mockQuestion: Question[] = [
+        {
+          id: 'uuid',
+          type: 'RANGE',
+          question: 'question',
+          rangeFrom: 1,
+          rangeTo: 5,
+          order: 1,
+          formId: 'uuid',
+        },
+      ];
+      prismaMock.question.findMany.mockResolvedValue(mockQuestion);
       prismaMock.$transaction.mockImplementation(async (callback) => {
         const prismaMockTx = createPrismaMock();
-        const mockQuestion: Question[] = [
-          {
-            id: 'uuid',
-            type: 'RANGE',
-            question: 'question',
-            rangeFrom: 1,
-            rangeTo: 5,
-            order: 1,
-            formId: 'uuid',
-          },
-        ];
-        prismaMockTx.question.findMany.mockResolvedValue(mockQuestion);
         prismaMockTx.form.update.mockResolvedValue({ id: 'id' } as Form);
         await callback(prismaMockTx);
       });
@@ -328,9 +328,9 @@ describe('SurveyService', () => {
     });
 
     it('should check if the updated question exists in the form', async () => {
+      prismaMock.question.findMany.mockResolvedValue([]);
       prismaMock.$transaction.mockImplementation(async (callback) => {
         const prismaMockTx = createPrismaMock();
-        prismaMockTx.question.findMany.mockResolvedValue([]);
         await callback(prismaMockTx);
       });
 
