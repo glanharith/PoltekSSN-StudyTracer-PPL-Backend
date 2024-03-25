@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO } from './DTO/CreateSurveyDTO';
-import { IsAdmin, IsAlumni, IsPublic } from 'src/common/decorator';
+import { IsAdmin, IsAlumni } from 'src/common/decorator';
 import { response } from 'src/common/util/response';
 
 @Controller('survey')
@@ -16,9 +16,9 @@ export class SurveyController {
     return response('Survey successfully created');
   }
 
-  @Get()
+  @Get('/:surveyType')
   @IsAlumni()
-  async getSurvey() {
-    return this.surveyService.getAllAvailableAlumniSurvey();
+  async getSurvey(@Param('surveyType') surveyType: string) {
+    return this.surveyService.getAllAvailableAlumniSurvey(surveyType);
   }
 }

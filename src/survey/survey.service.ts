@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSurveyDTO } from './DTO/CreateSurveyDTO';
+import { FormType } from '@prisma/client';
 
 @Injectable()
 export class SurveyService {
@@ -114,10 +115,12 @@ export class SurveyService {
     });
   }
 
-  async getAllAvailableAlumniSurvey() {
+  async getAllAvailableAlumniSurvey(surveyType: string) {
     const now = new Date();
     return this.prisma.form.findMany({
       where: {
+        type:
+          surveyType == 'CURRICULUM' ? FormType.CURRICULUM : FormType.CAREER,
         startTime: {
           lte: now,
         },
