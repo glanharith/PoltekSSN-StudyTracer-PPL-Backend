@@ -16,9 +16,9 @@ export class SurveyController {
     return response('Survey successfully created');
   }
 
-  @Get('/:surveyType')
+  @Get('/:surveyId')
   @IsAlumni()
-  async getSurvey(@Param('surveyType') surveyType: string) {
-    return this.surveyService.getAllAvailableAlumniSurvey(surveyType);
+  async getSurvey(@Param('surveyId') surveyId: string) {
+    return this.surveyService.getSurveyById(surveyId);
   }
 }
