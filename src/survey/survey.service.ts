@@ -120,7 +120,11 @@ export class SurveyService {
         id: surveyId,
       },
       include: {
-        questions: true,
+        questions: {
+          include: {
+            option: true,
+          },
+        },
       },
     });
   }
