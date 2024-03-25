@@ -1,16 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SurveyService } from './survey.service';
 import { DeepMockProxy } from 'jest-mock-extended';
-import { Form, PrismaClient, Question } from '@prisma/client';
+import { Form, PrismaClient, FormType, Question } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   CreateSurveyDTO,
   OptionDTO,
   QuestionDTO,
   EditSurveyDTO,
+  ExistingQuestionDTO,
 } from './DTO/SurveyDTO';
 import { createPrismaMock } from 'src/prisma/prisma.mock';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('SurveyService', () => {
   let surveyService: SurveyService;
@@ -86,22 +87,22 @@ describe('SurveyService', () => {
     questions: [questionText, questionRadio, questionCheckbox, questionRange],
   };
 
-  const existingQuestionText: QuestionDTO = {
+  const existingQuestionText: ExistingQuestionDTO = {
     id: 'uuid',
     ...questionText,
   };
 
-  const existingQuestionRadio: QuestionDTO = {
+  const existingQuestionRadio: ExistingQuestionDTO = {
     id: 'uuid',
     ...questionRadio,
   };
 
-  const existingQuestionCheckbox: QuestionDTO = {
+  const existingQuestionCheckbox: ExistingQuestionDTO = {
     id: 'uuid',
     ...questionCheckbox,
   };
 
-  const existingQuestionRange: QuestionDTO = {
+  const existingQuestionRange: ExistingQuestionDTO = {
     id: 'uuid',
     ...questionRange,
   };
@@ -146,6 +147,19 @@ describe('SurveyService', () => {
       existingQuestionCheckbox,
     ],
     deleteQuestions: [{ id: 'uuid' }],
+  };
+
+  const surveyTest: Form = {
+    id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+    type: 'CURRICULUM',
+    title: 'Test Survey',
+    description: 'This is a testing survey',
+    startTime: new Date(2024, 1, 2),
+    endTime: new Date(2024, 2, 2),
+    admissionYearFrom: 2019,
+    admissionYearTo: 2019,
+    graduateYearFrom: 2023,
+    graduateYearTo: 2023,
   };
 
   describe('create survey', () => {
@@ -387,7 +401,7 @@ describe('SurveyService', () => {
     it('should validate question order', async () => {
       const editSurveyDTOWithInvalidQuestionOrder: EditSurveyDTO = {
         ...editSurveyDTO,
-        updateQuestions: [
+        newQuestions: [
           questionText,
           questionRadio,
           questionCheckbox,
@@ -407,7 +421,7 @@ describe('SurveyService', () => {
     it('should validate radio option', async () => {
       const editSurveyDTOWithNoRadioOption: EditSurveyDTO = {
         ...editSurveyDTO,
-        updateQuestions: [
+        newQuestions: [
           questionText,
           { ...questionRadio, options: [] },
           questionCheckbox,
@@ -424,7 +438,7 @@ describe('SurveyService', () => {
     it('should validate checkbox option', async () => {
       const editSurveyDTOWithNoCheckboxOption: EditSurveyDTO = {
         ...editSurveyDTO,
-        updateQuestions: [
+        newQuestions: [
           questionText,
           questionRadio,
           { ...questionCheckbox, options: [] },
@@ -441,7 +455,7 @@ describe('SurveyService', () => {
     it('should validate option order', async () => {
       const editSurveyDTOWithInvalidOptionOrder: EditSurveyDTO = {
         ...editSurveyDTO,
-        updateQuestions: [
+        newQuestions: [
           questionText,
           {
             ...questionRadio,
@@ -461,7 +475,7 @@ describe('SurveyService', () => {
     it('should validate rangeFrom and rangeTo', async () => {
       const editSurveyDTOWithoutRange: EditSurveyDTO = {
         ...editSurveyDTO,
-        updateQuestions: [
+        newQuestions: [
           questionText,
           questionRadio,
           questionCheckbox,
@@ -478,7 +492,7 @@ describe('SurveyService', () => {
     it('should validate range', async () => {
       const editSurveyDTOWithInvalidRange: EditSurveyDTO = {
         ...editSurveyDTO,
-        updateQuestions: [
+        newQuestions: [
           questionText,
           questionRadio,
           questionCheckbox,
@@ -490,6 +504,127 @@ describe('SurveyService', () => {
         surveyService.editSurvey(surveyId, editSurveyDTOWithInvalidRange),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
+    });
+
+    describe('delete', () => {
+      const id = surveyTest.id;
+      const nonExistentId = '5e2633ba-435d-41e8-8432-efa2832ce564';
+      const invalidUUID = 'invalid-uuid';
+
+      it('should successfully delete a survey', async () => {
+        prismaMock.form.findUnique.mockResolvedValue(surveyTest);
+        prismaMock.form.delete.mockResolvedValue(surveyTest);
+
+        expect(await surveyService.deleteSurvey(id)).toEqual(id);
+        expect(prismaMock.form.delete).toHaveBeenCalledWith({
+          where: {
+            id: surveyTest.id,
+          },
+        });
+      });
+
+      it('should throw NotFoundException if survey is not found', async () => {
+        prismaMock.form.findUnique.mockResolvedValue(null);
+
+        await expect(surveyService.deleteSurvey(nonExistentId)).rejects.toThrow(
+          NotFoundException,
+        );
+        expect(prismaMock.form.delete).toHaveBeenCalledTimes(0);
+      });
+
+      it('should throw BadRequestException if ID is not a valid UUID', async () => {
+        await expect(surveyService.deleteSurvey(invalidUUID)).rejects.toThrow(
+          BadRequestException,
+        );
+      });
+
+      it("should not delete a survey if the current date is within the survey's active period", async () => {
+        jest.useFakeTimers().setSystemTime(new Date(2024, 1, 15));
+
+        prismaMock.form.findUnique.mockResolvedValue(surveyTest);
+
+        await expect(surveyService.deleteSurvey(id)).rejects.toThrow(
+          BadRequestException,
+        );
+
+        expect(prismaMock.form.delete).toHaveBeenCalledTimes(0);
+
+        jest.useRealTimers();
+      });
+    });
+  });
+
+  describe('get survey', () => {
+    const option = [
+      {
+        id: 'da20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        label: '21',
+        questionId: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        order: 0,
+      },
+    ];
+
+    const question = [
+      {
+        id: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        type: 'RADIO',
+        question: 'What is 9 + 10',
+        order: 0,
+        formId: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        rangeFrom: null,
+        rangeTo: null,
+        options: option,
+      },
+    ];
+
+    const survey = {
+      id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+      type: FormType.CURRICULUM,
+      title: 'Test Survey',
+      description: 'This is a testing survey',
+      startTime: new Date(2024, 1, 2),
+      endTime: new Date(2024, 2, 2),
+      admissionYearFrom: 2019,
+      admissionYearTo: 2019,
+      graduateYearFrom: 2023,
+      graduateYearTo: 2023,
+      questions: question,
+    };
+
+    const nonExistentId = '5e2633ba-435d-41e8-8432-efa2832ce564';
+    const invalidUUID = 'invalid-uuid';
+
+    it('should return a survey', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(survey);
+
+      expect(await surveyService.getSurvey(survey.id)).toEqual(survey);
+      expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
+      expect(prismaMock.form.findUnique).toHaveBeenCalledWith({
+        where: {
+          id: survey.id,
+        },
+        include: {
+          questions: {
+            include: {
+              option: true,
+            },
+          },
+        },
+      });
+    });
+
+    it('should throw NotFoundException if survey is not found', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(null);
+
+      await expect(surveyService.getSurvey(nonExistentId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw BadRequestException if ID is not a valid UUID', async () => {
+      await expect(surveyService.getSurvey(invalidUUID)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

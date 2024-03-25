@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Patch, Param } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Get,
+} from '@nestjs/common';
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO, EditSurveyDTO } from './DTO/SurveyDTO';
 import { IsAdmin } from 'src/common/decorator';
@@ -25,5 +33,17 @@ export class SurveyController {
     await this.surveyService.editSurvey(id, editSurveyDTO);
 
     return response('Survey successfully updated');
+  }
+
+  @Delete('/:id')
+  @IsAdmin()
+  async deleteSurvey(@Param('id') id: string) {
+    return this.surveyService.deleteSurvey(id);
+  }
+
+  @Get('/:id')
+  @IsAdmin()
+  async getSurvey(@Param('id') id: string) {
+    return this.surveyService.getSurvey(id);
   }
 }

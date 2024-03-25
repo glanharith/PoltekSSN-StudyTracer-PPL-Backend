@@ -23,11 +23,6 @@ export class OptionDTO {
 
 export class QuestionDTO {
   @IsString()
-  @IsUUID()
-  @IsOptional()
-  id?: string;
-
-  @IsString()
   @IsIn(['TEXT', 'CHECKBOX', 'RADIO', 'RANGE'])
   type: QuestionType;
 
@@ -51,6 +46,13 @@ export class QuestionDTO {
   @Type(() => OptionDTO)
   @IsOptional()
   options?: OptionDTO[];
+}
+
+export class ExistingQuestionDTO extends QuestionDTO {
+  @IsString()
+  @IsUUID()
+  @IsNotEmpty()
+  id: string;
 }
 
 export class DeleteQuestionDTO {
@@ -115,6 +117,6 @@ export class EditSurveyDTO extends SurveyDTO {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => QuestionDTO)
-  updateQuestions: QuestionDTO[];
+  @Type(() => ExistingQuestionDTO)
+  updateQuestions: ExistingQuestionDTO[];
 }
