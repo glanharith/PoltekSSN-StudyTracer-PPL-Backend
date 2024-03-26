@@ -8,6 +8,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   ValidateNested,
 } from 'class-validator';
 
@@ -47,7 +48,20 @@ export class QuestionDTO {
   options?: OptionDTO[];
 }
 
-export class CreateSurveyDTO {
+export class ExistingQuestionDTO extends QuestionDTO {
+  @IsString()
+  @IsUUID()
+  @IsNotEmpty()
+  id: string;
+}
+
+export class DeleteQuestionDTO {
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+}
+
+export class SurveyDTO {
   @IsString()
   @IsNotEmpty()
   title: string;
@@ -85,9 +99,24 @@ export class CreateSurveyDTO {
   @IsNumber()
   @IsOptional()
   graduateYearTo?: number;
-
+}
+export class CreateSurveyDTO extends SurveyDTO {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => QuestionDTO)
   questions: QuestionDTO[];
+}
+export class EditSurveyDTO extends SurveyDTO {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QuestionDTO)
+  newQuestions: QuestionDTO[];
+
+  @IsArray()
+  deleteQuestions: DeleteQuestionDTO[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ExistingQuestionDTO)
+  updateQuestions: ExistingQuestionDTO[];
 }
