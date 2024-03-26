@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSurveyDTO } from './DTO/CreateSurveyDTO';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class SurveyService {
@@ -112,5 +113,62 @@ export class SurveyService {
         });
       }
     });
+  }
+
+  async deleteSurvey(id: string): Promise<string> {
+    if (!isUUID(id)) {
+      throw new BadRequestException(
+        'Invalid ID format. ID must be a valid UUID'
+      );
+    }
+
+    const survey = await this.prisma.form.findUnique({
+      where: { id }
+    });
+
+    if (!survey) {
+      throw new NotFoundException(`Survey with ID ${id} not found`)
+    }
+
+    const startTime = survey.startTime.getTime();
+    const endTime = survey.endTime.getTime();
+    const currentTime = new Date().getTime();
+
+    if (currentTime >= startTime && currentTime <= endTime) {
+      throw new BadRequestException(
+        'Cannot delete survey during its active period'
+      );
+    }
+
+    await this.prisma.form.delete({
+      where: { id },
+    });
+
+    return id;
+  }
+
+  async getSurvey(id: string): Promise<Record<string, any>> {
+    if (!isUUID(id)) {
+      throw new BadRequestException(
+        'Invalid ID format. ID must be a valid UUID'
+      );
+    }
+
+    const survey = await this.prisma.form.findUnique({
+      where: { id },
+      include: {
+        questions: {
+          include: {
+            option: true,
+          },
+        },
+      },
+    });
+
+    if (!survey) {
+      throw new NotFoundException(`Survey with ID ${id} not found`);
+    }
+
+    return survey;
   }
 }

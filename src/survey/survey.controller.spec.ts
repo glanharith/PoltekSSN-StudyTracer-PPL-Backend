@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SurveyController } from './survey.controller';
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO } from './DTO/CreateSurveyDTO';
+import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { FormType } from '@prisma/client';
 
 jest.mock('./survey.service');
 
@@ -41,6 +43,98 @@ describe('SurveyController', () => {
       const result = await surveyController.createSurvey(createSurveyDTO);
 
       expect(result).toEqual({ message: 'Survey successfully created' });
+    });
+  });
+
+  describe('DELETE /survey/:id', () => {
+    const id = 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef';
+    const nonExistentId = 'notExist';
+
+    it('should successfully delete a survey', async () => {
+      surveyServiceMock.deleteSurvey.mockResolvedValue(id);
+      const result = await surveyController.deleteSurvey(id);
+
+      expect(result).toEqual(id);
+
+      expect(surveyServiceMock.deleteSurvey).toHaveBeenCalledWith(id);
+    });
+
+    it('should throw NotFoundException for a non-existing survey', async () => {
+      surveyServiceMock.deleteSurvey.mockRejectedValue(new NotFoundException('Survey not found'));
+      
+      await expect(surveyController.deleteSurvey(nonExistentId)).rejects.toThrow(
+        NotFoundException
+      );
+    });
+
+    it('should handle errors during deletion', async () => {
+      surveyServiceMock.deleteSurvey.mockRejectedValue(
+        new InternalServerErrorException('Error while deleting survey')
+      );
+
+      await expect(surveyController.deleteSurvey(id)).rejects.toThrow(
+        InternalServerErrorException
+      );
+    });
+  });
+
+  describe('GET /survey/:id', () => {
+    const option = [{
+      id: 'da20eb7a-8667-4a82-a18d-47aca6cf84ef',
+      label: '21',
+      questionId: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
+      order: 0
+    }];
+    
+    const question = [{
+      id: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
+      type: 'RADIO',
+      question: 'What is 9 + 10',
+      order: 0,
+      formId: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+      rangeFrom: null,
+      rangeTo: null,
+      options: option
+    }]; 
+    
+    const survey = {
+      id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+      type: FormType.CURRICULUM,
+      title: 'Test Survey',
+      description: 'This is a testing survey',
+      startTime: new Date(2024, 1, 2),
+      endTime: new Date(2024, 2, 2),
+      admissionYearFrom: 2019,
+      admissionYearTo: 2019,
+      graduateYearFrom: 2023,
+      graduateYearTo: 2023,
+      questions: question
+    };
+    
+    it('should successfully return a survey', async () => {
+      surveyServiceMock.getSurvey.mockResolvedValue(survey);
+
+      const result = await surveyController.getSurvey(survey.id);
+
+      expect(result).toEqual(survey);
+    });
+
+    it('should return NotFoundException for non-existing survey', async () => {
+      surveyServiceMock.getSurvey.mockRejectedValue(new NotFoundException('Survey not found'));
+
+      await expect(surveyController.getSurvey(survey.id)).rejects.toThrow(
+        NotFoundException
+      );
+    });
+
+    it('should handle errors during get', async () => {
+      surveyServiceMock.getSurvey.mockRejectedValue(
+        new InternalServerErrorException('Error while retrieving survey')
+      );
+
+      await expect(surveyController.getSurvey(survey.id)).rejects.toThrow(
+        InternalServerErrorException
+      );
     });
   });
 });
