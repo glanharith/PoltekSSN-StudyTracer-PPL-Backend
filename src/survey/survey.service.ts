@@ -132,13 +132,14 @@ export class SurveyService {
     });
   }
 
-<<<<<<< HEAD
   async getSurveyById(surveyId: string) {
     return this.prisma.form.findUnique({
       where: {
         id: surveyId,
       },
-=======
+    });
+  }
+
   async editSurvey(id: string, editSurveyDTO: EditSurveyDTO) {
     const { newQuestions, updateQuestions, deleteQuestions, ...form } =
       editSurveyDTO;
@@ -262,7 +263,6 @@ export class SurveyService {
 
     const survey = await this.prisma.form.findUnique({
       where: { id },
->>>>>>> daefe71d59316e2a603ad51251767102d46ca3b8
       include: {
         questions: {
           include: {
@@ -271,14 +271,11 @@ export class SurveyService {
         },
       },
     });
-<<<<<<< HEAD
-=======
 
     if (!survey) {
       throw new NotFoundException(`Survey with ID ${id} not found`);
     }
 
     return survey;
->>>>>>> daefe71d59316e2a603ad51251767102d46ca3b8
   }
 }
