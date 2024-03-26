@@ -11,6 +11,7 @@ import {
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO, EditSurveyDTO } from './DTO/SurveyDTO';
 import { response } from 'src/common/util/response';
+import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
 
 @Controller('survey')
 export class SurveyController {
@@ -22,6 +23,19 @@ export class SurveyController {
     await this.surveyService.createSurvey(createSurveyDTO);
 
     return response('Survey successfully created');
+  }
+
+  @Post('/fill-survey')
+  @IsAlumni()
+  async fillSurvey(@Body() fillSurveyDTO: FillSurveyDTO) {
+    for (const key in fillSurveyDTO) {
+      if (fillSurveyDTO.hasOwnProperty(key)) {
+        const value = fillSurveyDTO[key];
+        console.log('Key:', key);
+        console.log('Value:', value);
+      }
+    }
+    console.log('DDDDD');
   }
 
   @Get('/get/:surveyId')
