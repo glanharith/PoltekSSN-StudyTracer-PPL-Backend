@@ -137,6 +137,13 @@ export class SurveyService {
       where: {
         id: surveyId,
       },
+      include: {
+        questions: {
+          include: {
+            option: true,
+          },
+        },
+      },
     });
   }
 

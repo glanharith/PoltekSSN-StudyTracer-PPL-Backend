@@ -24,9 +24,9 @@ export class SurveyController {
     return response('Survey successfully created');
   }
 
-  @Get('/:surveyId')
+  @Get('/get/:surveyId')
   @IsAlumni()
-  async getSurvey(@Param('surveyId') surveyId: string) {
+  async getSurveyForAlumni(@Param('surveyId') surveyId: string) {
     return this.surveyService.getSurveyById(surveyId);
   }
 
@@ -45,5 +45,11 @@ export class SurveyController {
   @IsAdmin()
   async deleteSurvey(@Param('id') id: string) {
     return this.surveyService.deleteSurvey(id);
+  }
+
+  @Get('/:id')
+  @IsAdmin()
+  async getSurvey(@Param('id') id: string) {
+    return this.surveyService.getSurvey(id);
   }
 }
