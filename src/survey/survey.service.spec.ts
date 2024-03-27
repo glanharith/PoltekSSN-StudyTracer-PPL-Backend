@@ -627,4 +627,72 @@ describe('SurveyService', () => {
       );
     });
   });
+
+  describe('get all surveys', () => {
+    it('should return all surveys', async () => {
+      const surveysMock = [surveyTest];
+
+      prismaMock.form.findMany.mockResolvedValue(surveysMock);
+
+      const result = await surveyService.getAllSurveys();
+
+      expect(result).toEqual(surveysMock);
+      expect(prismaMock.form.findMany).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('getAvailableSurveyByYear', () => {
+    const startTime = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }),
+    );
+    const endTime = new Date(startTime.getDate() + 3);
+  
+    const survey = {
+      id: '9999cca4-8997-4880-ac67-9768ede6e2a3',
+      type: FormType.CURRICULUM,
+      title: 'Test Survey',
+      description: 'Test',
+      startTime: startTime,
+      endTime: endTime,
+      admissionYearFrom: 2020,
+      admissionYearTo: 2023,
+      graduateYearFrom: 2024,
+      graduateYearTo: 2027,
+    };
+    
+    it('should return surveys for a given admission and graduate year within 7 days before start date and before end time', async () => {
+      const admissionYear = '2020';
+      const graduateYear = '2025';
+      const surveysMock = [survey];
+
+      prismaMock.form.findMany.mockResolvedValue(surveysMock);
+
+      const result = await surveyService.getAvailableSurveyByYear(
+        admissionYear,
+        graduateYear,
+      );
+
+      expect(result).toEqual(surveysMock);
+    });
+
+    it('should throw BadRequestException if admissionYear or graduateYear is invalid', async () => {
+      const admissionYear = 'invalid';
+      const graduateYear = '2024';
+
+      await expect(
+        surveyService.getAvailableSurveyByYear(admissionYear, graduateYear),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaMock.form.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException if graduateYear is less than admissionYear', async () => {
+      const admissionYear = '2025';
+      const graduateYear = '2024';
+      
+      await expect(
+        surveyService.getAvailableSurveyByYear(admissionYear, graduateYear),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaMock.form.findMany).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -11,6 +11,7 @@ import {
   SurveyDTO,
 } from './DTO/SurveyDTO';
 import { isUUID } from 'class-validator';
+import { Form } from '@prisma/client';
 
 @Injectable()
 export class SurveyService {
@@ -269,5 +270,70 @@ export class SurveyService {
     }
 
     return survey;
+  }
+
+  async getAvailableSurveyByYear(
+    admissionYear: string,
+    graduateYear: string,
+  ): Promise<Form[]> {
+    const admissionYearNum = parseInt(admissionYear, 10);
+    const graduateYearNum = parseInt(graduateYear, 10);
+
+    if (isNaN(admissionYearNum) || isNaN(graduateYearNum)) {
+      throw new BadRequestException('Invalid admission year or graduate year');
+    }
+
+    if (graduateYearNum < admissionYearNum) {
+      throw new BadRequestException("Graduate year can't be less than admission year");
+    }
+
+    const today = new Date();
+    const startDateThreshold = new Date(
+      today.getTime() + 7 * 24 * 60 * 60 * 1000, // today + 7 days
+    );
+
+    const survey = await this.prisma.form.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              { admissionYearFrom: { equals: null } },
+              { admissionYearFrom: { lte: admissionYearNum } },
+            ],
+          },
+          {
+            OR: [
+              { admissionYearTo: { equals: null } },
+              { admissionYearTo: { gte: admissionYearNum } },
+            ],
+          },
+          {
+            OR: [
+              { graduateYearFrom: { equals: null } },
+              { graduateYearFrom: { lte: graduateYearNum } },
+            ],
+          },
+          {
+            OR: [
+              { graduateYearTo: { equals: null } },
+              { graduateYearTo: { gte: graduateYearNum } },
+            ],
+          },
+          {
+            AND: [
+              { startTime: { lte: startDateThreshold } },
+              { endTime: { gte: today } },
+            ],
+          },
+        ],
+      },
+    });
+
+    return survey;
+  }
+
+  async getAllSurveys(): Promise<Form[]> {
+    const surveys = await this.prisma.form.findMany();
+    return surveys;
   }
 }
