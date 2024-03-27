@@ -7,6 +7,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import {
   CreateSurveyDTO,
   EditSurveyDTO,
+  ExistingQuestionDTO,
   QuestionDTO,
   SurveyDTO,
 } from './DTO/SurveyDTO';
@@ -53,7 +54,11 @@ export class SurveyService {
     }
   }
 
-  private validateQuestions(questions: QuestionDTO[]) {
+  async createSurvey(createSurveyDTO: CreateSurveyDTO) {
+    const { questions, ...form } = createSurveyDTO;
+
+    this.validateFormDetails(form);
+
     const questionOrderSet = new Set();
 
     questions.forEach((q) => {
@@ -99,14 +104,6 @@ export class SurveyService {
         }
       }
     });
-  }
-
-  async createSurvey(createSurveyDTO: CreateSurveyDTO) {
-    const { questions, ...form } = createSurveyDTO;
-
-    this.validateFormDetails(form);
-
-    this.validateQuestions(questions);
 
     await this.prisma.$transaction(async (tx) => {
       const { id } = await tx.form.create({
@@ -138,7 +135,142 @@ export class SurveyService {
 
     this.validateFormDetails(form);
 
-    this.validateQuestions([...newQuestions, ...updateQuestions]);
+    const questionOrderSet = new Set();
+
+    newQuestions.forEach((q) => {
+      const { type, rangeFrom, rangeTo, options, order } = q;
+
+      if (questionOrderSet.has(order)) {
+        throw new BadRequestException({
+          message: 'Question order must be unique within a form',
+        });
+      }
+
+      questionOrderSet.add(order);
+
+      if (['CHECKBOX', 'RADIO'].includes(type)) {
+        if (options === undefined || options.length === 0) {
+          throw new BadRequestException({
+            message:
+              'Question with type CHECKBOX or RADIO must have at least 1 option',
+          });
+        }
+
+        const optionOrderSet = new Set();
+        options.forEach(({ order }) => {
+          if (optionOrderSet.has(order)) {
+            throw new BadRequestException({
+              message: 'Option order must be unique within a question',
+            });
+          }
+          optionOrderSet.add(order);
+        });
+      }
+
+      if (type === 'RANGE') {
+        if (
+          rangeFrom === undefined ||
+          rangeTo === undefined ||
+          rangeFrom > rangeTo
+        ) {
+          throw new BadRequestException({
+            message:
+              'Question with type RANGE must have rangeFrom and rangeTo, with rangeFrom less than or equal to rangeTo',
+          });
+        }
+      }
+    });
+
+    for (const q of updateQuestions) {
+      try {
+        const {
+          type,
+          rangeFrom,
+          rangeTo,
+          order,
+          newOptions,
+          updateOptions,
+          deleteOptions,
+        } = q;
+
+        if (questionOrderSet.has(order)) {
+          throw new BadRequestException({
+            message: 'Question order must be unique within a form',
+          });
+        }
+
+        if (type === 'RANGE') {
+          if (
+            rangeFrom === undefined ||
+            rangeTo === undefined ||
+            rangeFrom > rangeTo
+          ) {
+            throw new BadRequestException({
+              message:
+                'Question with type RANGE must have rangeFrom and rangeTo, with rangeFrom less than or equal to rangeTo',
+            });
+          }
+        }
+
+        if (['CHECKBOX', 'RADIO'].includes(type)) {
+          if (
+            ((newOptions === undefined || newOptions.length === 0) &&
+              (updateOptions === undefined || updateOptions.length === 0)) ||
+            (newOptions &&
+              updateOptions &&
+              deleteOptions &&
+              newOptions.length + updateOptions.length <= deleteOptions.length)
+          ) {
+            throw new BadRequestException({
+              message:
+                'Question with type CHECKBOX or RADIO must have at least 1 option when adding new options',
+            });
+          }
+
+          const newOptionOrders = (newOptions ?? []).map(
+            (option) => option.order,
+          );
+          const updateOptionOrders = (updateOptions ?? []).map(
+            (option) => option.order,
+          );
+          const optionOrders = [...newOptionOrders, ...updateOptionOrders];
+          const optionOrderSet = new Set();
+
+          optionOrders.forEach((order) => {
+            if (optionOrderSet.has(order)) {
+              throw new BadRequestException({
+                message: 'Option order must be unique within a question',
+              });
+            }
+            optionOrderSet.add(order);
+          });
+
+          const existingOptions = await this.prisma.option.findMany({
+            select: { id: true },
+            where: { questionId: q.id },
+          });
+          const updateOptionIds = (updateOptions ?? []).map(
+            (option) => option.id,
+          );
+          const deleteOptionIds = (deleteOptions ?? []).map(
+            (option) => option.id,
+          );
+          const existingOptionIdSet = new Set(
+            existingOptions.map((option) => option.id),
+          );
+
+          [...updateOptionIds, ...deleteOptionIds].forEach((id) => {
+            if (!existingOptionIdSet.has(id)) {
+              throw new BadRequestException({
+                message: 'Failed to update or delete option: Option not found',
+              });
+            }
+          });
+        }
+      } catch (error) {
+        throw error;
+      }
+    }
 
     const existingQuestions = await this.prisma.question.findMany({
       select: {
@@ -187,7 +319,8 @@ export class SurveyService {
       }
 
       for (const q of updateQuestions) {
-        const { options, ...question } = q;
+        const { newOptions, updateOptions, deleteOptions, ...question } = q;
+
         await tx.question.update({
           where: {
             id: q.id,
@@ -197,8 +330,30 @@ export class SurveyService {
             formId: id,
             options: {
               createMany: {
-                data: options ?? [],
+                data: newOptions ?? [],
               },
+            },
+          },
+        });
+
+        for (const opt of updateOptions ?? []) {
+          const { id, label, order } = opt;
+          await tx.option.update({
+            where: {
+              id: id,
+            },
+            data: {
+              label,
+              order,
+            },
+          });
+        }
+
+        const deleteOptionIds = (deleteOptions ?? []).map((opt) => opt.id);
+        await tx.option.deleteMany({
+          where: {
+            id: {
+              in: deleteOptionIds,
             },
           },
         });
