@@ -6,7 +6,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { FormType } from '@prisma/client';
+import { FormType, QuestionType } from '@prisma/client';
 
 jest.mock('./survey.service');
 
@@ -119,6 +119,70 @@ describe('SurveyController', () => {
           InternalServerErrorException,
         );
       });
+    });
+  });
+
+  describe('GET /survey/get/:surveyId', () => {
+    const option = [
+      {
+        id: 'da20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        label: '21',
+        questionId: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        order: 0,
+      },
+    ];
+
+    const question = [
+      {
+        id: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        type: QuestionType.RADIO,
+        question: 'What is 9 + 10',
+        order: 0,
+        formId: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        rangeFrom: null,
+        rangeTo: null,
+        option: option,
+      },
+    ];
+
+    const survey = {
+      id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+      type: FormType.CURRICULUM,
+      title: 'Test Survey',
+      description: 'This is a testing survey',
+      startTime: new Date(2024, 1, 2),
+      endTime: new Date(2024, 2, 2),
+      admissionYearFrom: 2019,
+      admissionYearTo: 2019,
+      graduateYearFrom: 2023,
+      graduateYearTo: 2023,
+      questions: question,
+    };
+
+    it('should return survey when id is valid', async () => {
+      surveyServiceMock.getSurveyById.mockResolvedValue(survey);
+      const res = await surveyController.getSurveyForAlumni(survey.id);
+      expect(res).toEqual(survey);
+    });
+
+    it('should return NotFoundException for non-existing survey', async () => {
+      surveyServiceMock.getSurveyById.mockRejectedValue(
+        new NotFoundException('Survey not found'),
+      );
+
+      await expect(
+        surveyController.getSurveyForAlumni(survey.id),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should handle errors during get', async () => {
+      surveyServiceMock.getSurveyById.mockRejectedValue(
+        new InternalServerErrorException('Error while retrieving survey'),
+      );
+
+      await expect(
+        surveyController.getSurveyForAlumni(survey.id),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 

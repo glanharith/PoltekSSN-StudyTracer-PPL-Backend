@@ -133,7 +133,13 @@ export class SurveyService {
   }
 
   async getSurveyById(surveyId: string) {
-    return this.prisma.form.findUnique({
+    if (!isUUID(surveyId)) {
+      throw new BadRequestException(
+        'Invalid ID format. ID must be a valid UUID',
+      );
+    }
+
+    const survey = await this.prisma.form.findUnique({
       where: {
         id: surveyId,
       },
@@ -145,6 +151,12 @@ export class SurveyService {
         },
       },
     });
+
+    if (!survey) {
+      throw new NotFoundException(`Survey with ID ${surveyId} not found`);
+    }
+
+    return survey;
   }
 
   async editSurvey(id: string, editSurveyDTO: EditSurveyDTO) {
