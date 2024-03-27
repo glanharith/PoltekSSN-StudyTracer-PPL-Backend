@@ -10,6 +10,7 @@ import {
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO, EditSurveyDTO } from './DTO/SurveyDTO';
 import { IsAdmin } from 'src/common/decorator';
+import { IsPublic } from 'src/common/decorator';
 import { response } from 'src/common/util/response';
 
 @Controller('survey')
@@ -17,7 +18,8 @@ export class SurveyController {
   constructor(private readonly surveyService: SurveyService) {}
 
   @Post()
-  @IsAdmin()
+  // @IsAdmin()
+  @IsPublic()
   async createSurvey(@Body() createSurveyDTO: CreateSurveyDTO) {
     await this.surveyService.createSurvey(createSurveyDTO);
 
@@ -25,7 +27,8 @@ export class SurveyController {
   }
 
   @Patch('/:id')
-  @IsAdmin()
+  // @IsAdmin()
+  @IsPublic()
   async editSurvey(
     @Param('id') id: string,
     @Body() editSurveyDTO: EditSurveyDTO,
@@ -36,13 +39,15 @@ export class SurveyController {
   }
 
   @Delete('/:id')
-  @IsAdmin()
+  // @IsAdmin()
+  @IsPublic()
   async deleteSurvey(@Param('id') id: string) {
     return this.surveyService.deleteSurvey(id);
   }
 
   @Get('/:id')
-  @IsAdmin()
+  // @IsAdmin()
+  @IsPublic()
   async getSurvey(@Param('id') id: string) {
     return this.surveyService.getSurvey(id);
   }
