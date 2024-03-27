@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SurveyService } from './survey.service';
 import { DeepMockProxy } from 'jest-mock-extended';
-import { Form, PrismaClient, FormType, Question } from '@prisma/client';
+import { Form, PrismaClient, FormType, Question, Option } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   CreateSurveyDTO,
@@ -9,6 +9,7 @@ import {
   QuestionDTO,
   EditSurveyDTO,
   ExistingQuestionDTO,
+  ExistingOptionDTO,
 } from './DTO/SurveyDTO';
 import { createPrismaMock } from 'src/prisma/prisma.mock';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
@@ -30,6 +31,15 @@ describe('SurveyService', () => {
     surveyService = module.get<SurveyService>(SurveyService);
   });
 
+  const mockOption: Option[] = [
+    {
+      id: 'uuid',
+      questionId: 'uuid',
+      label: 'label',
+      order: 1,
+    },
+  ];
+
   const optionRadio1: OptionDTO = {
     label: 'Option Radio 1',
     order: 1,
@@ -38,6 +48,18 @@ describe('SurveyService', () => {
   const optionRadio2: OptionDTO = {
     label: 'Option Radio 2',
     order: 2,
+  };
+
+  const existingOptionRadio1: ExistingOptionDTO = {
+    id: 'uuid',
+    ...optionRadio1,
+    order: 3,
+  };
+
+  const existingOptionRadio2: ExistingOptionDTO = {
+    id: 'uuid',
+    ...optionRadio2,
+    order: 4,
   };
 
   const optionCheckbox1: OptionDTO = {
@@ -94,12 +116,20 @@ describe('SurveyService', () => {
 
   const existingQuestionRadio: ExistingQuestionDTO = {
     id: 'uuid',
-    ...questionRadio,
+    type: 'RADIO',
+    question: 'Question Radio',
+    order: 2,
+    newOptions: [optionRadio1, optionRadio2],
   };
 
   const existingQuestionCheckbox: ExistingQuestionDTO = {
     id: 'uuid',
-    ...questionCheckbox,
+    type: 'CHECKBOX',
+    question: 'Question Checkbox',
+    order: 3,
+    newOptions: [optionCheckbox1, optionCheckbox2],
+    updateOptions: [existingOptionRadio1, existingOptionRadio2],
+    deleteOptions: [{ id: 'uuid' }],
   };
 
   const existingQuestionRange: ExistingQuestionDTO = {
@@ -320,6 +350,7 @@ describe('SurveyService', () => {
 
   describe('edit survey', () => {
     it('should edit survey successfully', async () => {
+      prismaMock.option.findMany.mockResolvedValue(mockOption);
       const mockQuestion: Question[] = [
         {
           id: 'uuid',
@@ -341,7 +372,16 @@ describe('SurveyService', () => {
       await surveyService.editSurvey(surveyId, editSurveyDTO);
     });
 
-    it('should check if the updated question exists in the form', async () => {
+    it('should check if the updated or deleted option exists in the updated question', async () => {
+      prismaMock.option.findMany.mockResolvedValue([]);
+
+      await expect(
+        surveyService.editSurvey(surveyId, editSurveyDTO),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should check if the updated or deleted question exists in the form', async () => {
+      prismaMock.option.findMany.mockResolvedValue(mockOption);
       prismaMock.question.findMany.mockResolvedValue([]);
       prismaMock.$transaction.mockImplementation(async (callback) => {
         const prismaMockTx = createPrismaMock();
@@ -418,7 +458,23 @@ describe('SurveyService', () => {
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
 
-    it('should validate radio option', async () => {
+    it('should validate existing question order', async () => {
+      const editSurveyDTOWithInvalidQuestionOrder: EditSurveyDTO = {
+        ...editSurveyDTO,
+        newQuestions: [questionText, questionRadio, questionCheckbox],
+        updateQuestions: [{ ...existingQuestionRange, order: 1 }],
+      };
+
+      await expect(
+        surveyService.editSurvey(
+          surveyId,
+          editSurveyDTOWithInvalidQuestionOrder,
+        ),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaMock.$transaction).toBeCalledTimes(0);
+    });
+
+    it('should validate new radio option', async () => {
       const editSurveyDTOWithNoRadioOption: EditSurveyDTO = {
         ...editSurveyDTO,
         newQuestions: [
@@ -435,7 +491,25 @@ describe('SurveyService', () => {
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
 
-    it('should validate checkbox option', async () => {
+    it('should validate existing radio option', async () => {
+      const editSurveyDTOWithNoRadioOption: EditSurveyDTO = {
+        ...editSurveyDTO,
+        newQuestions: [],
+        updateQuestions: [
+          existingQuestionText,
+          { ...existingQuestionRadio, newOptions: [], updateOptions: [] },
+          existingQuestionCheckbox,
+          existingQuestionRange,
+        ],
+      };
+
+      await expect(
+        surveyService.editSurvey(surveyId, editSurveyDTOWithNoRadioOption),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaMock.$transaction).toBeCalledTimes(0);
+    });
+
+    it('should validate new checkbox option', async () => {
       const editSurveyDTOWithNoCheckboxOption: EditSurveyDTO = {
         ...editSurveyDTO,
         newQuestions: [
@@ -452,7 +526,26 @@ describe('SurveyService', () => {
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
 
-    it('should validate option order', async () => {
+    it('should validate existing checkbox option', async () => {
+      prismaMock.option.findMany.mockResolvedValue(mockOption);
+      const editSurveyDTOWithNoCheckboxOption: EditSurveyDTO = {
+        ...editSurveyDTO,
+        newQuestions: [],
+        updateQuestions: [
+          existingQuestionText,
+          existingQuestionRadio,
+          { ...existingQuestionCheckbox, newOptions: [], updateOptions: [] },
+          existingQuestionRange,
+        ],
+      };
+
+      await expect(
+        surveyService.editSurvey(surveyId, editSurveyDTOWithNoCheckboxOption),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaMock.$transaction).toBeCalledTimes(0);
+    });
+
+    it('should validate option order of a new question', async () => {
       const editSurveyDTOWithInvalidOptionOrder: EditSurveyDTO = {
         ...editSurveyDTO,
         newQuestions: [
@@ -472,7 +565,32 @@ describe('SurveyService', () => {
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
 
-    it('should validate rangeFrom and rangeTo', async () => {
+    it('should validate option order of an existing question', async () => {
+      const editSurveyDTOWithInvalidOptionOrder: EditSurveyDTO = {
+        ...editSurveyDTO,
+        newQuestions: [],
+        updateQuestions: [
+          existingQuestionText,
+          {
+            ...existingQuestionRadio,
+            newOptions: undefined,
+            updateOptions: [
+              existingOptionRadio1,
+              { ...existingOptionRadio2, order: 3 },
+            ],
+          },
+          existingQuestionCheckbox,
+          existingQuestionRange,
+        ],
+      };
+
+      await expect(
+        surveyService.editSurvey(surveyId, editSurveyDTOWithInvalidOptionOrder),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaMock.$transaction).toBeCalledTimes(0);
+    });
+
+    it('should validate rangeFrom and rangeTo of a new question', async () => {
       const editSurveyDTOWithoutRange: EditSurveyDTO = {
         ...editSurveyDTO,
         newQuestions: [
@@ -489,7 +607,29 @@ describe('SurveyService', () => {
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
 
-    it('should validate range', async () => {
+    it('should validate rangeFrom and rangeTo of an existing question', async () => {
+      prismaMock.option.findMany.mockResolvedValue(mockOption);
+      const editSurveyDTOWithoutRange: EditSurveyDTO = {
+        ...editSurveyDTO,
+        updateQuestions: [
+          existingQuestionText,
+          existingQuestionRadio,
+          existingQuestionCheckbox,
+          {
+            ...existingQuestionRange,
+            rangeFrom: undefined,
+            rangeTo: undefined,
+          },
+        ],
+      };
+
+      await expect(
+        surveyService.editSurvey(surveyId, editSurveyDTOWithoutRange),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaMock.$transaction).toBeCalledTimes(0);
+    });
+
+    it('should validate range of a new question', async () => {
       const editSurveyDTOWithInvalidRange: EditSurveyDTO = {
         ...editSurveyDTO,
         newQuestions: [
@@ -497,6 +637,24 @@ describe('SurveyService', () => {
           questionRadio,
           questionCheckbox,
           { ...questionRange, rangeFrom: 5, rangeTo: 1 },
+        ],
+      };
+
+      await expect(
+        surveyService.editSurvey(surveyId, editSurveyDTOWithInvalidRange),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaMock.$transaction).toBeCalledTimes(0);
+    });
+
+    it('should validate range of an existing question', async () => {
+      prismaMock.option.findMany.mockResolvedValue(mockOption);
+      const editSurveyDTOWithInvalidRange: EditSurveyDTO = {
+        ...editSurveyDTO,
+        updateQuestions: [
+          existingQuestionText,
+          existingQuestionRadio,
+          existingQuestionCheckbox,
+          { ...existingQuestionRange, rangeFrom: 5, rangeTo: 1 },
         ],
       };
 
