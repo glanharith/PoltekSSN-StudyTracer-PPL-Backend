@@ -147,7 +147,7 @@ export class SurveyService {
       include: {
         questions: {
           include: {
-            option: true,
+            options: true,
           },
         },
       },
@@ -311,7 +311,9 @@ export class SurveyService {
     }
 
     if (graduateYearNum < admissionYearNum) {
-      throw new BadRequestException("Graduate year can't be less than admission year");
+      throw new BadRequestException(
+        "Graduate year can't be less than admission year",
+      );
     }
 
     const today = new Date();

@@ -597,7 +597,7 @@ describe('SurveyService', () => {
     it('should return a survey', async () => {
       prismaMock.form.findUnique.mockResolvedValue(survey);
 
-      expect(await surveyService.getSurvey(survey.id)).toEqual(survey);
+      expect(await surveyService.getSurveyById(survey.id)).toEqual(survey);
       expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
       expect(prismaMock.form.findUnique).toHaveBeenCalledWith({
         where: {
@@ -748,7 +748,7 @@ describe('SurveyService', () => {
         include: {
           questions: {
             include: {
-              option: true,
+              options: true,
             },
           },
         },

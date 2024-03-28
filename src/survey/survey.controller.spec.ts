@@ -57,7 +57,7 @@ describe('SurveyController', () => {
     graduateYearTo: 2027,
     questions: question,
   };
-  
+
   describe('POST /survey', () => {
     const createSurveyDTO: CreateSurveyDTO = {
       title: 'title',
@@ -175,7 +175,7 @@ describe('SurveyController', () => {
         formId: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
         rangeFrom: null,
         rangeTo: null,
-        option: option,
+        options: option,
       },
     ];
 
