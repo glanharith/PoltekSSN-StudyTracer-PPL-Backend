@@ -122,7 +122,7 @@ export class SurveyService {
           data: {
             ...question,
             formId: id,
-            option: {
+            options: {
               createMany: {
                 data: options ?? [],
               },
@@ -205,7 +205,7 @@ export class SurveyService {
           data: {
             ...question,
             formId: id,
-            option: {
+            options: {
               createMany: {
                 data: options ?? [],
               },
@@ -223,7 +223,7 @@ export class SurveyService {
           data: {
             ...question,
             formId: id,
-            option: {
+            options: {
               createMany: {
                 data: options ?? [],
               },
@@ -286,7 +286,7 @@ export class SurveyService {
       include: {
         questions: {
           include: {
-            option: true,
+            options: true,
           },
         },
       },

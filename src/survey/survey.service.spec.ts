@@ -606,7 +606,7 @@ describe('SurveyService', () => {
         include: {
           questions: {
             include: {
-              option: true,
+              options: true,
             },
           },
         },
