@@ -21,6 +21,19 @@ export class OptionDTO {
   order: number;
 }
 
+export class ExistingOptionDTO extends OptionDTO {
+  @IsString()
+  @IsUUID()
+  @IsNotEmpty()
+  id: string;
+}
+
+export class DeleteOptionDTO {
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+}
+
 export class QuestionDTO {
   @IsString()
   @IsIn(['TEXT', 'CHECKBOX', 'RADIO', 'RANGE'])
@@ -53,6 +66,19 @@ export class ExistingQuestionDTO extends QuestionDTO {
   @IsUUID()
   @IsNotEmpty()
   id: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => OptionDTO)
+  newOptions?: OptionDTO[];
+
+  @IsArray()
+  deleteOptions?: DeleteOptionDTO[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ExistingOptionDTO)
+  updateOptions?: ExistingOptionDTO[];
 }
 
 export class DeleteQuestionDTO {
