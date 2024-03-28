@@ -10,8 +10,9 @@ import {
 } from '@nestjs/common';
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO, EditSurveyDTO } from './DTO/SurveyDTO';
-import { IsAdmin, IsHead, IsPublic } from 'src/common/decorator';
+import { IsAdmin, IsHead, IsPublic, IsAlumni } from 'src/common/decorator';
 import { response } from 'src/common/util/response';
+import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
 
 @Controller('survey')
 export class SurveyController {
@@ -23,6 +24,25 @@ export class SurveyController {
     await this.surveyService.createSurvey(createSurveyDTO);
 
     return response('Survey successfully created');
+  }
+
+  @Post('/fill-survey')
+  @IsAlumni()
+  async fillSurvey(@Body() fillSurveyDTO: FillSurveyDTO) {
+    for (const key in fillSurveyDTO) {
+      if (fillSurveyDTO.hasOwnProperty(key)) {
+        const value = fillSurveyDTO[key];
+        console.log('Key:', key);
+        console.log('Value:', value);
+      }
+    }
+    console.log('DDDDD');
+  }
+
+  @Get('/get/:surveyId')
+  @IsAlumni()
+  async getSurveyForAlumni(@Param('surveyId') surveyId: string) {
+    return this.surveyService.getSurveyById(surveyId);
   }
 
   @Patch('/:id')
@@ -54,11 +74,17 @@ export class SurveyController {
     @Query('admissionYear') admissionYear: string,
     @Query('graduateYear') graduateYear: string,
   ) {
-    const surveys = await this.surveyService.getAvailableSurveyByYear(admissionYear, graduateYear);
+    const surveys = await this.surveyService.getAvailableSurveyByYear(
+      admissionYear,
+      graduateYear,
+    );
 
-    return response(`Successfully got surveys for admission year ${admissionYear} and graduate year ${graduateYear}`, {
-      data: surveys,
-    })
+    return response(
+      `Successfully got surveys for admission year ${admissionYear} and graduate year ${graduateYear}`,
+      {
+        data: surveys,
+      },
+    );
   }
 
   @Get('/all')
@@ -68,6 +94,6 @@ export class SurveyController {
     const allSurveys = await this.surveyService.getAllSurveys();
     return response('Successfully got all surveys', {
       data: allSurveys,
-    })
+    });
   }
 }

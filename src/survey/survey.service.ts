@@ -133,6 +133,33 @@ export class SurveyService {
     });
   }
 
+  async getSurveyById(surveyId: string) {
+    if (!isUUID(surveyId)) {
+      throw new BadRequestException(
+        'Invalid ID format. ID must be a valid UUID',
+      );
+    }
+
+    const survey = await this.prisma.form.findUnique({
+      where: {
+        id: surveyId,
+      },
+      include: {
+        questions: {
+          include: {
+            options: true,
+          },
+        },
+      },
+    });
+
+    if (!survey) {
+      throw new NotFoundException(`Survey with ID ${surveyId} not found`);
+    }
+
+    return survey;
+  }
+
   async editSurvey(id: string, editSurveyDTO: EditSurveyDTO) {
     const { newQuestions, updateQuestions, deleteQuestions, ...form } =
       editSurveyDTO;
@@ -284,7 +311,9 @@ export class SurveyService {
     }
 
     if (graduateYearNum < admissionYearNum) {
-      throw new BadRequestException("Graduate year can't be less than admission year");
+      throw new BadRequestException(
+        "Graduate year can't be less than admission year",
+      );
     }
 
     const today = new Date();

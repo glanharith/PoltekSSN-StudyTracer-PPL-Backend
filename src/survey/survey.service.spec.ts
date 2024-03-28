@@ -597,7 +597,7 @@ describe('SurveyService', () => {
     it('should return a survey', async () => {
       prismaMock.form.findUnique.mockResolvedValue(survey);
 
-      expect(await surveyService.getSurvey(survey.id)).toEqual(survey);
+      expect(await surveyService.getSurveyById(survey.id)).toEqual(survey);
       expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
       expect(prismaMock.form.findUnique).toHaveBeenCalledWith({
         where: {
@@ -646,7 +646,7 @@ describe('SurveyService', () => {
       new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }),
     );
     const endTime = new Date(startTime.getDate() + 3);
-  
+
     const survey = {
       id: '9999cca4-8997-4880-ac67-9768ede6e2a3',
       type: FormType.CURRICULUM,
@@ -659,7 +659,7 @@ describe('SurveyService', () => {
       graduateYearFrom: 2024,
       graduateYearTo: 2027,
     };
-    
+
     it('should return surveys for a given admission and graduate year within 7 days before start date and before end time', async () => {
       const admissionYear = '2020';
       const graduateYear = '2025';
@@ -688,11 +688,85 @@ describe('SurveyService', () => {
     it('should throw BadRequestException if graduateYear is less than admissionYear', async () => {
       const admissionYear = '2025';
       const graduateYear = '2024';
-      
+
       await expect(
         surveyService.getAvailableSurveyByYear(admissionYear, graduateYear),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.form.findMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('get survey for alumni', () => {
+    const option = [
+      {
+        id: 'da20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        label: '21',
+        questionId: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        order: 0,
+      },
+    ];
+
+    const question = [
+      {
+        id: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        type: 'RADIO',
+        question: 'What is 9 + 10',
+        order: 0,
+        formId: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        rangeFrom: null,
+        rangeTo: null,
+        option: option,
+      },
+    ];
+
+    const survey = {
+      id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+      type: FormType.CURRICULUM,
+      title: 'Test Survey',
+      description: 'This is a testing survey',
+      startTime: new Date(2024, 1, 2),
+      endTime: new Date(2024, 2, 2),
+      admissionYearFrom: 2019,
+      admissionYearTo: 2019,
+      graduateYearFrom: 2023,
+      graduateYearTo: 2023,
+      questions: question,
+    };
+
+    const nonExistentId = '5e2633ba-435d-41e8-8432-efa2832ce564';
+    const invalidUUID = 'invalid-uuid';
+
+    it('should return a survey', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(survey);
+
+      expect(await surveyService.getSurveyById(survey.id)).toEqual(survey);
+      expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
+      expect(prismaMock.form.findUnique).toHaveBeenCalledWith({
+        where: {
+          id: survey.id,
+        },
+        include: {
+          questions: {
+            include: {
+              options: true,
+            },
+          },
+        },
+      });
+    });
+
+    it('should throw NotFoundException if survey is not found', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(null);
+
+      await expect(surveyService.getSurveyById(nonExistentId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw BadRequestException if ID is not a valid UUID', async () => {
+      await expect(surveyService.getSurveyById(invalidUUID)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });
