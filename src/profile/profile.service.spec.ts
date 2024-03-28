@@ -5,17 +5,21 @@ import { ProfileDTO } from './DTO';
 import { Alumni, PrismaClient, User } from '@prisma/client';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DeepMockProxy } from 'jest-mock-extended';
-import { secure } from 'src/common/util/security';
+import { secure, hash } from 'src/common/util/security';
 import { createPrismaMock } from 'src/prisma/prisma.mock';
-import { hash } from 'src/common/util/security';
+import { ZxcvbnService } from 'src/zxcvbn/zxcvbn.service';
+import { ZxcvbnModule } from 'src/zxcvbn/zxcvbn.module';
 
+jest.mock('src/zxcvbn/zxcvbn.service');
 describe('ProfileService', () => {
   let profileService: ProfileService;
   let prismaMock: DeepMockProxy<PrismaClient>;
+  let zxcvbnService: jest.Mocked<ZxcvbnService>;
 
   beforeEach(async () => {
     prismaMock = createPrismaMock();
     const testModule: TestingModule = await Test.createTestingModule({
+      imports: [ZxcvbnModule],
       providers: [
         ProfileService,
         { provide: PrismaService, useValue: prismaMock },
@@ -23,6 +27,7 @@ describe('ProfileService', () => {
     }).compile();
 
     profileService = testModule.get<ProfileService>(ProfileService);
+    zxcvbnService = testModule.get<jest.Mocked<ZxcvbnService>>(ZxcvbnService);
   });
   const alumni: Alumni = {
     id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
@@ -32,6 +37,7 @@ describe('ProfileService', () => {
     enrollmentYear: 2021,
     graduateYear: 2025,
     studyProgramId: '1',
+    npm: 'npm',
   };
   const user: User = {
     id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
@@ -117,6 +123,26 @@ describe('ProfileService', () => {
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.user.update).toHaveBeenCalledTimes(0);
     });
+
+    it('should throw BadRequestException if new password is not strong', async () => {
+      const updatedProfile: ProfileDTO = {
+        name: 'new name',
+        currentPassword: 'currentPassword',
+        password: 'newpassword',
+        address: 'new depok',
+        phoneNo: '081283888859',
+        enrollmentYear: 2020,
+      };
+
+      const hashedPassword = await hash('currentPassword');
+      user.password = hashedPassword;
+      prismaMock.user.findUnique.mockResolvedValue(user);
+      zxcvbnService.getScore.mockResolvedValue(1);
+
+      await expect(
+        profileService.edit(updatedProfile, user.email),
+      ).rejects.toThrow(BadRequestException);
+    });
     it('should not hash password and secure phoneNo and address if undefined', async () => {
       const hashedPassword = await hash('currentPassword');
       user.password = hashedPassword;
@@ -147,9 +173,12 @@ describe('ProfileService', () => {
       alumniUser.alumni.phoneNo = securedPhoneNo;
       alumniUser.alumni.address = securedAddress;
       const findUniqueMock = jest.fn().mockResolvedValue(alumniUser);
-      const profileService = new ProfileService({
-        user: { findUnique: findUniqueMock },
-      } as any);
+      const profileService = new ProfileService(
+        {
+          user: { findUnique: findUniqueMock },
+        } as any,
+        zxcvbnService,
+      );
 
       expect(await profileService.getProfilebyEmail(user.email)).toEqual({
         name: 'limbat',
@@ -163,9 +192,12 @@ describe('ProfileService', () => {
 
     it('should throw NotFoundException if user is not found', async () => {
       const findUniqueMock = jest.fn().mockResolvedValue(null);
-      const profileService = new ProfileService({
-        user: { findUnique: findUniqueMock },
-      } as any);
+      const profileService = new ProfileService(
+        {
+          user: { findUnique: findUniqueMock },
+        } as any,
+        zxcvbnService,
+      );
 
       await expect(
         profileService.getProfilebyEmail('nonexistent@example.com'),
@@ -179,9 +211,12 @@ describe('ProfileService', () => {
       };
 
       const findUniqueMock = jest.fn().mockResolvedValue(mockUser);
-      const profileService = new ProfileService({
-        user: { findUnique: findUniqueMock },
-      } as any);
+      const profileService = new ProfileService(
+        {
+          user: { findUnique: findUniqueMock },
+        } as any,
+        zxcvbnService,
+      );
 
       await expect(
         profileService.getProfilebyEmail('test@example.com'),

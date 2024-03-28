@@ -11,15 +11,20 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { createPrismaMock } from 'src/prisma/prisma.mock';
-import { hash, secure, unsecure } from 'src/common/util/security';
+import { hash, secure } from 'src/common/util/security';
+import { ZxcvbnService } from 'src/zxcvbn/zxcvbn.service';
+import { ZxcvbnModule } from 'src/zxcvbn/zxcvbn.module';
 
+jest.mock('src/zxcvbn/zxcvbn.service');
 describe('HeadOfStudyProgramService', () => {
   let headOfStudyProgramService: HeadOfStudyProgramService;
   let prismaMock: DeepMockProxy<PrismaClient>;
+  let zxcvbnService: jest.Mocked<ZxcvbnService>;
 
   beforeEach(async () => {
     prismaMock = createPrismaMock();
     const module: TestingModule = await Test.createTestingModule({
+      imports: [ZxcvbnModule],
       providers: [
         HeadOfStudyProgramService,
         { provide: PrismaService, useValue: prismaMock },
@@ -29,6 +34,7 @@ describe('HeadOfStudyProgramService', () => {
     headOfStudyProgramService = module.get<HeadOfStudyProgramService>(
       HeadOfStudyProgramService,
     );
+    zxcvbnService = module.get<jest.Mocked<ZxcvbnService>>(ZxcvbnService);
   });
 
   const studyProgram: StudyProgram = {
@@ -57,18 +63,21 @@ describe('HeadOfStudyProgramService', () => {
     name: 'Test kaprodi',
     password: 'passwordKaprpdi',
     studyProgramId: studyProgram.id,
+    nip: '123',
   };
 
   const headOfStudyProgram: HeadStudyProgram = {
     id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
     studyProgramId: studyProgram.id,
     isActive: true,
+    nip: '123',
   };
 
   const headOfStudyProgram2: HeadStudyProgram = {
     id: 'a11960cf-aefe-4e1d-8388-6327e5ca5131',
     studyProgramId: studyProgramTest.id,
     isActive: true,
+    nip: '123',
   };
 
   const headUser: User = {
@@ -115,7 +124,9 @@ describe('HeadOfStudyProgramService', () => {
           id: 'id',
           studyProgramId: registerKaprodiDTO.studyProgramId,
           isActive: true,
+          nip: 'nip',
         });
+        zxcvbnService.getScore.mockResolvedValue(5);
 
         await headOfStudyProgramService.create(registerKaprodiDTO);
         expect(prismaMock.user.create).toBeCalledTimes(1);
@@ -129,6 +140,19 @@ describe('HeadOfStudyProgramService', () => {
           password: 'passwordKaprpdi',
           role: 'HEAD_STUDY_PROGRAM',
         });
+
+        await expect(
+          headOfStudyProgramService.create(registerKaprodiDTO),
+        ).rejects.toThrow(BadRequestException);
+        expect(prismaMock.user.create).toBeCalledTimes(0);
+      });
+
+      it('should throw BadRequest if kaprodi with same nip is exist', async () => {
+        prismaMock.user.findFirst.mockResolvedValue(null);
+        prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgram);
+        prismaMock.headStudyProgram.findFirst.mockResolvedValue(
+          headOfStudyProgram,
+        );
 
         await expect(
           headOfStudyProgramService.create(registerKaprodiDTO),
@@ -150,6 +174,16 @@ describe('HeadOfStudyProgramService', () => {
       it('should throw BadRequest if head of study program not exists', async () => {
         prismaMock.user.findFirst.mockResolvedValue(null);
         prismaMock.studyProgram.findUnique.mockResolvedValue(null);
+
+        await expect(
+          headOfStudyProgramService.create(registerKaprodiDTO),
+        ).rejects.toThrow(BadRequestException);
+        expect(prismaMock.user.create).toBeCalledTimes(0);
+      });
+
+      it('should throw BadRequest if password not strong enough', async () => {
+        prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgram);
+        zxcvbnService.getScore.mockResolvedValue(1);
 
         await expect(
           headOfStudyProgramService.create(registerKaprodiDTO),
@@ -328,6 +362,7 @@ describe('HeadOfStudyProgramService', () => {
         id: headOfStudyProgram.id,
         studyProgramId: studyProgramNew.id,
         isActive: true,
+        nip: 'nip',
       });
       prismaMock.user.update.mockResolvedValue({
         id: headUser.id,
@@ -390,6 +425,7 @@ describe('HeadOfStudyProgramService', () => {
         id: headOfStudyProgram.id,
         studyProgramId: studyProgramNew.id,
         isActive: true,
+        nip: 'nip',
       });
       prismaMock.user.update.mockResolvedValue(headUser);
 

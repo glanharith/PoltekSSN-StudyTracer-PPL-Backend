@@ -31,6 +31,7 @@ model HeadStudyProgram {
   id             String  @id @unique
   studyProgramId String
   isActive       Boolean @default(false)
+  nip            String  @unique @default(uuid())
 
   user         User         @relation(fields: [id], references: [id])
   studyProgram StudyProgram @relation(fields: [studyProgramId], references: [id])
@@ -44,6 +45,7 @@ model Alumni {
   enrollmentYear Int
   graduateYear   Int
   studyProgramId String
+  npm            String @unique @default(uuid())
 
   user         User         @relation(fields: [id], references: [id])
   studyProgram StudyProgram @relation(fields: [studyProgramId], references: [id])
@@ -68,6 +70,11 @@ model Form {
   startTime   DateTime
   endTime     DateTime
 
+  admissionYearFrom Int?
+  admissionYearTo   Int?
+  graduateYearFrom  Int?
+  graduateYearTo    Int?
+
   questions Question[]
   responses Response[]
 }
@@ -81,17 +88,18 @@ model Question {
   order     Int
   formId    String
 
-  form    Form     @relation(fields: [formId], references: [id])
-  option  Option[]
-  answers Answer[]
+  form     Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  options  Option[]
+  answers  Answer[]
 }
 
 model Option {
   id         String @id @unique @default(uuid())
   label      String
   questionId String
+  order      Int
 
-  question Question @relation(fields: [questionId], references: [id])
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model Response {

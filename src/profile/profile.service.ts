@@ -1,16 +1,20 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfileDTO } from './DTO';
-import {  hash, secure, unsecure } from 'src/common/util/security';
+import { hash, secure, unsecure } from 'src/common/util/security';
 import { compare } from 'bcrypt';
+import { ZxcvbnService } from 'src/zxcvbn/zxcvbn.service';
 
 @Injectable()
 export class ProfileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly zxcvbnService: ZxcvbnService,
+  ) {}
 
   async edit(
     {
@@ -41,6 +45,16 @@ export class ProfileService {
     if (currentPassword) {
       if (!(await compare(currentPassword, user.password))) {
         throw new BadRequestException('Invalid password');
+      }
+
+      const passwordScore = await this.zxcvbnService.getScore(
+        password as string,
+      );
+
+      if (passwordScore <= 2) {
+        throw new BadRequestException({
+          message: 'Password not strong enough',
+        });
       }
     }
 
@@ -79,6 +93,7 @@ export class ProfileService {
         alumni: {
           select: {
             id: false,
+            npm: true,
             phoneNo: true,
             address: true,
             gender: false,
@@ -98,6 +113,7 @@ export class ProfileService {
     return {
       name: user.name,
       alumni: {
+        npm: user.alumni.npm,
         phoneNo: decryptPhoneNo,
         address: decryptAddress,
         enrollmentYear: user.alumni.enrollmentYear,

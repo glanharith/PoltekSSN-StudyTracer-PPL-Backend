@@ -54,18 +54,21 @@ describe('HeadOfStudyProgramController', () => {
     name: 'Test kaprodi',
     password: 'passwordKaprpdi',
     studyProgramId: studyProgram.id,
+    nip: '123123',
   };
 
   const headOfStudyProgram: HeadStudyProgram = {
     id: '1',
     studyProgramId: studyProgram.id,
     isActive: true,
+    nip: 'nip',
   };
 
   const headOfStudyProgram2: HeadStudyProgram = {
     id: '2',
     studyProgramId: studyProgramTest.id,
     isActive: true,
+    nip: 'nip',
   };
 
   const cleanData = [
@@ -78,6 +81,7 @@ describe('HeadOfStudyProgramController', () => {
           id: studyProgram.id,
         },
         isActive: true,
+        nip: '123',
       },
       email: registerKaprodiDTO.email,
     },
