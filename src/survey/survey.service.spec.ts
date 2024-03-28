@@ -646,7 +646,7 @@ describe('SurveyService', () => {
       new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }),
     );
     const endTime = new Date(startTime.getDate() + 3);
-  
+
     const survey = {
       id: '9999cca4-8997-4880-ac67-9768ede6e2a3',
       type: FormType.CURRICULUM,
@@ -659,7 +659,7 @@ describe('SurveyService', () => {
       graduateYearFrom: 2024,
       graduateYearTo: 2027,
     };
-    
+
     it('should return surveys for a given admission and graduate year within 7 days before start date and before end time', async () => {
       const admissionYear = '2020';
       const graduateYear = '2025';
@@ -688,7 +688,7 @@ describe('SurveyService', () => {
     it('should throw BadRequestException if graduateYear is less than admissionYear', async () => {
       const admissionYear = '2025';
       const graduateYear = '2024';
-      
+
       await expect(
         surveyService.getAvailableSurveyByYear(admissionYear, graduateYear),
       ).rejects.toThrow(BadRequestException);
