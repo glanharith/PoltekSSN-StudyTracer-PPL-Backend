@@ -24,6 +24,40 @@ describe('SurveyController', () => {
     surveyServiceMock = module.get<jest.Mocked<SurveyService>>(SurveyService);
   });
 
+  const option = [
+    {
+      id: '7392cca4-8997-4880-ac67-9768ede6e2a3',
+      label: 'option',
+      questionId: '1222cca4-8997-4880-ac67-9768ede6e2a3',
+      order: 0,
+    },
+  ];
+
+  const question = [
+    {
+      id: '1222cca4-8997-4880-ac67-9768ede6e2a3',
+      type: 'RADIO',
+      question: 'How good is the curriculum?',
+      order: 0,
+      formId: '9999cca4-8997-4880-ac67-9768ede6e2a3',
+      options: option,
+    },
+  ];
+
+  const survey = {
+    id: '9999cca4-8997-4880-ac67-9768ede6e2a3',
+    type: FormType.CURRICULUM,
+    title: 'Test Survey',
+    description: 'Test',
+    startTime: new Date(2024, 3, 22),
+    endTime: new Date(2024, 4, 22),
+    admissionYearFrom: 2020,
+    admissionYearTo: 2023,
+    graduateYearFrom: 2024,
+    graduateYearTo: 2027,
+    questions: question,
+  };
+  
   describe('POST /survey', () => {
     const createSurveyDTO: CreateSurveyDTO = {
       title: 'title',
@@ -185,6 +219,39 @@ describe('SurveyController', () => {
       await expect(surveyController.getSurvey(survey.id)).rejects.toThrow(
         InternalServerErrorException,
       );
+    });
+  });
+
+  describe('GET /survey/all', () => {
+    it('should return all surveys', async () => {
+      const surveysMock = [survey];
+      surveyServiceMock.getAllSurveys.mockResolvedValue(surveysMock);
+
+      const result = await surveyController.getAllSurveys();
+
+      expect(result).toEqual({
+        message: 'Successfully got all surveys',
+        data: surveysMock,
+      });
+    });
+  });
+
+  describe('GET /survey?admissionYear=<tahun>&graduateYear=<tahun>', () => {
+    it('should return surveys for a given admission and graduate year', async () => {
+      const admissionYear = '2021';
+      const graduateYear = '2025';
+      const surveysMock = [survey];
+      surveyServiceMock.getAvailableSurveyByYear.mockResolvedValue(surveysMock);
+
+      const result = await surveyController.getAvailableSurveyByYear(
+        admissionYear,
+        graduateYear,
+      );
+
+      expect(result).toEqual({
+        message: `Successfully got surveys for admission year ${admissionYear} and graduate year ${graduateYear}`,
+        data: surveysMock,
+      });
     });
   });
 });
