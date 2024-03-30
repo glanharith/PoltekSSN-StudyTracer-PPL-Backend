@@ -511,6 +511,10 @@ export class SurveyService {
           },
         ],
       },
+      include: {
+        questions: false,
+        responses: true,
+      },
     });
 
     return survey;

@@ -62,6 +62,16 @@ export class SurveyController {
     return this.surveyService.deleteSurvey(id);
   }
 
+  @Get('/all')
+  @IsAdmin()
+  @IsHead()
+  async getAllSurveys() {
+    const allSurveys = await this.surveyService.getAllSurveys();
+    return response('Successfully got all surveys', {
+      data: allSurveys,
+    });
+  }
+
   @Get('/:id')
   @IsAdmin()
   async getSurvey(@Param('id') id: string) {
@@ -85,15 +95,5 @@ export class SurveyController {
         data: surveys,
       },
     );
-  }
-
-  @Get('/all')
-  @IsAdmin()
-  @IsHead()
-  async getAllSurveys() {
-    const allSurveys = await this.surveyService.getAllSurveys();
-    return response('Successfully got all surveys', {
-      data: allSurveys,
-    });
   }
 }
