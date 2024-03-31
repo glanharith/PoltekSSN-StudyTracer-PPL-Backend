@@ -4,13 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import {
-  CreateSurveyDTO,
-  EditSurveyDTO,
-  ExistingQuestionDTO,
-  QuestionDTO,
-  SurveyDTO,
-} from './DTO/SurveyDTO';
+import { CreateSurveyDTO, EditSurveyDTO, SurveyDTO } from './DTO/SurveyDTO';
 import { isUUID } from 'class-validator';
 import { Form } from '@prisma/client';
 
