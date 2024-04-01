@@ -7,7 +7,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import {
   CreateSurveyDTO,
   EditSurveyDTO,
-  ExistingQuestionDTO,
   QuestionDTO,
   SurveyDTO,
 } from './DTO/SurveyDTO';
@@ -55,11 +54,7 @@ export class SurveyService {
     }
   }
 
-  async createSurvey(createSurveyDTO: CreateSurveyDTO) {
-    const { questions, ...form } = createSurveyDTO;
-
-    this.validateFormDetails(form);
-
+  private validateQuestionOrder = (questions: QuestionDTO[]) => {
     const questionOrderSet = new Set();
 
     questions.forEach((q) => {
@@ -105,6 +100,14 @@ export class SurveyService {
         }
       }
     });
+  };
+
+  async createSurvey(createSurveyDTO: CreateSurveyDTO) {
+    const { questions, ...form } = createSurveyDTO;
+
+    this.validateFormDetails(form);
+
+    this.validateQuestionOrder(questions);
 
     await this.prisma.$transaction(async (tx) => {
       const { id } = await tx.form.create({
@@ -163,51 +166,9 @@ export class SurveyService {
 
     this.validateFormDetails(form);
 
-    const questionOrderSet = new Set();
+    this.validateQuestionOrder(newQuestions);
 
-    newQuestions.forEach((q) => {
-      const { type, rangeFrom, rangeTo, options, order } = q;
-
-      if (questionOrderSet.has(order)) {
-        throw new BadRequestException({
-          message: 'Question order must be unique within a form',
-        });
-      }
-
-      questionOrderSet.add(order);
-
-      if (['CHECKBOX', 'RADIO'].includes(type)) {
-        if (options === undefined || options.length === 0) {
-          throw new BadRequestException({
-            message:
-              'Question with type CHECKBOX or RADIO must have at least 1 option',
-          });
-        }
-
-        const optionOrderSet = new Set();
-        options.forEach(({ order }) => {
-          if (optionOrderSet.has(order)) {
-            throw new BadRequestException({
-              message: 'Option order must be unique within a question',
-            });
-          }
-          optionOrderSet.add(order);
-        });
-      }
-
-      if (type === 'RANGE') {
-        if (
-          rangeFrom === undefined ||
-          rangeTo === undefined ||
-          rangeFrom > rangeTo
-        ) {
-          throw new BadRequestException({
-            message:
-              'Question with type RANGE must have rangeFrom and rangeTo, with rangeFrom less than or equal to rangeTo',
-          });
-        }
-      }
-    });
+    const questionOrderSet = new Set(newQuestions.map(({ order }) => order));
 
     for (const q of updateQuestions) {
       try {
