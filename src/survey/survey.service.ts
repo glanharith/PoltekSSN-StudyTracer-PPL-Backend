@@ -203,12 +203,8 @@ export class SurveyService {
 
         if (['CHECKBOX', 'RADIO'].includes(type)) {
           if (
-            ((newOptions === undefined || newOptions.length === 0) &&
-              (updateOptions === undefined || updateOptions.length === 0)) ||
-            (newOptions &&
-              updateOptions &&
-              deleteOptions &&
-              newOptions.length + updateOptions.length <= deleteOptions.length)
+            (newOptions === undefined || newOptions.length === 0) &&
+            (updateOptions === undefined || updateOptions.length === 0)
           ) {
             throw new BadRequestException({
               message:
