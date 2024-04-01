@@ -397,8 +397,15 @@ export class SurveyService {
       where: { id },
       include: {
         questions: {
+          orderBy: {
+            order: 'asc',
+          },
           include: {
-            options: true,
+            options: {
+              orderBy: {
+                order: 'asc',
+              },
+            },
           },
         },
       },
