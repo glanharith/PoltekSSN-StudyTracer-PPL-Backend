@@ -11,7 +11,7 @@ import {
   SurveyDTO,
 } from './DTO/SurveyDTO';
 import { isUUID } from 'class-validator';
-import { Form } from '@prisma/client';
+import { Alumni, Form } from '@prisma/client';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
 
 @Injectable()
@@ -489,67 +489,150 @@ export class SurveyService {
 
   async fillSurvey(req: FillSurveyDTO, email: string) {
     const firstQuestionId = Object.keys(req)[0];
+    const user = await this.getUserByEmail(email);
+    const alumni = await this.getAlumni(user);
+    const form = await this.getForm(firstQuestionId);
 
+    this.validateFormTimeRange(form);
+    this.validateAlumniEnrollmentYear(alumni, form);
+    this.validateAlumniGraduateYear(alumni, form);
+    await this.checkExistingResponse(alumni, form);
+
+    await this.createResponseAndAnswers(req, alumni, form);
+  }
+
+  private async getUserByEmail(email: string) {
     const user = await this.prisma.user.findUnique({
-      where: {
-        email,
-      },
-      select: {
-        alumni: true,
-      },
+      where: { email },
+      select: { alumni: true },
     });
+
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+
+    return user;
+  }
+
+  private async getAlumni(user: any) {
+    const alumniId = user?.alumni?.id;
+
+    if (!alumniId) {
+      throw new NotFoundException(`Alumni not found for the given user`);
+    }
 
     const alumni = await this.prisma.alumni.findUnique({
-      where: {
-        id: user?.alumni?.id,
-      },
-      include: {
-        studyProgram: true,
-        responses: true,
-      },
+      where: { id: alumniId },
+      include: { studyProgram: true, responses: true },
     });
 
+    if (!alumni) {
+      throw new NotFoundException(`Alumni not found`);
+    }
+
+    return alumni;
+  }
+
+  private async getForm(questionId: string) {
     const question = await this.prisma.question.findUnique({
-      where: {
-        id: firstQuestionId,
-      },
+      where: { id: questionId },
     });
 
-    const transaction = await this.prisma.$transaction(async (prisma) => {
+    if (!question) {
+      throw new NotFoundException(`Question not found`);
+    }
+
+    const form = await this.prisma.form.findUnique({
+      where: { id: question.formId },
+    });
+
+    if (!form) {
+      throw new NotFoundException(`Form not found`);
+    }
+
+    return form;
+  }
+
+  private validateFormTimeRange(form: Form) {
+    const currentTime = new Date();
+    if (currentTime < form.startTime || currentTime > form.endTime) {
+      throw new BadRequestException(
+        'Form is not available at the current time',
+      );
+    }
+  }
+
+  private validateAlumniEnrollmentYear(alumni: Alumni, form: Form) {
+    if (
+      (form.admissionYearFrom !== undefined ||
+        form.admissionYearTo !== undefined) &&
+      !(
+        alumni.enrollmentYear >= (form.admissionYearFrom || 0) &&
+        alumni.enrollmentYear <=
+          (form.admissionYearTo || new Date().getFullYear())
+      )
+    ) {
+      throw new BadRequestException(
+        'Alumni enrollment year must be within the range of admission years.',
+      );
+    }
+  }
+
+  private validateAlumniGraduateYear(alumni: Alumni, form: Form) {
+    if (
+      (form.graduateYearFrom !== undefined ||
+        form.graduateYearTo !== undefined) &&
+      alumni.graduateYear !== undefined &&
+      !(
+        alumni.graduateYear >= (form.graduateYearFrom || 0) &&
+        alumni.graduateYear <= (form.graduateYearTo || new Date().getFullYear())
+      )
+    ) {
+      throw new BadRequestException(
+        'Alumni graduate year must be within the range of graduate years.',
+      );
+    }
+  }
+
+  private async checkExistingResponse(alumni: Alumni, form: Form) {
+    const response = await this.prisma.response.findFirst({
+      where: { alumniId: alumni.id, formId: form.id },
+    });
+
+    if (response) {
+      throw new BadRequestException('Alumni can only fill the survey once');
+    }
+  }
+
+  private async createResponseAndAnswers(
+    req: FillSurveyDTO,
+    alumni: Alumni,
+    form: Form,
+  ) {
+    await this.prisma.$transaction(async (prisma) => {
       const response = await prisma.response.create({
         data: {
           alumni: { connect: { id: alumni?.id } },
-          form: { connect: { id: question?.formId } },
+          form: { connect: { id: form?.id } },
         },
       });
 
       await Promise.all(
         Object.entries(req).map(async ([questionId, answer]) => {
-          if (Array.isArray(answer)) {
-            await Promise.all(
-              answer.map(async (item) => {
-                await prisma.answer.create({
-                  data: {
-                    answer: item.toString(),
-                    response: { connect: { id: response.id } },
-                    question: { connect: { id: questionId } },
-                  },
-                });
-              }),
-            );
-          } else {
-            await prisma.answer.create({
-              data: {
-                answer: answer.toString(),
-                response: { connect: { id: response.id } },
-                question: { connect: { id: questionId } },
-              },
-            });
-          }
+          const answers = Array.isArray(answer) ? answer : [answer];
+          await Promise.all(
+            answers.map(async (item) => {
+              await prisma.answer.create({
+                data: {
+                  answer: item.toString(),
+                  response: { connect: { id: response.id } },
+                  question: { connect: { id: questionId } },
+                },
+              });
+            }),
+          );
         }),
       );
     });
-
-    await transaction;
   }
 }
