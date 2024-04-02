@@ -118,7 +118,7 @@ export class ProfileService {
         phoneNo: decryptPhoneNo,
         address: decryptAddress,
         enrollmentYear: user.alumni.enrollmentYear,
-        graduateYear: user.alumni.graduateYear
+        graduateYear: user.alumni.graduateYear,
       },
     };
   }
