@@ -12,6 +12,7 @@ import {
 } from './DTO/SurveyDTO';
 import { isUUID } from 'class-validator';
 import { Form } from '@prisma/client';
+import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
 
 @Injectable()
 export class SurveyService {
@@ -484,5 +485,71 @@ export class SurveyService {
   async getAllSurveys(): Promise<Form[]> {
     const surveys = await this.prisma.form.findMany();
     return surveys;
+  }
+
+  async fillSurvey(req: FillSurveyDTO, email: string) {
+    const firstQuestionId = Object.keys(req)[0];
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        alumni: true,
+      },
+    });
+
+    const alumni = await this.prisma.alumni.findUnique({
+      where: {
+        id: user?.alumni?.id,
+      },
+      include: {
+        studyProgram: true,
+        responses: true,
+      },
+    });
+
+    const question = await this.prisma.question.findUnique({
+      where: {
+        id: firstQuestionId,
+      },
+    });
+
+    const transaction = await this.prisma.$transaction(async (prisma) => {
+      const response = await prisma.response.create({
+        data: {
+          alumni: { connect: { id: alumni?.id } },
+          form: { connect: { id: question?.formId } },
+        },
+      });
+
+      await Promise.all(
+        Object.entries(req).map(async ([questionId, answer]) => {
+          if (Array.isArray(answer)) {
+            await Promise.all(
+              answer.map(async (item) => {
+                await prisma.answer.create({
+                  data: {
+                    answer: item.toString(),
+                    response: { connect: { id: response.id } },
+                    question: { connect: { id: questionId } },
+                  },
+                });
+              }),
+            );
+          } else {
+            await prisma.answer.create({
+              data: {
+                answer: answer.toString(),
+                response: { connect: { id: response.id } },
+                question: { connect: { id: questionId } },
+              },
+            });
+          }
+        }),
+      );
+    });
+
+    await transaction;
   }
 }

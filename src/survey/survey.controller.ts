@@ -10,7 +10,13 @@ import {
 } from '@nestjs/common';
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO, EditSurveyDTO } from './DTO/SurveyDTO';
-import { IsAdmin, IsHead, IsPublic, IsAlumni } from 'src/common/decorator';
+import {
+  IsAdmin,
+  IsHead,
+  IsPublic,
+  IsAlumni,
+  ReqUser,
+} from 'src/common/decorator';
 import { response } from 'src/common/util/response';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
 
@@ -28,15 +34,9 @@ export class SurveyController {
 
   @Post('/fill-survey')
   @IsAlumni()
-  async fillSurvey(@Body() fillSurveyDTO: FillSurveyDTO) {
-    for (const key in fillSurveyDTO) {
-      if (fillSurveyDTO.hasOwnProperty(key)) {
-        const value = fillSurveyDTO[key];
-        console.log('Key:', key);
-        console.log('Value:', value);
-      }
-    }
-    console.log('DDDDD');
+  async fillSurvey(@ReqUser() request, @Body() fillSurveyDTO: FillSurveyDTO) {
+    await this.surveyService.fillSurvey(fillSurveyDTO, request.email);
+    return response('Survey successfully filled');
   }
 
   @Get('/get/:surveyId')
