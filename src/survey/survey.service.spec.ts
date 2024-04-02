@@ -1,7 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SurveyService } from './survey.service';
 import { DeepMockProxy } from 'jest-mock-extended';
-import { Form, PrismaClient, FormType, Question, Option } from '@prisma/client';
+import {
+  Form,
+  PrismaClient,
+  FormType,
+  Question,
+  Option,
+  User,
+  Alumni,
+} from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   CreateSurveyDTO,
@@ -755,7 +763,7 @@ describe('SurveyService', () => {
     it('should return a survey', async () => {
       prismaMock.form.findUnique.mockResolvedValue(survey);
 
-      expect(await surveyService.getSurveyById(survey.id)).toEqual(survey);
+      expect(await surveyService.getSurvey(survey.id)).toEqual(survey);
       expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
       expect(prismaMock.form.findUnique).toHaveBeenCalledWith({
         where: {
@@ -877,13 +885,35 @@ describe('SurveyService', () => {
       },
     ];
 
+    const mockAlumni: Alumni = {
+      id: 'ed036827-2df3-4c45-8323-0eb43627f7f1',
+      phoneNo:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.WtVfnFZ9U/.nMeXDtqedgwDE0Mj8kvy|92d362f959534bab|fc54298b1aa9f0ca3bb3e0d997bc3685|000a68a2793d43b622eba0361b458d44',
+      address:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.Y2yh6rIYemKlZchKh6gMZxXoNWaRYn.|3528eed66ca856ae|b3157b4ecd41ddc884e86e6b01d5129d|6b96c85f4e36a2783045980c4bc6293a9fb29c7206b15cae60301c45aabbf41b48d1adcc6eddedd5e9cf2b77992bb491f67e2dfe473f3e1283a02bc7f8412ae7cacd7a24671b2e8e48579e42d7e50209',
+      gender: 'MALE',
+      enrollmentYear: 1995,
+      graduateYear: 1999,
+      studyProgramId: '2fa34067-d271-4ea4-9074-dedb3c99cb3a',
+      npm: '1312452141',
+    };
+
+    const mockUser: User & { alumni: Alumni } = {
+      id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
+      email: 'email@email.com',
+      password: 'currentPassword',
+      name: 'user',
+      role: 'ALUMNI',
+      alumni: mockAlumni,
+    };
+
     const survey = {
       id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
       type: FormType.CURRICULUM,
       title: 'Test Survey',
       description: 'This is a testing survey',
       startTime: new Date(2024, 1, 2),
-      endTime: new Date(2024, 2, 2),
+      endTime: new Date(2025, 2, 3),
       admissionYearFrom: 2019,
       admissionYearTo: 2019,
       graduateYearFrom: 2023,
@@ -896,8 +926,36 @@ describe('SurveyService', () => {
 
     it('should return a survey', async () => {
       prismaMock.form.findUnique.mockResolvedValue(survey);
+      prismaMock.user.findUnique.mockResolvedValue(mockUser);
 
-      expect(await surveyService.getSurveyById(survey.id)).toEqual(survey);
+      prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
+      prismaMock.form.findUnique.mockResolvedValue({
+        id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
+        type: 'CURRICULUM',
+        title: 'test normal',
+        description: 'normal',
+        startTime: new Date('2024-04-02T12:56:00.000Z'),
+        endTime: new Date('2025-04-02T12:57:00.000Z'),
+        admissionYearFrom: null,
+        admissionYearTo: null,
+        graduateYearFrom: null,
+        graduateYearTo: null,
+      });
+
+      expect(
+        await surveyService.getSurveyForFill(survey.id, 'test@gmail.com'),
+      ).toEqual({
+        id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
+        type: 'CURRICULUM',
+        title: 'test normal',
+        description: 'normal',
+        startTime: new Date('2024-04-02T12:56:00.000Z'),
+        endTime: new Date('2025-04-02T12:57:00.000Z'),
+        admissionYearFrom: null,
+        admissionYearTo: null,
+        graduateYearFrom: null,
+        graduateYearTo: null,
+      });
       expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
       expect(prismaMock.form.findUnique).toHaveBeenCalledWith({
         where: {
@@ -914,16 +972,36 @@ describe('SurveyService', () => {
     });
 
     it('should throw NotFoundException if survey is not found', async () => {
-      prismaMock.form.findUnique.mockResolvedValue(null);
-
-      await expect(surveyService.getSurveyById(nonExistentId)).rejects.toThrow(
-        NotFoundException,
-      );
+      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
+      await expect(
+        surveyService.getSurveyForFill(nonExistentId, 'test@gmail.com'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if ID is not a valid UUID', async () => {
-      await expect(surveyService.getSurveyById(invalidUUID)).rejects.toThrow(
-        BadRequestException,
+      await expect(
+        surveyService.getSurveyForFill(invalidUUID, 'test@gmail.com'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('no email', async () => {
+      await expect(
+        surveyService.getUserByEmail('test@gmail.com'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('no alumni', async () => {
+      await expect(
+        surveyService.getAlumni({
+          id: '123',
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('no alumni with Id', async () => {
+      await expect(surveyService.getAlumni(mockUser)).rejects.toThrow(
+        NotFoundException,
       );
     });
   });

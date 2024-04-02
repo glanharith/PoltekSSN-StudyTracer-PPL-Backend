@@ -24,6 +24,8 @@ describe('SurveyController', () => {
     surveyServiceMock = module.get<jest.Mocked<SurveyService>>(SurveyService);
   });
 
+  const email = 'test@gmail.com';
+
   const option = [
     {
       id: '7392cca4-8997-4880-ac67-9768ede6e2a3',
@@ -194,28 +196,43 @@ describe('SurveyController', () => {
     };
 
     it('should return survey when id is valid', async () => {
-      surveyServiceMock.getSurveyById.mockResolvedValue(survey);
-      const res = await surveyController.getSurveyForAlumni(survey.id);
+      surveyServiceMock.getSurveyForFill.mockResolvedValue(survey);
+      const res = await surveyController.getSurveyForAlumni(
+        {
+          user: { email: email },
+        },
+        survey.id,
+      );
       expect(res).toEqual(survey);
     });
 
     it('should return NotFoundException for non-existing survey', async () => {
-      surveyServiceMock.getSurveyById.mockRejectedValue(
+      surveyServiceMock.getSurveyForFill.mockRejectedValue(
         new NotFoundException('Survey not found'),
       );
 
       await expect(
-        surveyController.getSurveyForAlumni(survey.id),
+        surveyController.getSurveyForAlumni(
+          {
+            user: { email: email },
+          },
+          survey.id,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should handle errors during get', async () => {
-      surveyServiceMock.getSurveyById.mockRejectedValue(
+      surveyServiceMock.getSurveyForFill.mockRejectedValue(
         new InternalServerErrorException('Error while retrieving survey'),
       );
 
       await expect(
-        surveyController.getSurveyForAlumni(survey.id),
+        surveyController.getSurveyForAlumni(
+          {
+            user: { email: email },
+          },
+          survey.id,
+        ),
       ).rejects.toThrow(InternalServerErrorException);
     });
   });

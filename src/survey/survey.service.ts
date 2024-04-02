@@ -134,12 +134,15 @@ export class SurveyService {
     });
   }
 
-  async getSurveyById(surveyId: string) {
+  async getSurveyForFill(surveyId: string, email: string) {
     if (!isUUID(surveyId)) {
       throw new BadRequestException(
-        'Invalid ID format. ID must be a valid UUID',
+        'Format ID tidak sesuai dengan format UUID',
       );
     }
+
+    const user = await this.getUserByEmail(email);
+    const alumni = await this.getAlumni(user);
 
     const survey = await this.prisma.form.findUnique({
       where: {
@@ -155,8 +158,15 @@ export class SurveyService {
     });
 
     if (!survey) {
-      throw new NotFoundException(`Survey with ID ${surveyId} not found`);
+      throw new NotFoundException(
+        `Survey dengan ID ${surveyId} tidak ditemukan`,
+      );
     }
+
+    this.validateFormTimeRange(survey);
+    this.validateAlumniEnrollmentYear(alumni, survey);
+    this.validateAlumniGraduateYear(alumni, survey);
+    await this.checkExistingResponse(alumni, survey);
 
     return survey;
   }
@@ -501,24 +511,26 @@ export class SurveyService {
     await this.createResponseAndAnswers(req, alumni, form);
   }
 
-  private async getUserByEmail(email: string) {
+  async getUserByEmail(email: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
       select: { alumni: true },
     });
 
     if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
+      throw new NotFoundException(`User dengan email ${email} tidak ditemukan`);
     }
 
     return user;
   }
 
-  private async getAlumni(user: any) {
+  async getAlumni(user: any) {
     const alumniId = user?.alumni?.id;
 
     if (!alumniId) {
-      throw new NotFoundException(`Alumni not found for the given user`);
+      throw new NotFoundException(
+        `User dengan id ${user.id} tidak memiliki role alumni`,
+      );
     }
 
     const alumni = await this.prisma.alumni.findUnique({
@@ -527,19 +539,21 @@ export class SurveyService {
     });
 
     if (!alumni) {
-      throw new NotFoundException(`Alumni not found`);
+      throw new NotFoundException(`Alumni tidak ditemukan`);
     }
 
     return alumni;
   }
 
-  private async getForm(questionId: string) {
+  async getForm(questionId: string) {
     const question = await this.prisma.question.findUnique({
       where: { id: questionId },
     });
 
     if (!question) {
-      throw new NotFoundException(`Question not found`);
+      throw new NotFoundException(
+        `Pertanyaan dengan id ${questionId} tidak ditemukan`,
+      );
     }
 
     const form = await this.prisma.form.findUnique({
@@ -547,7 +561,7 @@ export class SurveyService {
     });
 
     if (!form) {
-      throw new NotFoundException(`Form not found`);
+      throw new NotFoundException(`Survey tidak ditemukan`);
     }
 
     return form;
@@ -556,9 +570,7 @@ export class SurveyService {
   private validateFormTimeRange(form: Form) {
     const currentTime = new Date();
     if (currentTime < form.startTime || currentTime > form.endTime) {
-      throw new BadRequestException(
-        'Form is not available at the current time',
-      );
+      throw new BadRequestException('Survey tidak dapat diisi pada saat ini.');
     }
   }
 
@@ -573,7 +585,7 @@ export class SurveyService {
       )
     ) {
       throw new BadRequestException(
-        'Alumni enrollment year must be within the range of admission years.',
+        'Tahun masuk alumni harus sesuai dengan syarat yang ditentukan.',
       );
     }
   }
@@ -589,7 +601,7 @@ export class SurveyService {
       )
     ) {
       throw new BadRequestException(
-        'Alumni graduate year must be within the range of graduate years.',
+        'Tahun kelulusan alumni harus sesuai dengan syarat yang ditentukan',
       );
     }
   }
@@ -600,7 +612,9 @@ export class SurveyService {
     });
 
     if (response) {
-      throw new BadRequestException('Alumni can only fill the survey once');
+      throw new BadRequestException(
+        'Alumni hanya dapat mengisi survey satu kali',
+      );
     }
   }
 

@@ -41,8 +41,11 @@ export class SurveyController {
 
   @Get('/get/:surveyId')
   @IsAlumni()
-  async getSurveyForAlumni(@Param('surveyId') surveyId: string) {
-    return this.surveyService.getSurveyById(surveyId);
+  async getSurveyForAlumni(
+    @ReqUser() request,
+    @Param('surveyId') surveyId: string,
+  ) {
+    return this.surveyService.getSurveyForFill(surveyId, request.email);
   }
 
   @Patch('/:id')
