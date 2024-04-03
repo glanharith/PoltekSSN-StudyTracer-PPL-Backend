@@ -10,6 +10,7 @@ import { ProfileModule } from './profile/profile.module';
 import { HeadOfStudyProgramModule } from './head-of-study-program/head-of-study-program.module';
 import { ZxcvbnModule } from './zxcvbn/zxcvbn.module';
 import { SurveyModule } from './survey/survey.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SurveyModule } from './survey/survey.module';
     HeadOfStudyProgramModule,
     ZxcvbnModule,
     SurveyModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
