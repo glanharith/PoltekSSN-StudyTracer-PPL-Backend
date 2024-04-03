@@ -774,8 +774,15 @@ describe('SurveyService', () => {
         },
         include: {
           questions: {
+            orderBy: {
+              order: 'asc',
+            },
             include: {
-              options: true,
+              options: {
+                orderBy: {
+                  order: 'asc',
+                },
+              },
             },
           },
         },
