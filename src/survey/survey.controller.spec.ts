@@ -3,10 +3,12 @@ import { SurveyController } from './survey.controller';
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO, EditSurveyDTO } from './DTO/SurveyDTO';
 import {
+  BadRequestException,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { FormType, QuestionType } from '@prisma/client';
+import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
 
 jest.mock('./survey.service');
 
@@ -82,6 +84,55 @@ describe('SurveyController', () => {
       const result = await surveyController.createSurvey(createSurveyDTO);
 
       expect(result).toEqual({ message: 'Survey successfully created' });
+    });
+  });
+
+  describe('POST /fill-survey', () => {
+    const fillSurveyDTO: FillSurveyDTO = {
+      'ini-id-question': 'ini jawaban',
+    };
+
+    it('should return success message', async () => {
+      surveyServiceMock.fillSurvey.mockResolvedValue();
+
+      const result = await surveyController.fillSurvey(
+        {
+          user: { email: email },
+        },
+        fillSurveyDTO,
+      );
+
+      expect(result).toEqual({ message: 'Survey successfully filled' });
+    });
+
+    it('should throw notFoundException', async () => {
+      surveyServiceMock.fillSurvey.mockRejectedValue(
+        new NotFoundException('Not found'),
+      );
+
+      await expect(
+        surveyController.fillSurvey(
+          {
+            user: { email: email },
+          },
+          fillSurveyDTO,
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw badRequest', async () => {
+      surveyServiceMock.fillSurvey.mockRejectedValue(
+        new BadRequestException('Bad request'),
+      );
+
+      await expect(
+        surveyController.fillSurvey(
+          {
+            user: { email: email },
+          },
+          fillSurveyDTO,
+        ),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
