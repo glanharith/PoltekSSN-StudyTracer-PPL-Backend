@@ -1,5 +1,4 @@
-import { Injectable } from '@nestjs/common';
-import { log } from 'console';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -11,24 +10,55 @@ export class NotificationService {
       where: {
         email: userEmail,
       },
+      select:{
+        id: true,
+        alumni:{
+          select:{
+            graduateYear: true,
+            enrollmentYear: true,
+          }
+        }
+      }
     });
-    const allSurvey = await this.prisma.form.findMany();
+    
+    const currentDate = new Date();
+
+    const activeSurveys = await this.prisma.form.findMany({
+      where: {
+        startTime: { lte: currentDate },
+        endTime: { gte: currentDate },
+      },
+    });
+    const eligibleForms = activeSurveys.filter((form) => {
+      if (!user) throw new NotFoundException('User not found');
+      if (!user.alumni) throw new NotFoundException('User not found');
+      return(
+        (!form.admissionYearFrom || (user.alumni.enrollmentYear >= form.admissionYearFrom)) &&
+        (!form.admissionYearTo || (user.alumni.enrollmentYear <= form.admissionYearTo)) &&
+        (!form.graduateYearFrom || (user.alumni.graduateYear >= form.graduateYearFrom)) &&
+        (!form.graduateYearTo || (user.alumni.graduateYear <= form.graduateYearTo))
+      )
+        
+    });
     const userResponse = await this.prisma.response.findMany({
       where: {
         alumniId: user?.id,
+        formId: { in: eligibleForms.map((form) => form.id) },
       },
       select: {
         formId: true,
       },
     });
-    const filledSurveyIds = userResponse.map((response) => response.formId);
-    const filledSurvey = allSurvey.filter((survey) =>
-      filledSurveyIds.includes(survey.id),
+    const filledFormIds = userResponse.map((response) => response.formId);
+    const filledSurvey = eligibleForms.filter((form) =>
+      filledFormIds.includes(form.id),
     );
-    const unfilledSurvey = allSurvey.filter(
-      (survey) => !filledSurveyIds.includes(survey.id),
-    );
+    const unfilledSurvey = eligibleForms.filter(
+      (form) =>
 
+        !filledFormIds.includes(form.id)
+        
+    );
     const notification = unfilledSurvey.map((survey) => {
       return {
         surveyId: survey.id,
