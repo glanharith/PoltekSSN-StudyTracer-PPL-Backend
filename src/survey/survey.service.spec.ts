@@ -1,7 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SurveyService } from './survey.service';
 import { DeepMockProxy } from 'jest-mock-extended';
-import { Form, PrismaClient, FormType, Question, Option } from '@prisma/client';
+import {
+  Form,
+  PrismaClient,
+  FormType,
+  Question,
+  Option,
+  User,
+  Alumni,
+  Response,
+  QuestionType,
+} from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   CreateSurveyDTO,
@@ -13,6 +23,7 @@ import {
 } from './DTO/SurveyDTO';
 import { createPrismaMock } from 'src/prisma/prisma.mock';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
 
 describe('SurveyService', () => {
   let surveyService: SurveyService;
@@ -755,7 +766,7 @@ describe('SurveyService', () => {
     it('should return a survey', async () => {
       prismaMock.form.findUnique.mockResolvedValue(survey);
 
-      expect(await surveyService.getSurveyById(survey.id)).toEqual(survey);
+      expect(await surveyService.getSurvey(survey.id)).toEqual(survey);
       expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
       expect(prismaMock.form.findUnique).toHaveBeenCalledWith({
         where: {
@@ -763,8 +774,15 @@ describe('SurveyService', () => {
         },
         include: {
           questions: {
+            orderBy: {
+              order: 'asc',
+            },
             include: {
-              options: true,
+              options: {
+                orderBy: {
+                  order: 'asc',
+                },
+              },
             },
           },
         },
@@ -855,58 +873,80 @@ describe('SurveyService', () => {
   });
 
   describe('get survey for alumni', () => {
-    const option = [
-      {
-        id: 'da20eb7a-8667-4a82-a18d-47aca6cf84ef',
-        label: '21',
-        questionId: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
-        order: 0,
-      },
-    ];
+    const mockAlumni: Alumni = {
+      id: 'ed036827-2df3-4c45-8323-0eb43627f7f1',
+      phoneNo:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.WtVfnFZ9U/.nMeXDtqedgwDE0Mj8kvy|92d362f959534bab|fc54298b1aa9f0ca3bb3e0d997bc3685|000a68a2793d43b622eba0361b458d44',
+      address:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.Y2yh6rIYemKlZchKh6gMZxXoNWaRYn.|3528eed66ca856ae|b3157b4ecd41ddc884e86e6b01d5129d|6b96c85f4e36a2783045980c4bc6293a9fb29c7206b15cae60301c45aabbf41b48d1adcc6eddedd5e9cf2b77992bb491f67e2dfe473f3e1283a02bc7f8412ae7cacd7a24671b2e8e48579e42d7e50209',
+      gender: 'MALE',
+      enrollmentYear: 1995,
+      graduateYear: 1999,
+      studyProgramId: '2fa34067-d271-4ea4-9074-dedb3c99cb3a',
+      npm: '1312452141',
+    };
 
-    const question = [
-      {
-        id: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
-        type: 'RADIO',
-        question: 'What is 9 + 10',
-        order: 0,
-        formId: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
-        rangeFrom: null,
-        rangeTo: null,
-        option: option,
-      },
-    ];
+    const mockUser: User & { alumni: Alumni } = {
+      id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
+      email: 'email@email.com',
+      password: 'currentPassword',
+      name: 'user',
+      role: 'ALUMNI',
+      alumni: mockAlumni,
+    };
 
-    const survey = {
-      id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
-      type: FormType.CURRICULUM,
-      title: 'Test Survey',
-      description: 'This is a testing survey',
-      startTime: new Date(2024, 1, 2),
-      endTime: new Date(2024, 2, 2),
-      admissionYearFrom: 2019,
-      admissionYearTo: 2019,
-      graduateYearFrom: 2023,
-      graduateYearTo: 2023,
-      questions: question,
+    const mockSurvey = {
+      id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
+      type: 'CURRICULUM',
+      title: 'test normal',
+      description: 'normal',
+      startTime: new Date('2024-04-02T12:56:00.000Z'),
+      endTime: new Date('2025-04-02T12:57:00.000Z'),
+      admissionYearFrom: null,
+      admissionYearTo: null,
+      graduateYearFrom: null,
+      graduateYearTo: null,
     };
 
     const nonExistentId = '5e2633ba-435d-41e8-8432-efa2832ce564';
     const invalidUUID = 'invalid-uuid';
 
     it('should return a survey', async () => {
-      prismaMock.form.findUnique.mockResolvedValue(survey);
+      prismaMock.user.findUnique.mockResolvedValue(mockUser);
 
-      expect(await surveyService.getSurveyById(survey.id)).toEqual(survey);
+      prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
+      prismaMock.form.findUnique.mockResolvedValue({
+        id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
+        type: 'CURRICULUM',
+        title: 'test normal',
+        description: 'normal',
+        startTime: new Date('2024-04-02T12:56:00.000Z'),
+        endTime: new Date('2025-04-02T12:57:00.000Z'),
+        admissionYearFrom: null,
+        admissionYearTo: null,
+        graduateYearFrom: null,
+        graduateYearTo: null,
+      });
+
+      expect(
+        await surveyService.getSurveyForFill(mockSurvey.id, 'test@gmail.com'),
+      ).toEqual(mockSurvey);
       expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
       expect(prismaMock.form.findUnique).toHaveBeenCalledWith({
         where: {
-          id: survey.id,
+          id: mockSurvey.id,
         },
         include: {
           questions: {
             include: {
-              options: true,
+              options: {
+                orderBy: {
+                  order: 'asc',
+                },
+              },
+            },
+            orderBy: {
+              order: 'asc',
             },
           },
         },
@@ -914,17 +954,229 @@ describe('SurveyService', () => {
     });
 
     it('should throw NotFoundException if survey is not found', async () => {
-      prismaMock.form.findUnique.mockResolvedValue(null);
+      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
+      await expect(
+        surveyService.getSurveyForFill(nonExistentId, 'test@gmail.com'),
+      ).rejects.toThrow(NotFoundException);
+    });
 
-      await expect(surveyService.getSurveyById(nonExistentId)).rejects.toThrow(
+    it('should throw BadRequestException if ID is not a valid UUID', async () => {
+      await expect(
+        surveyService.getSurveyForFill(invalidUUID, 'test@gmail.com'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('no email', async () => {
+      await expect(
+        surveyService.getUserByEmail('test@gmail.com'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('no alumni', async () => {
+      await expect(
+        surveyService.getAlumni({
+          id: '123',
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('no alumni with Id', async () => {
+      await expect(surveyService.getAlumni(mockUser)).rejects.toThrow(
         NotFoundException,
       );
     });
 
-    it('should throw BadRequestException if ID is not a valid UUID', async () => {
-      await expect(surveyService.getSurveyById(invalidUUID)).rejects.toThrow(
-        BadRequestException,
-      );
+    it('the form is not availble now', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
+      prismaMock.form.findUnique.mockResolvedValue({
+        id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
+        type: 'CURRICULUM',
+        title: 'test normal',
+        description: 'normal',
+        startTime: new Date('2024-04-02T12:56:00.000Z'),
+        endTime: new Date('2024-04-02T12:57:00.000Z'),
+        admissionYearFrom: null,
+        admissionYearTo: null,
+        graduateYearFrom: null,
+        graduateYearTo: null,
+      });
+
+      await expect(
+        surveyService.getSurveyForFill(mockSurvey.id, 'test@gmail.com'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('the form enrollment year didnt match', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
+      prismaMock.form.findUnique.mockResolvedValue({
+        id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
+        type: 'CURRICULUM',
+        title: 'test normal',
+        description: 'normal',
+        startTime: new Date('2024-04-02T12:56:00.000Z'),
+        endTime: new Date('2025-04-02T12:57:00.000Z'),
+        admissionYearFrom: 1999,
+        admissionYearTo: 2000,
+        graduateYearFrom: null,
+        graduateYearTo: null,
+      });
+
+      await expect(
+        surveyService.getSurveyForFill(mockSurvey.id, 'test@gmail.com'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('the form graduate year didnt match', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
+      prismaMock.form.findUnique.mockResolvedValue({
+        id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
+        type: 'CURRICULUM',
+        title: 'test normal',
+        description: 'normal',
+        startTime: new Date('2024-04-02T12:56:00.000Z'),
+        endTime: new Date('2025-04-02T12:57:00.000Z'),
+        admissionYearFrom: null,
+        admissionYearTo: null,
+        graduateYearFrom: 2001,
+        graduateYearTo: null,
+      });
+
+      await expect(
+        surveyService.getSurveyForFill(mockSurvey.id, 'test@gmail.com'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('alumni have filled the same form', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
+      prismaMock.form.findUnique.mockResolvedValue({
+        id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
+        type: 'CURRICULUM',
+        title: 'test normal',
+        description: 'normal',
+        startTime: new Date('2024-04-02T12:56:00.000Z'),
+        endTime: new Date('2025-04-02T12:57:00.000Z'),
+        admissionYearFrom: null,
+        admissionYearTo: null,
+        graduateYearFrom: null,
+        graduateYearTo: null,
+      });
+      prismaMock.response.findFirst.mockResolvedValue({
+        id: 'hehe',
+        formId: 'hehe',
+        alumniId: 'jeje',
+      });
+
+      await expect(
+        surveyService.getSurveyForFill(mockSurvey.id, 'test@gmail.com'),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('fill survey', () => {
+    const mockAlumni: Alumni = {
+      id: 'ed036827-2df3-4c45-8323-0eb43627f7f1',
+      phoneNo:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.WtVfnFZ9U/.nMeXDtqedgwDE0Mj8kvy|92d362f959534bab|fc54298b1aa9f0ca3bb3e0d997bc3685|000a68a2793d43b622eba0361b458d44',
+      address:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.Y2yh6rIYemKlZchKh6gMZxXoNWaRYn.|3528eed66ca856ae|b3157b4ecd41ddc884e86e6b01d5129d|6b96c85f4e36a2783045980c4bc6293a9fb29c7206b15cae60301c45aabbf41b48d1adcc6eddedd5e9cf2b77992bb491f67e2dfe473f3e1283a02bc7f8412ae7cacd7a24671b2e8e48579e42d7e50209',
+      gender: 'MALE',
+      enrollmentYear: 1995,
+      graduateYear: 1999,
+      studyProgramId: '2fa34067-d271-4ea4-9074-dedb3c99cb3a',
+      npm: '1312452141',
+    };
+
+    const fillSurveyDTO: FillSurveyDTO = {
+      'ini-id-question': 'ini jawaban',
+    };
+
+    const mockUser: User & { alumni: Alumni } = {
+      id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
+      email: 'email@email.com',
+      password: 'currentPassword',
+      name: 'user',
+      role: 'ALUMNI',
+      alumni: mockAlumni,
+    };
+
+    it('success fill survey', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
+      prismaMock.form.findUnique.mockResolvedValue({
+        id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
+        type: 'CURRICULUM',
+        title: 'test normal',
+        description: 'normal',
+        startTime: new Date('2024-04-02T12:56:00.000Z'),
+        endTime: new Date('2025-04-02T12:57:00.000Z'),
+        admissionYearFrom: null,
+        admissionYearTo: null,
+        graduateYearFrom: null,
+        graduateYearTo: null,
+      });
+      prismaMock.question.findUnique.mockResolvedValue({
+        id: 'id',
+        type: QuestionType.TEXT,
+        question: 'ini question',
+        rangeFrom: null,
+        rangeTo: null,
+        order: 1,
+        formId: '9423bbe7-f14f-4b02-8654-b15b1c163341',
+      });
+
+      prismaMock.$transaction.mockImplementation(async (callback) => {
+        const prismaMockTx = createPrismaMock();
+        prismaMockTx.response.create.mockResolvedValue({
+          id: 'id',
+        } as Response);
+        await callback(prismaMockTx);
+      });
+
+      await surveyService.fillSurvey(fillSurveyDTO, mockUser.email);
+    });
+
+    it('Question id is not found', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
+      prismaMock.form.findUnique.mockResolvedValue({
+        id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
+        type: 'CURRICULUM',
+        title: 'test normal',
+        description: 'normal',
+        startTime: new Date('2024-04-02T12:56:00.000Z'),
+        endTime: new Date('2025-04-02T12:57:00.000Z'),
+        admissionYearFrom: null,
+        admissionYearTo: null,
+        graduateYearFrom: null,
+        graduateYearTo: null,
+      });
+
+      await expect(
+        surveyService.fillSurvey(fillSurveyDTO, mockUser.email),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('Survey with those question is not found', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
+      prismaMock.question.findUnique.mockResolvedValue({
+        id: 'id',
+        type: QuestionType.TEXT,
+        question: 'ini question',
+        rangeFrom: null,
+        rangeTo: null,
+        order: 1,
+        formId: '9423bbe7-f14f-4b02-8654-b15b1c163341',
+      });
+
+      await expect(
+        surveyService.fillSurvey(fillSurveyDTO, mockUser.email),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

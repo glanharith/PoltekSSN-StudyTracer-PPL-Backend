@@ -3,10 +3,12 @@ import { SurveyController } from './survey.controller';
 import { SurveyService } from './survey.service';
 import { CreateSurveyDTO, EditSurveyDTO } from './DTO/SurveyDTO';
 import {
+  BadRequestException,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { FormType, QuestionType } from '@prisma/client';
+import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
 
 jest.mock('./survey.service');
 
@@ -23,6 +25,8 @@ describe('SurveyController', () => {
     surveyController = module.get<SurveyController>(SurveyController);
     surveyServiceMock = module.get<jest.Mocked<SurveyService>>(SurveyService);
   });
+
+  const email = 'test@gmail.com';
 
   const option = [
     {
@@ -80,6 +84,55 @@ describe('SurveyController', () => {
       const result = await surveyController.createSurvey(createSurveyDTO);
 
       expect(result).toEqual({ message: 'Survey successfully created' });
+    });
+  });
+
+  describe('POST /fill-survey', () => {
+    const fillSurveyDTO: FillSurveyDTO = {
+      'ini-id-question': 'ini jawaban',
+    };
+
+    it('should return success message', async () => {
+      surveyServiceMock.fillSurvey.mockResolvedValue();
+
+      const result = await surveyController.fillSurvey(
+        {
+          user: { email: email },
+        },
+        fillSurveyDTO,
+      );
+
+      expect(result).toEqual({ message: 'Survey successfully filled' });
+    });
+
+    it('should throw notFoundException', async () => {
+      surveyServiceMock.fillSurvey.mockRejectedValue(
+        new NotFoundException('Not found'),
+      );
+
+      await expect(
+        surveyController.fillSurvey(
+          {
+            user: { email: email },
+          },
+          fillSurveyDTO,
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw badRequest', async () => {
+      surveyServiceMock.fillSurvey.mockRejectedValue(
+        new BadRequestException('Bad request'),
+      );
+
+      await expect(
+        surveyController.fillSurvey(
+          {
+            user: { email: email },
+          },
+          fillSurveyDTO,
+        ),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -194,28 +247,43 @@ describe('SurveyController', () => {
     };
 
     it('should return survey when id is valid', async () => {
-      surveyServiceMock.getSurveyById.mockResolvedValue(survey);
-      const res = await surveyController.getSurveyForAlumni(survey.id);
+      surveyServiceMock.getSurveyForFill.mockResolvedValue(survey);
+      const res = await surveyController.getSurveyForAlumni(
+        {
+          user: { email: email },
+        },
+        survey.id,
+      );
       expect(res).toEqual(survey);
     });
 
     it('should return NotFoundException for non-existing survey', async () => {
-      surveyServiceMock.getSurveyById.mockRejectedValue(
+      surveyServiceMock.getSurveyForFill.mockRejectedValue(
         new NotFoundException('Survey not found'),
       );
 
       await expect(
-        surveyController.getSurveyForAlumni(survey.id),
+        surveyController.getSurveyForAlumni(
+          {
+            user: { email: email },
+          },
+          survey.id,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should handle errors during get', async () => {
-      surveyServiceMock.getSurveyById.mockRejectedValue(
+      surveyServiceMock.getSurveyForFill.mockRejectedValue(
         new InternalServerErrorException('Error while retrieving survey'),
       );
 
       await expect(
-        surveyController.getSurveyForAlumni(survey.id),
+        surveyController.getSurveyForAlumni(
+          {
+            user: { email: email },
+          },
+          survey.id,
+        ),
       ).rejects.toThrow(InternalServerErrorException);
     });
   });

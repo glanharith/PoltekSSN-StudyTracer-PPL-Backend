@@ -12,7 +12,8 @@ import {
   SurveyDTO,
 } from './DTO/SurveyDTO';
 import { isUUID } from 'class-validator';
-import { Form } from '@prisma/client';
+import { Alumni, Form } from '@prisma/client';
+import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
 
 @Injectable()
 export class SurveyService {
@@ -55,11 +56,7 @@ export class SurveyService {
     }
   }
 
-  async createSurvey(createSurveyDTO: CreateSurveyDTO) {
-    const { questions, ...form } = createSurveyDTO;
-
-    this.validateFormDetails(form);
-
+  private validateQuestionOrder = (questions: QuestionDTO[]) => {
     const questionOrderSet = new Set();
 
     questions.forEach((q) => {
@@ -82,13 +79,13 @@ export class SurveyService {
         }
 
         const optionOrderSet = new Set();
-        options.forEach(({ order }) => {
-          if (optionOrderSet.has(order)) {
+        options.forEach(({ order: i }) => {
+          if (optionOrderSet.has(i)) {
             throw new BadRequestException({
               message: 'Option order must be unique within a question',
             });
           }
-          optionOrderSet.add(order);
+          optionOrderSet.add(i);
         });
       }
 
@@ -105,109 +102,13 @@ export class SurveyService {
         }
       }
     });
+  };
 
-    await this.prisma.$transaction(async (tx) => {
-      const { id } = await tx.form.create({
-        data: {
-          ...form,
-        },
-      });
-
-      for (const q of questions) {
-        const { options, ...question } = q;
-        await tx.question.create({
-          data: {
-            ...question,
-            formId: id,
-            options: {
-              createMany: {
-                data: options ?? [],
-              },
-            },
-          },
-        });
-      }
-    });
-  }
-
-  async getSurveyById(surveyId: string) {
-    if (!isUUID(surveyId)) {
-      throw new BadRequestException(
-        'Invalid ID format. ID must be a valid UUID',
-      );
-    }
-
-    const survey = await this.prisma.form.findUnique({
-      where: {
-        id: surveyId,
-      },
-      include: {
-        questions: {
-          include: {
-            options: true,
-          },
-        },
-      },
-    });
-
-    if (!survey) {
-      throw new NotFoundException(`Survey with ID ${surveyId} not found`);
-    }
-
-    return survey;
-  }
-
-  async editSurvey(id: string, editSurveyDTO: EditSurveyDTO) {
-    const { newQuestions, updateQuestions, deleteQuestions, ...form } =
-      editSurveyDTO;
-
-    this.validateFormDetails(form);
-
-    const questionOrderSet = new Set();
-
-    newQuestions.forEach((q) => {
-      const { type, rangeFrom, rangeTo, options, order } = q;
-
-      if (questionOrderSet.has(order)) {
-        throw new BadRequestException({
-          message: 'Question order must be unique within a form',
-        });
-      }
-
-      questionOrderSet.add(order);
-
-      if (['CHECKBOX', 'RADIO'].includes(type)) {
-        if (options === undefined || options.length === 0) {
-          throw new BadRequestException({
-            message:
-              'Question with type CHECKBOX or RADIO must have at least 1 option',
-          });
-        }
-
-        const optionOrderSet = new Set();
-        options.forEach(({ order }) => {
-          if (optionOrderSet.has(order)) {
-            throw new BadRequestException({
-              message: 'Option order must be unique within a question',
-            });
-          }
-          optionOrderSet.add(order);
-        });
-      }
-
-      if (type === 'RANGE') {
-        if (
-          rangeFrom === undefined ||
-          rangeTo === undefined ||
-          rangeFrom > rangeTo
-        ) {
-          throw new BadRequestException({
-            message:
-              'Question with type RANGE must have rangeFrom and rangeTo, with rangeFrom less than or equal to rangeTo',
-          });
-        }
-      }
-    });
+  private async validateUpdatedQuestionOrder(
+    newQuestions: QuestionDTO[],
+    updateQuestions: ExistingQuestionDTO[],
+  ) {
+    const questionOrderSet = new Set(newQuestions.map(({ order }) => order));
 
     for (const q of updateQuestions) {
       try {
@@ -242,12 +143,8 @@ export class SurveyService {
 
         if (['CHECKBOX', 'RADIO'].includes(type)) {
           if (
-            ((newOptions === undefined || newOptions.length === 0) &&
-              (updateOptions === undefined || updateOptions.length === 0)) ||
-            (newOptions &&
-              updateOptions &&
-              deleteOptions &&
-              newOptions.length + updateOptions.length <= deleteOptions.length)
+            (newOptions === undefined || newOptions.length === 0) &&
+            (updateOptions === undefined || updateOptions.length === 0)
           ) {
             throw new BadRequestException({
               message:
@@ -264,13 +161,13 @@ export class SurveyService {
           const optionOrders = [...newOptionOrders, ...updateOptionOrders];
           const optionOrderSet = new Set();
 
-          optionOrders.forEach((order) => {
-            if (optionOrderSet.has(order)) {
+          optionOrders.forEach((i) => {
+            if (optionOrderSet.has(i)) {
               throw new BadRequestException({
                 message: 'Option order must be unique within a question',
               });
             }
-            optionOrderSet.add(order);
+            optionOrderSet.add(i);
           });
 
           const existingOptions = await this.prisma.option.findMany({
@@ -287,8 +184,8 @@ export class SurveyService {
             existingOptions.map((option) => option.id),
           );
 
-          [...updateOptionIds, ...deleteOptionIds].forEach((id) => {
-            if (!existingOptionIdSet.has(id)) {
+          [...updateOptionIds, ...deleteOptionIds].forEach((optionId) => {
+            if (!existingOptionIdSet.has(optionId)) {
               throw new BadRequestException({
                 message: 'Failed to update or delete option: Option not found',
               });
@@ -296,9 +193,96 @@ export class SurveyService {
           });
         }
       } catch (error) {
+        console.error(error);
         throw error;
       }
     }
+  }
+
+  async createSurvey(createSurveyDTO: CreateSurveyDTO) {
+    const { questions, ...form } = createSurveyDTO;
+
+    this.validateFormDetails(form);
+
+    this.validateQuestionOrder(questions);
+
+    await this.prisma.$transaction(async (tx) => {
+      const { id } = await tx.form.create({
+        data: {
+          ...form,
+        },
+      });
+
+      for (const q of questions) {
+        const { options, ...question } = q;
+        await tx.question.create({
+          data: {
+            ...question,
+            formId: id,
+            options: {
+              createMany: {
+                data: options ?? [],
+              },
+            },
+          },
+        });
+      }
+    });
+  }
+
+  async getSurveyForFill(surveyId: string, email: string) {
+    if (!isUUID(surveyId)) {
+      throw new BadRequestException(
+        'Format ID tidak sesuai dengan format UUID',
+      );
+    }
+
+    const user = await this.getUserByEmail(email);
+    const alumni = await this.getAlumni(user);
+
+    const survey = await this.prisma.form.findUnique({
+      where: {
+        id: surveyId,
+      },
+      include: {
+        questions: {
+          include: {
+            options: {
+              orderBy: {
+                order: 'asc',
+              },
+            },
+          },
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
+    });
+
+    if (!survey) {
+      throw new NotFoundException(
+        `Survey dengan ID ${surveyId} tidak ditemukan`,
+      );
+    }
+
+    this.validateFormTimeRange(survey);
+    this.validateAlumniEnrollmentYear(alumni, survey);
+    this.validateAlumniGraduateYear(alumni, survey);
+    await this.checkExistingResponse(alumni, survey);
+
+    return survey;
+  }
+
+  async editSurvey(id: string, editSurveyDTO: EditSurveyDTO) {
+    const { newQuestions, updateQuestions, deleteQuestions, ...form } =
+      editSurveyDTO;
+
+    this.validateFormDetails(form);
+
+    this.validateQuestionOrder(newQuestions);
+
+    await this.validateUpdatedQuestionOrder(newQuestions, updateQuestions);
 
     const existingQuestions = await this.prisma.question.findMany({
       select: {
@@ -365,10 +349,10 @@ export class SurveyService {
         });
 
         for (const opt of updateOptions ?? []) {
-          const { id, label, order } = opt;
+          const { id: optionId, label, order } = opt;
           await tx.option.update({
             where: {
-              id: id,
+              id: optionId,
             },
             data: {
               label,
@@ -440,8 +424,15 @@ export class SurveyService {
       where: { id },
       include: {
         questions: {
+          orderBy: {
+            order: 'asc',
+          },
           include: {
-            options: true,
+            options: {
+              orderBy: {
+                order: 'asc',
+              },
+            },
           },
         },
       },
@@ -511,6 +502,10 @@ export class SurveyService {
           },
         ],
       },
+      include: {
+        questions: false,
+        responses: true,
+      },
     });
 
     return survey;
@@ -519,5 +514,158 @@ export class SurveyService {
   async getAllSurveys(): Promise<Form[]> {
     const surveys = await this.prisma.form.findMany();
     return surveys;
+  }
+
+  async fillSurvey(req: FillSurveyDTO, email: string) {
+    const firstQuestionId = Object.keys(req)[0];
+    const user = await this.getUserByEmail(email);
+    const alumni = await this.getAlumni(user);
+    const form = await this.getForm(firstQuestionId);
+
+    this.validateFormTimeRange(form);
+    this.validateAlumniEnrollmentYear(alumni, form);
+    this.validateAlumniGraduateYear(alumni, form);
+    await this.checkExistingResponse(alumni, form);
+
+    await this.createResponseAndAnswers(req, alumni, form);
+  }
+
+  async getUserByEmail(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { alumni: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User dengan email ${email} tidak ditemukan`);
+    }
+
+    return user;
+  }
+
+  async getAlumni(user: any) {
+    const alumniId = user?.alumni?.id;
+
+    if (!alumniId) {
+      throw new NotFoundException(
+        `User dengan id ${user.id} tidak memiliki role alumni`,
+      );
+    }
+
+    const alumni = await this.prisma.alumni.findUnique({
+      where: { id: alumniId },
+      include: { studyProgram: true, responses: true },
+    });
+
+    if (!alumni) {
+      throw new NotFoundException(`Alumni tidak ditemukan`);
+    }
+
+    return alumni;
+  }
+
+  async getForm(questionId: string) {
+    const question = await this.prisma.question.findUnique({
+      where: { id: questionId },
+    });
+
+    if (!question) {
+      throw new NotFoundException(
+        `Pertanyaan dengan id ${questionId} tidak ditemukan`,
+      );
+    }
+
+    const form = await this.prisma.form.findUnique({
+      where: { id: question.formId },
+    });
+
+    if (!form) {
+      throw new NotFoundException(`Survey tidak ditemukan`);
+    }
+
+    return form;
+  }
+
+  private validateFormTimeRange(form: Form) {
+    const currentTime = new Date();
+    if (currentTime < form.startTime || currentTime > form.endTime) {
+      throw new BadRequestException('Survey tidak dapat diisi pada saat ini.');
+    }
+  }
+
+  private validateAlumniEnrollmentYear(alumni: Alumni, form: Form) {
+    if (
+      (form.admissionYearFrom !== undefined ||
+        form.admissionYearTo !== undefined) &&
+      !(
+        alumni.enrollmentYear >= (form.admissionYearFrom || 0) &&
+        alumni.enrollmentYear <=
+          (form.admissionYearTo || new Date().getFullYear())
+      )
+    ) {
+      throw new BadRequestException(
+        'Tahun masuk alumni harus sesuai dengan syarat yang ditentukan.',
+      );
+    }
+  }
+
+  private validateAlumniGraduateYear(alumni: Alumni, form: Form) {
+    if (
+      (form.graduateYearFrom !== undefined ||
+        form.graduateYearTo !== undefined) &&
+      alumni.graduateYear !== undefined &&
+      !(
+        alumni.graduateYear >= (form.graduateYearFrom || 0) &&
+        alumni.graduateYear <= (form.graduateYearTo || new Date().getFullYear())
+      )
+    ) {
+      throw new BadRequestException(
+        'Tahun kelulusan alumni harus sesuai dengan syarat yang ditentukan',
+      );
+    }
+  }
+
+  private async checkExistingResponse(alumni: Alumni, form: Form) {
+    const response = await this.prisma.response.findFirst({
+      where: { alumniId: alumni.id, formId: form.id },
+    });
+
+    if (response) {
+      throw new BadRequestException(
+        'Alumni hanya dapat mengisi survey satu kali',
+      );
+    }
+  }
+
+  private async createResponseAndAnswers(
+    req: FillSurveyDTO,
+    alumni: Alumni,
+    form: Form,
+  ) {
+    await this.prisma.$transaction(async (prisma) => {
+      const response = await prisma.response.create({
+        data: {
+          alumni: { connect: { id: alumni?.id } },
+          form: { connect: { id: form?.id } },
+        },
+      });
+
+      await Promise.all(
+        Object.entries(req).map(async ([questionId, answer]) => {
+          const answers = Array.isArray(answer) ? answer : [answer];
+          await Promise.all(
+            answers.map(async (item) => {
+              await prisma.answer.create({
+                data: {
+                  answer: item.toString(),
+                  response: { connect: { id: response.id } },
+                  question: { connect: { id: questionId } },
+                },
+              });
+            }),
+          );
+        }),
+      );
+    });
   }
 }

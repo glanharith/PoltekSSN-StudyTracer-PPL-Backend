@@ -92,13 +92,13 @@ export class ProfileService {
         role: false,
         alumni: {
           select: {
-            id: false,
+            id: true,
             npm: true,
             phoneNo: true,
             address: true,
             gender: false,
             enrollmentYear: true,
-            graduateYear: false,
+            graduateYear: true,
             studyProgramId: false,
           },
         },
@@ -113,10 +113,12 @@ export class ProfileService {
     return {
       name: user.name,
       alumni: {
+        id: user.alumni.id,
         npm: user.alumni.npm,
         phoneNo: decryptPhoneNo,
         address: decryptAddress,
         enrollmentYear: user.alumni.enrollmentYear,
+        graduateYear: user.alumni.graduateYear,
       },
     };
   }
