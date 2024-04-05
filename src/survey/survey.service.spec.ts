@@ -939,7 +939,14 @@ describe('SurveyService', () => {
         include: {
           questions: {
             include: {
-              options: true,
+              options: {
+                orderBy: {
+                  order: 'asc',
+                },
+              },
+            },
+            orderBy: {
+              order: 'asc',
             },
           },
         },
