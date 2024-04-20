@@ -103,7 +103,13 @@ export class SurveyController {
   @Get('/:id/response-preview')
   @IsAdmin()
   @IsHead()
-  getSurveyResponse(id: string) {
-    throw new Error('Method not implemented.');
+  async getSurveyResponse(@Param('id') id: string) {
+    const responses = await this.surveyService.getSurveyResponses(id);
+    return response(
+      `Successfully got responses for survey ${id}`,
+      {
+        data: responses,
+      },
+    );
   }
 }
