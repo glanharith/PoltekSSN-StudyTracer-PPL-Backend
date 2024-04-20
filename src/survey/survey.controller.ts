@@ -99,4 +99,11 @@ export class SurveyController {
       },
     );
   }
+
+  @Get('/:id/response-preview')
+  @IsAdmin()
+  @IsHead()
+  getSurveyResponse(id: string) {
+    throw new Error('Method not implemented.');
+  }
 }
