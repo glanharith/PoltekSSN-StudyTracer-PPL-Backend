@@ -669,7 +669,29 @@ export class SurveyService {
     });
   }
 
-  getSurveyResponses(surveyId: string) : any {
-    throw new Error('Method not implemented.');
+  async getSurveyResponses(surveyId: string) {
+    const survey = await this.prisma.form.findUnique({
+      where: { id: surveyId },
+    });
+
+    if (!survey) {
+      throw new NotFoundException(
+        `Survey dengan ID ${surveyId} tidak ditemukan`,
+      );
+    }
+
+    const responses = await this.prisma.response.findMany({
+      where: { formId: surveyId },
+      include: {
+        alumni: true,
+        answers: {
+          include: {
+            question: true,
+          },
+        },
+      },
+    });
+
+    return responses;
   }
 }
