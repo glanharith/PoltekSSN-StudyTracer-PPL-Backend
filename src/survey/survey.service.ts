@@ -668,4 +668,8 @@ export class SurveyService {
       );
     });
   }
+
+  getSurveyResponses(surveyId: string) : any {
+    throw new Error('Method not implemented.');
+  }
 }
