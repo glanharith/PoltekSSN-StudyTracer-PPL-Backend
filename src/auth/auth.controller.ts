@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  InternalServerErrorException,
+  Post,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { IsPublic } from 'src/common/decorator';
 import { LoginDTO, RegisterDTO } from './DTO';
@@ -23,5 +31,12 @@ export class AuthController {
     const token = await this.authService.login(loginDTO);
 
     return response('Successfully logged in', { token });
+  }
+
+  // For demonstration purpose
+  @IsPublic()
+  @Get('/error')
+  async error() {
+    throw new InternalServerErrorException();
   }
 }
