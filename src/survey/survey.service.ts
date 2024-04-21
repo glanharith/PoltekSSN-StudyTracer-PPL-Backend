@@ -467,7 +467,7 @@ export class SurveyService {
       today.getTime() + 7 * 24 * 60 * 60 * 1000, // today + 7 days
     );
 
-    const survey = await this.prisma.form.findMany({
+    return await this.prisma.form.findMany({
       where: {
         AND: [
           {
@@ -507,13 +507,10 @@ export class SurveyService {
         responses: true,
       },
     });
-
-    return survey;
   }
 
   async getAllSurveys(): Promise<Form[]> {
-    const surveys = await this.prisma.form.findMany();
-    return surveys;
+    return await this.prisma.form.findMany();
   }
 
   async fillSurvey(req: FillSurveyDTO, email: string) {
