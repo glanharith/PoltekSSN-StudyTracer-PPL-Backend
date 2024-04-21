@@ -677,7 +677,7 @@ export class SurveyService {
       );
     }
 
-    const responses = await this.prisma.response.findMany({
+    return await this.prisma.response.findMany({
       where: { formId: surveyId },
       include: {
         alumni: true,
@@ -688,7 +688,5 @@ export class SurveyService {
         },
       },
     });
-
-    return responses;
   }
 }
