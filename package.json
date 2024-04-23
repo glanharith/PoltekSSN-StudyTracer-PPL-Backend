@@ -93,7 +93,8 @@
       "\\.module\\.ts$",
       "\\.guard\\.ts$",
       "/DTO",
-      "\\.mock\\.ts$"
+      "\\.mock\\.ts$",
+      "/sentry"
     ],
     "coverageReporters": [
       "lcov",
