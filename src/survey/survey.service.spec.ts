@@ -10,6 +10,7 @@ import {
   User,
   Alumni,
   Response,
+  Answer,
   QuestionType,
 } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -202,6 +203,88 @@ describe('SurveyService', () => {
     graduateYearFrom: 2023,
     graduateYearTo: 2023,
   };
+
+  const surveyDummy: Form = {
+    id: '7da494a3-bc0f-4df5-ad24-0dd069b24b76',
+    type: 'CURRICULUM',
+    title: 'Dummy Survey',
+    description: 'This is a dummy survey',
+    startTime: new Date(2024, 1, 2),
+    endTime: new Date(2024, 11, 2),
+    admissionYearFrom: 2018,
+    admissionYearTo: 2018,
+    graduateYearFrom: 2022,
+    graduateYearTo: 2022
+  }
+
+  const questionDummyText: Question = {
+    id: '9b98dbbc-56f6-40f6-a87b-6447a89d0725',
+    type: QuestionType.TEXT,
+    question: 'Berapa tinggi Anda?',
+    rangeFrom: null,
+    rangeTo: null,
+    order: 1,
+    formId: surveyDummy.id
+  }
+
+  const questionDummyCheckbox: Question = {
+    id: '93cec37a-a694-4082-b668-efef90c38da7',
+    type: QuestionType.CHECKBOX,
+    question: 'Pilih warna kesukaan Anda (bisa lebih dari satu)!',
+    rangeFrom: null,
+    rangeTo: null,
+    order: 2,
+    formId: surveyDummy.id
+  }
+
+  const optionDummyCheckbox1: Option = {
+    id: '6ea0ef05-015e-415b-9eae-7afe482a04c4',
+    label: 'Biru',
+    questionId: questionDummyCheckbox.id,
+    order: 1
+  }
+
+  const optionDummyCheckbox2: Option = {
+    id: 'aabc1d6e-7e0a-4a8f-a8f9-867ce70777b1',
+    label: 'Merah',
+    questionId: questionDummyCheckbox.id,
+    order: 2
+  }
+
+  const answerDummyText1: Answer = {
+    id: 'd6e02e00-a397-4e63-8ede-abee0e815dab',
+    answer: 'Cukup tinggi',
+    responseId: '6131e17b-ad05-468e-b79f-dfb2b8efaab8',
+    questionId: questionDummyText.id
+  }
+
+  const answerDummyCheckbox1: Answer = {
+    id: '19be2608-5dc2-4ec2-988b-a678a08fbb0c',
+    answer: 'Biru',
+    responseId: answerDummyText1.responseId,
+    questionId: questionDummyCheckbox.id
+  }
+
+  const answerDummyText2: Answer = {
+    id: '49cb1ec2-5573-43b3-92ad-e255ff5bc7d8',
+    answer: 'Pendek',
+    responseId: 'eb48bdb6-a387-4e9e-8aaf-417778930d34',
+    questionId: questionDummyText.id
+  }
+
+  const answerDummyCheckbox2: Answer = {
+    id: 'cb36503c-c6ca-4ee5-8bff-49ecdd262c5c',
+    answer: 'Biru',
+    responseId: answerDummyText2.responseId,
+    questionId: questionDummyCheckbox.id
+  }
+
+  const answerDummyCheckbox3: Answer = {
+    id: '77198ab9-d338-4fa6-9fdc-3f0eb3f4929e',
+    answer: 'Merah',
+    responseId: answerDummyText2.responseId,
+    questionId: questionDummyCheckbox.id
+  }
 
   describe('create survey', () => {
     it('should create survey successfully', async () => {
@@ -1170,6 +1253,112 @@ describe('SurveyService', () => {
       await expect(
         surveyService.fillSurvey(fillSurveyDTO, mockUser.email),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('analyze response data', () => {
+    const mockSurvey = {
+      title: 'Survey Test',
+      questions: [
+        {
+          question: 'Seberapa baik situs kami?',
+          type: 'RANGE',
+          options: [
+            { label: '1', answers: [] },
+            { label: '2', answers: [] },
+            { label: '3', answers: [{ answer: '3' }] },
+            { label: '4', answers: [{ answer: '4' }] },
+            { label: '5', answers: [{ answer: '5' }] },
+          ],
+          answers: [
+            { answer: '4' }, { answer: '5' }, { answer: '3' }
+          ]
+        },
+        {
+          question: 'Fitur mana yang Anda gunakan?',
+          type: 'CHECKBOX',
+          options: [
+            { label: 'Obrolan', answers: [{ answer: 'Obrolan' }, { answer: 'Obrolan' }] },
+            { label: 'Pencarian', answers: [{ answer: 'Pencarian' }, { answer: 'Pencarian' }] }
+          ],
+          answers: [
+            { answer: 'Obrolan' }, { answer: 'Obrolan' }, { answer: 'Pencarian' }, { answer: 'Pencarian' }
+          ]
+        },
+        {
+          question: 'Apakah Anda akan merekomendasikan kami?',
+          type: 'RADIO',
+          options: [
+            { label: 'Ya', answers: [{ answer: 'Ya' }, { answer: 'Ya' }] },
+            { label: 'Tidak', answers: [{ answer: 'Tidak' }] }
+          ],
+          answers: [
+            { answer: 'Ya' }, { answer: 'Ya' }, { answer: 'Tidak' }
+          ]
+        },
+        {
+          question: 'Saran Anda?',
+          type: 'TEXT',
+          options: [],
+          answers: [
+            { answer: 'Tambah artikel.' },
+            { answer: 'Perbaiki kecepatan.' },
+            { answer: 'Semuanya baik.' }
+          ]
+        }
+      ]
+    };
+
+    const totalRespondents = 3;
+
+    it('should correctly analyze range type questions', async () => {
+      const stats = await surveyService.analyzeResponse(mockSurvey, totalRespondents);
+      expect(stats[0].data).toEqual([
+        { optionLabel: '1', optionAnswersCount: 0, percentage: '0.00%' },
+        { optionLabel: '2', optionAnswersCount: 0, percentage: '0.00%' },
+        { optionLabel: '3', optionAnswersCount: 1, percentage: '33.33%' },
+        { optionLabel: '4', optionAnswersCount: 1, percentage: '33.33%' },
+        { optionLabel: '5', optionAnswersCount: 1, percentage: '33.33%' }
+      ]);
+    });
+
+    it('should correctly analyze checkbox type questions', async () => {
+      const stats = await surveyService.analyzeResponse(mockSurvey, totalRespondents);
+      expect(stats[1].data).toEqual([
+        {
+          optionLabel: 'Obrolan',
+          optionAnswersCount: 2,
+          percentage: '66.67%'
+        },
+        {
+          optionLabel: 'Pencarian',
+          optionAnswersCount: 2,
+          percentage: '66.67%'
+        }
+      ]);
+    });
+
+    it('should correctly analyze radio type questions', async () => {
+      const stats = await surveyService.analyzeResponse(mockSurvey, totalRespondents);
+      expect(stats[2].data).toEqual([
+        {
+          optionLabel: 'Ya',
+          optionAnswersCount: 2,
+          percentage: '66.67%'
+        },
+        {
+          optionLabel: 'Tidak',
+          optionAnswersCount: 1,
+          percentage: '33.33%'
+        }
+      ]);
+    });
+
+    it('should correctly analyze text type questions', async () => {
+      const stats = await surveyService.analyzeResponse(mockSurvey, totalRespondents);
+      expect(stats[3].data).toEqual([
+        'Tambah artikel.', 'Perbaiki kecepatan.', 'Semuanya baik.'
+      ]);
     });
   });
 });
