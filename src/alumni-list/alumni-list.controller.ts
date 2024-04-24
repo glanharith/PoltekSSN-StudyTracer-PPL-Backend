@@ -12,17 +12,16 @@ export class AlumniListController{
     async viewAlumni(@ReqUser() request){
         if(request.role == "ADMIN"){
             return{
-                message: 'Succesfully got all the alumnis',
+                message: 'Successfully got all the alumnis',
                 data: await this.alumniListService.getAllAlumni()
             }
         }
-        else{
+        if(request.role=='HEAD_STUDY_PROGRAM'){
             return{
-                message: 'Succesfully got all the alumnis',
+                message: 'Successfully got all the alumnis',
                 data: await this.alumniListService.getAllAlumnibyProdi(request.email)
             }
         }
         
-
     }
 }
