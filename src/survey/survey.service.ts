@@ -14,6 +14,7 @@ import {
 import { isUUID } from 'class-validator';
 import { Alumni, Form } from '@prisma/client';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
+import { toCsvFile } from 'src/common/util/csv';
 
 @Injectable()
 export class SurveyService {
@@ -443,6 +444,79 @@ export class SurveyService {
     }
 
     return survey;
+  }
+
+  async getSurveyResponses(id: string): Promise<Record<string, any>> {
+    if (!isUUID(id)) {
+      throw new BadRequestException(
+        'Invalid ID format. ID must be a valid UUID',
+      );
+    }
+
+    const survey = await this.prisma.form.findUnique({
+      where: { id },
+    });
+
+    if (!survey) {
+      throw new NotFoundException(`Survey with ID ${id} not found`);
+    }
+
+    const responses = await this.prisma.answer.findMany({
+      select: {
+        question: {
+          select: {
+            question: true,
+          },
+        },
+        answer: true,
+        response: {
+          select: {
+            alumni: {
+              select: {
+                user: {
+                  select: {
+                    name: true,
+                  },
+                },
+                gender: true,
+                enrollmentYear: true,
+                graduateYear: true,
+                npm: true,
+                studyProgram: {
+                  select: {
+                    name: true,
+                    code: true,
+                    level: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      where: {
+        response: {
+          formId: id,
+        },
+      },
+    });
+
+    const flattenedData = responses.map((r) => {
+      return {
+        question: r.question.question,
+        answer: r.answer,
+        name: r.response.alumni.user.name,
+        npm: r.response.alumni.npm,
+        gender: r.response.alumni.gender,
+        enrollmentYear: r.response.alumni.enrollmentYear,
+        graduateYear: r.response.alumni.graduateYear,
+        studyProgram: r.response.alumni.studyProgram.name,
+        studyProgramCode: r.response.alumni.studyProgram.code,
+        studyProgramLevel: r.response.alumni.studyProgram.level,
+      };
+    });
+
+    return toCsvFile(flattenedData, `${survey.title}_Responses`);
   }
 
   async getAvailableSurveyByYear(
