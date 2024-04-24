@@ -19,7 +19,6 @@ import {
 } from 'src/common/decorator';
 import { response } from 'src/common/util/response';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
-
 @Controller('survey')
 export class SurveyController {
   constructor(private readonly surveyService: SurveyService) {}
@@ -79,6 +78,12 @@ export class SurveyController {
   @IsAdmin()
   async getSurvey(@Param('id') id: string) {
     return this.surveyService.getSurvey(id);
+  }
+
+  @Get('/:id/responses')
+  @IsAdmin()
+  async getSurveyResponses(@Param('id') id: string) {
+    return this.surveyService.getSurveyResponses(id);
   }
 
   @Get()
