@@ -11,6 +11,7 @@ import {
   Alumni,
   Response,
   QuestionType,
+  StudyProgram,
 } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
@@ -801,6 +802,125 @@ describe('SurveyService', () => {
       await expect(surveyService.getSurvey(invalidUUID)).rejects.toThrow(
         BadRequestException,
       );
+    });
+  });
+
+  describe('get survey responses', () => {
+    const studyProgram: StudyProgram = {
+      id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
+      name: 'Computer Science',
+      code: 'code',
+      level: 'D3',
+    };
+
+    const mockUser: User = {
+      id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
+      email: 'email@email.com',
+      password: 'currentPassword',
+      name: 'user',
+      role: 'ALUMNI',
+    };
+
+    const mockAlumni: Alumni & { user: User } & { studyProgram: StudyProgram } =
+      {
+        id: 'ed036827-2df3-4c45-8323-0eb43627f7f1',
+        phoneNo:
+          '$2b$10$89KoyS3YtlCfSsfHiyZTN.WtVfnFZ9U/.nMeXDtqedgwDE0Mj8kvy|92d362f959534bab|fc54298b1aa9f0ca3bb3e0d997bc3685|000a68a2793d43b622eba0361b458d44',
+        address:
+          '$2b$10$89KoyS3YtlCfSsfHiyZTN.Y2yh6rIYemKlZchKh6gMZxXoNWaRYn.|3528eed66ca856ae|b3157b4ecd41ddc884e86e6b01d5129d|6b96c85f4e36a2783045980c4bc6293a9fb29c7206b15cae60301c45aabbf41b48d1adcc6eddedd5e9cf2b77992bb491f67e2dfe473f3e1283a02bc7f8412ae7cacd7a24671b2e8e48579e42d7e50209',
+        gender: 'MALE',
+        enrollmentYear: 1995,
+        graduateYear: 1999,
+        studyProgramId: '2fa34067-d271-4ea4-9074-dedb3c99cb3a',
+        studyProgram: studyProgram,
+        npm: '1312452141',
+        user: mockUser,
+      };
+
+    const question = [
+      {
+        id: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        type: 'RADIO',
+        question: 'What is 9 + 10',
+        order: 0,
+        formId: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        rangeFrom: null,
+        rangeTo: null,
+      },
+    ];
+
+    const survey = {
+      id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+      type: FormType.CURRICULUM,
+      title: 'Test Survey',
+      description: 'This is a testing survey',
+      startTime: new Date(2024, 1, 2),
+      endTime: new Date(2024, 2, 2),
+      admissionYearFrom: 2019,
+      admissionYearTo: 2019,
+      graduateYearFrom: 2023,
+      graduateYearTo: 2023,
+      questions: question,
+    };
+
+    const response = {
+      id: '0d55baea-a841-4b9b-bf41-392c2b6d60b8',
+      formId: 'c75eee37-ced7-4ffd-8322-da086e73a57f',
+      alumniId: 'ed036827-2df3-4c45-8323-0eb43627f7f1',
+      alumni: mockAlumni,
+    };
+
+    const responses = [
+      {
+        id: '06f8062d-a638-48d7-8e2c-0f6a8f6f56b7',
+        answer: 'test',
+        responseId: response.id,
+        response: response,
+        questionId: question[0].id,
+        question: question[0],
+      },
+      {
+        id: '35669c91-538b-4c4d-9494-0c406ef0ba40',
+        answer: 'test',
+        responseId: response.id,
+        response: response,
+        questionId: question[0].id,
+        question: question[0],
+      },
+      {
+        id: 'bec02106-f90f-4e72-a767-c5cc5c765a7a',
+        answer: 'test',
+        responseId: response.id,
+        response: response,
+        questionId: question[0].id,
+        question: question[0],
+      },
+    ];
+
+    const nonExistentId = '5e2633ba-435d-41e8-8432-efa2832ce564';
+    const invalidUUID = 'invalid-uuid';
+
+    it('should return a survey response', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(survey);
+      prismaMock.answer.findMany.mockResolvedValue(responses);
+
+      await surveyService.getSurveyResponses(survey.id);
+      expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
+      expect(prismaMock.answer.findMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw NotFoundException if survey is not found', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(null);
+
+      await expect(
+        surveyService.getSurveyResponses(nonExistentId),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException if ID is not a valid UUID', async () => {
+      await expect(
+        surveyService.getSurveyResponses(invalidUUID),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
