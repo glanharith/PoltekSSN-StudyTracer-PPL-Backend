@@ -204,88 +204,6 @@ describe('SurveyService', () => {
     graduateYearTo: 2023,
   };
 
-  const surveyDummy: Form = {
-    id: '7da494a3-bc0f-4df5-ad24-0dd069b24b76',
-    type: 'CURRICULUM',
-    title: 'Dummy Survey',
-    description: 'This is a dummy survey',
-    startTime: new Date(2024, 1, 2),
-    endTime: new Date(2024, 11, 2),
-    admissionYearFrom: 2018,
-    admissionYearTo: 2018,
-    graduateYearFrom: 2022,
-    graduateYearTo: 2022
-  }
-
-  const questionDummyText: Question = {
-    id: '9b98dbbc-56f6-40f6-a87b-6447a89d0725',
-    type: QuestionType.TEXT,
-    question: 'Berapa tinggi Anda?',
-    rangeFrom: null,
-    rangeTo: null,
-    order: 1,
-    formId: surveyDummy.id
-  }
-
-  const questionDummyCheckbox: Question = {
-    id: '93cec37a-a694-4082-b668-efef90c38da7',
-    type: QuestionType.CHECKBOX,
-    question: 'Pilih warna kesukaan Anda (bisa lebih dari satu)!',
-    rangeFrom: null,
-    rangeTo: null,
-    order: 2,
-    formId: surveyDummy.id
-  }
-
-  const optionDummyCheckbox1: Option = {
-    id: '6ea0ef05-015e-415b-9eae-7afe482a04c4',
-    label: 'Biru',
-    questionId: questionDummyCheckbox.id,
-    order: 1
-  }
-
-  const optionDummyCheckbox2: Option = {
-    id: 'aabc1d6e-7e0a-4a8f-a8f9-867ce70777b1',
-    label: 'Merah',
-    questionId: questionDummyCheckbox.id,
-    order: 2
-  }
-
-  const answerDummyText1: Answer = {
-    id: 'd6e02e00-a397-4e63-8ede-abee0e815dab',
-    answer: 'Cukup tinggi',
-    responseId: '6131e17b-ad05-468e-b79f-dfb2b8efaab8',
-    questionId: questionDummyText.id
-  }
-
-  const answerDummyCheckbox1: Answer = {
-    id: '19be2608-5dc2-4ec2-988b-a678a08fbb0c',
-    answer: 'Biru',
-    responseId: answerDummyText1.responseId,
-    questionId: questionDummyCheckbox.id
-  }
-
-  const answerDummyText2: Answer = {
-    id: '49cb1ec2-5573-43b3-92ad-e255ff5bc7d8',
-    answer: 'Pendek',
-    responseId: 'eb48bdb6-a387-4e9e-8aaf-417778930d34',
-    questionId: questionDummyText.id
-  }
-
-  const answerDummyCheckbox2: Answer = {
-    id: 'cb36503c-c6ca-4ee5-8bff-49ecdd262c5c',
-    answer: 'Biru',
-    responseId: answerDummyText2.responseId,
-    questionId: questionDummyCheckbox.id
-  }
-
-  const answerDummyCheckbox3: Answer = {
-    id: '77198ab9-d338-4fa6-9fdc-3f0eb3f4929e',
-    answer: 'Merah',
-    responseId: answerDummyText2.responseId,
-    questionId: questionDummyCheckbox.id
-  }
-
   describe('create survey', () => {
     it('should create survey successfully', async () => {
       prismaMock.$transaction.mockImplementation(async (callback) => {
@@ -1253,6 +1171,85 @@ describe('SurveyService', () => {
       await expect(
         surveyService.fillSurvey(fillSurveyDTO, mockUser.email),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('get survey response by questions', () => {
+    it('should return analysis for a survey with responses', async () => {
+      const mockSurveyId = '77198ab9-d338-4fa6-9fdc-3f0eb3f4929e';
+      const mockSurvey = {
+        id: mockSurveyId,
+        type: FormType.CURRICULUM,
+        description: 'deskripsi survey',
+        title: 'Survey test',
+        startTime: new Date(2024, 0, 1),
+        endTime: new Date(2024, 11, 1),
+        admissionYearFrom: 2018,
+        admissionYearTo: 2018,
+        graduateYearFrom: 2022,
+        graduateYearTo: 2022,
+        questions: [{
+          order: 1,
+          options: [{ order: 1, label: 'Ya', answers: [{ answer: 'Ya' }] }],
+          answers: [{ answer: 'Ya' }]
+        }]
+      };
+
+      prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
+      surveyService.analyzeResponse = jest.fn().mockReturnValue('Analysis Data');
+
+      const result = await surveyService.getSurveyResponseByQuestions(mockSurveyId);
+
+      expect(result).toEqual({
+        title: 'Survey test',
+        totalRespondents: 1,
+        answerStats: 'Analysis Data'
+      });
+      expect(surveyService.analyzeResponse).toHaveBeenCalledWith(mockSurvey, 1);
+    });
+
+    it('should return message if survey has questions but no responses', async () => {
+      const mockSurveyId = '77198ab9-d338-4fa6-9fdc-3f0eb3f4929e';
+      const mockSurvey = {
+        id: mockSurveyId,
+        type: FormType.CURRICULUM,
+        description: 'deskripsi survey',
+        title: 'Survey no response',
+        startTime: new Date(2024, 0, 1),
+        endTime: new Date(2024, 11, 1),
+        admissionYearFrom: 2018,
+        admissionYearTo: 2018,
+        graduateYearFrom: 2022,
+        graduateYearTo: 2022,
+        questions: [{
+          order: 1,
+          options: [],
+          answers: []
+        }]
+      };
+
+      prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
+
+      const result = await surveyService.getSurveyResponseByQuestions(mockSurveyId);
+
+      expect(result).toEqual({
+        survey: mockSurvey,
+        message: 'Survei tidak memiliki respon'
+      });
+    });
+
+    it('should throw BadRequestException if the ID is not a valid UUID', async () => {
+      const invalidId = '123';
+      await expect(surveyService.getSurveyResponseByQuestions(invalidId))
+        .rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw NotFoundException if the survey does not exist', async () => {
+      const nonExistentId = '77198ab9-d338-4fa6-9fdc-3f0eb3f4929e';
+      prismaMock.form.findUnique.mockResolvedValue(null);
+
+      await expect(surveyService.getSurveyResponseByQuestions(nonExistentId))
+        .rejects.toThrow(NotFoundException);
     });
   });
 
