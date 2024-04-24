@@ -661,4 +661,34 @@ export class SurveyService {
       );
     });
   }
+
+  async analyzeResponse(survey: any, totalRespondents: number) {
+    return survey.questions.map(question => {
+      const { type, options, answers } = question;
+
+      if (type == 'TEXT') {
+        return {
+          question: question.question,
+          questionType: type,
+          data: answers.map(answer => answer.answer)
+        };
+      } else {
+        const optionStats = options.map(option => {
+          const optionAnswersCount = option.answers.length;
+          const percentage = (optionAnswersCount / totalRespondents) * 100;
+          return {
+            optionLabel: option.label,
+            optionAnswersCount,
+            percentage: percentage.toFixed(2) + '%'
+          };
+        });
+
+        return {
+          question: question.question,
+          questionType: type,
+          data: optionStats
+        };
+      }
+    })
+  }
 }
