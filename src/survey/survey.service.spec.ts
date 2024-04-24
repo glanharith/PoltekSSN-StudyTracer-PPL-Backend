@@ -1175,8 +1175,8 @@ describe('SurveyService', () => {
   });
 
   describe('get survey response by questions', () => {
+    const mockSurveyId = '77198ab9-d338-4fa6-9fdc-3f0eb3f4929e';
     it('should return analysis for a survey with responses', async () => {
-      const mockSurveyId = '77198ab9-d338-4fa6-9fdc-3f0eb3f4929e';
       const mockSurvey = {
         id: mockSurveyId,
         type: FormType.CURRICULUM,
@@ -1209,7 +1209,6 @@ describe('SurveyService', () => {
     });
 
     it('should return message if survey has questions but no responses', async () => {
-      const mockSurveyId = '77198ab9-d338-4fa6-9fdc-3f0eb3f4929e';
       const mockSurvey = {
         id: mockSurveyId,
         type: FormType.CURRICULUM,
@@ -1245,11 +1244,33 @@ describe('SurveyService', () => {
     });
 
     it('should throw NotFoundException if the survey does not exist', async () => {
-      const nonExistentId = '77198ab9-d338-4fa6-9fdc-3f0eb3f4929e';
       prismaMock.form.findUnique.mockResolvedValue(null);
 
-      await expect(surveyService.getSurveyResponseByQuestions(nonExistentId))
+      await expect(surveyService.getSurveyResponseByQuestions(mockSurveyId))
         .rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw a NotFoundException if the survey has no questions', async () => {
+      const mockSurveyWithNoQuestions = {
+        id: mockSurveyId,
+        type: FormType.CURRICULUM,
+        title: 'Survey Test',
+        description: 'deskripsi',
+        startTime: new Date(2024, 0, 1),
+        endTime: new Date(2024, 1, 1),
+        admissionYearFrom: 2020,
+        admissionYearTo: 2024,
+        graduateYearFrom: 2024,
+        graduateYearTo: 2028,
+        questions: []
+      };
+
+      prismaMock.form.findUnique.mockResolvedValue(mockSurveyWithNoQuestions);
+
+      await expect(surveyService.getSurveyResponseByQuestions(mockSurveyId))
+        .rejects.toThrow(NotFoundException);
+      await expect(surveyService.getSurveyResponseByQuestions(mockSurveyId))
+        .rejects.toThrow('Survei belum memiliki pertanyaan');
     });
   });
 
