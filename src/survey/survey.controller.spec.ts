@@ -6,9 +6,11 @@ import {
   BadRequestException,
   InternalServerErrorException,
   NotFoundException,
+  StreamableFile,
 } from '@nestjs/common';
 import { FormType, QuestionType } from '@prisma/client';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
+import { Readable } from 'stream';
 
 jest.mock('./survey.service');
 
@@ -351,6 +353,40 @@ describe('SurveyController', () => {
       await expect(surveyController.getSurvey(survey.id)).rejects.toThrow(
         InternalServerErrorException,
       );
+    });
+  });
+
+  describe('GET /survey/:id/responses', () => {
+    it('should successfully return a survey response', async () => {
+      const file: StreamableFile = new StreamableFile(new Readable(), {
+        type: 'text/csv',
+        disposition: `attachment; filename=Survey_Responses.csv"`,
+      });
+
+      surveyServiceMock.getSurveyResponses.mockResolvedValue(file);
+      const result = await surveyController.getSurveyResponses(survey.id);
+
+      expect(result).toEqual(file);
+    });
+
+    it('should return NotFoundException for non-existing survey', async () => {
+      surveyServiceMock.getSurveyResponses.mockRejectedValue(
+        new NotFoundException('Survey not found'),
+      );
+
+      await expect(
+        surveyController.getSurveyResponses(survey.id),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should handle errors during get', async () => {
+      surveyServiceMock.getSurveyResponses.mockRejectedValue(
+        new InternalServerErrorException('Error while retrieving survey'),
+      );
+
+      await expect(
+        surveyController.getSurveyResponses(survey.id),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 
