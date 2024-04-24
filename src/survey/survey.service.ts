@@ -161,7 +161,7 @@ export class SurveyService {
           const optionOrders = [...newOptionOrders, ...updateOptionOrders];
           const optionOrderSet = new Set();
 
-          optionOrderSet.forEach(({ order: i }) => {
+          optionOrders.forEach((i) => {
             if (optionOrderSet.has(i)) {
               throw new BadRequestException({
                 message: 'Option order must be unique within a question',
