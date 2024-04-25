@@ -81,9 +81,14 @@ describe('AlumniListService', () => {
                 address: 'depok',
                 gender: 'MALE',
                 enrollmentYear: 2021,
-                graduateYear: 2025
+                graduateYear: 2025,
+                studyProgramId: '1'
             }
         }]
+        const studyProgram = {
+            id: '1',
+            name: 'Computer Science'
+        }
         const securedPhone = await secure(alumniUser[0].alumni.phoneNo)
         const securedAddress = await secure(alumniUser[0].alumni.address)
         const securedEmail = await secure(alumniUser[0].email)
@@ -91,9 +96,11 @@ describe('AlumniListService', () => {
         alumniUser[0].alumni.address = securedAddress
         alumniUser[0].email = securedEmail
         const findManyMock = jest.fn().mockResolvedValue(alumniUser);
+        const findUniqueMock = jest.fn().mockResolvedValue(studyProgram)
         const alumnilistService = new AlumniListService(
             {
               user: { findMany: findManyMock },
+              studyProgram:{findUnique: findUniqueMock}
             } as any,
         );
 
@@ -132,18 +139,26 @@ describe('AlumniListService', () => {
                 studyProgramId: headStudyProgramId,
             },
         }];
+        const studyProgram = {
+            id: headStudyProgramId,
+            name: 'Computer Science'
+        }
         const securedPhone = await secure(alumniUser[0].alumni.phoneNo)
         const securedAddress = await secure(alumniUser[0].alumni.address)
         const securedEmail = await secure(alumniUser[0].email)
         alumniUser[0].alumni.phoneNo = securedPhone
         alumniUser[0].alumni.address = securedAddress
         alumniUser[0].email = securedEmail
+        const findUniqueMockStudy = jest.fn().mockResolvedValue(studyProgram)
         const findManyMock = jest.fn().mockResolvedValue(alumniUser);
-        const findUniqueMock = jest.fn().mockResolvedValue(head)
+        const findUniqueMockHead = jest.fn().mockResolvedValue(head)
         const alumnilistService = new AlumniListService(
             {
               user: { findMany: findManyMock,
-                findUnique: findUniqueMock
+                findUnique: findUniqueMockHead,
+               },
+               studyProgram:{
+                findUnique: findUniqueMockStudy
                },
             } as any,
         );
@@ -182,6 +197,85 @@ describe('AlumniListService', () => {
         );
         await expect(
             alumnilistService.getAllAlumnibyProdi('nonexistent@example.com'),
+        ).rejects.toThrowError(NotFoundException);
+    })
+    it('should return NotFoundException if studyprogram is not found in getallalumnibyprodi', async () => {
+        const headEmail = 'head@example.com';
+        const headStudyProgramId = 123; 
+        const head = {
+            email: headEmail,
+            headStudyProgram: {
+                studyProgramId: headStudyProgramId,
+            },
+        };
+        
+        const alumniUser = [{
+            name: 'limbat',
+            email: 'email@email.com',
+            alumni: {
+                npm: '2106752344',
+                phoneNo: '081283831838',
+                address: 'depok',
+                gender: 'MALE',
+                enrollmentYear: 2021,
+                graduateYear: 2025,
+                studyProgramId: headStudyProgramId,
+            },
+        }];
+        const securedPhone = await secure(alumniUser[0].alumni.phoneNo)
+        const securedAddress = await secure(alumniUser[0].alumni.address)
+        const securedEmail = await secure(alumniUser[0].email)
+        alumniUser[0].alumni.phoneNo = securedPhone
+        alumniUser[0].alumni.address = securedAddress
+        alumniUser[0].email = securedEmail
+        const findUniqueMockHead = jest.fn().mockResolvedValue(head);
+        const findManyMock = jest.fn().mockResolvedValue(alumniUser)
+        const findUniqueMockStudy = jest.fn().mockResolvedValue(null);
+        const alumnilistService = new AlumniListService(
+            {
+              user: { findMany: findManyMock,
+                findUnique: findUniqueMockHead,
+               },
+               studyProgram:{
+                findUnique: findUniqueMockStudy
+               },
+            } as any,
+        );
+        await expect(
+            alumnilistService.getAllAlumnibyProdi('head@example.com'),
+        ).rejects.toThrowError(NotFoundException);
+    })
+    it('should return NotFoundException if studyprogram is not found in getallalumni', async () => {
+        const alumniUser = [{
+            name: 'limbat',
+            email: 'email@email.com',
+            alumni: {
+                npm: '2106752344',
+                phoneNo: '081283831838',
+                address: 'depok',
+                gender: 'MALE',
+                enrollmentYear: 2021,
+                graduateYear: 2025,
+                studyProgramId: '1',
+            },
+        }];
+        const securedPhone = await secure(alumniUser[0].alumni.phoneNo)
+        const securedAddress = await secure(alumniUser[0].alumni.address)
+        const securedEmail = await secure(alumniUser[0].email)
+        alumniUser[0].alumni.phoneNo = securedPhone
+        alumniUser[0].alumni.address = securedAddress
+        alumniUser[0].email = securedEmail
+        const findManyMock = jest.fn().mockResolvedValue(alumniUser)
+        const findUniqueMock = jest.fn().mockResolvedValue(null);
+        const alumnilistService = new AlumniListService(
+            {
+            user: { findMany: findManyMock,
+                },
+            studyProgram: { findUnique: findUniqueMock },
+            } as any,
+        );
+        await expect(
+            alumnilistService.getAllAlumni(),
         ).rejects.toThrowError(NotFoundException);
     })
 });
