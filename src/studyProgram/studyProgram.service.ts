@@ -12,14 +12,13 @@ export class StudyProgramService {
   constructor(private readonly prisma: PrismaService) {}
   async create({ name, code, level }: StudyProgramDTO): Promise<StudyProgram> {
     if (await this.isStudyProgramNameAvailable('', name)) {
-      const newStudyProgram = await this.prisma.studyProgram.create({
+      return await this.prisma.studyProgram.create({
         data: {
           name: name,
           code: code,
           level: level,
         },
       });
-      return newStudyProgram;
     }
     throw new ConflictException('Study program name already exists');
   }
@@ -30,7 +29,7 @@ export class StudyProgramService {
   ): Promise<StudyProgram> {
     await this.getStudyProgramById(id);
     if (await this.isStudyProgramNameAvailable(id, name)) {
-      const updatedStudyProgram = await this.prisma.studyProgram.update({
+      return await this.prisma.studyProgram.update({
         where: {
           id: id,
         },
@@ -40,7 +39,6 @@ export class StudyProgramService {
           level: level,
         },
       });
-      return updatedStudyProgram;
     }
     throw new ConflictException('Study program name already exists');
   }
@@ -74,12 +72,11 @@ export class StudyProgramService {
   async delete(id: string): Promise<StudyProgram> {
     await this.getStudyProgramById(id);
     await this.checkStudyProgramsUsed([id]);
-    const studyPrograms = await this.prisma.studyProgram.delete({
+    return await this.prisma.studyProgram.delete({
       where: {
         id: id,
       },
     });
-    return studyPrograms;
   }
 
   async getMultipleStudyProgramsById(ids: string[]): Promise<StudyProgram[]> {

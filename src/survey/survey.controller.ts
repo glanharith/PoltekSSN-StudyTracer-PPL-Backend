@@ -82,8 +82,8 @@ export class SurveyController {
 
   @Get('/:id/responses')
   @IsAdmin()
-  async getSurveyResponses(@Param('id') id: string) {
-    return this.surveyService.getSurveyResponses(id);
+  async downloadSurveyResponses(@Param('id') id: string) {
+    return this.surveyService.downloadSurveyResponses(id);
   }
 
   @Get()
@@ -103,5 +103,15 @@ export class SurveyController {
         data: surveys,
       },
     );
+  }
+
+  @Get('/:id/response-preview')
+  @IsAdmin()
+  @IsHead()
+  async getSurveyResponse(@Param('id') id: string) {
+    const responses = await this.surveyService.getSurveyResponses(id);
+    return response(`Successfully got responses for survey ${id}`, {
+      data: responses,
+    });
   }
 }

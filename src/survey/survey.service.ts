@@ -446,7 +446,7 @@ export class SurveyService {
     return survey;
   }
 
-  async getSurveyResponses(id: string): Promise<Record<string, any>> {
+  async downloadSurveyResponses(id: string): Promise<Record<string, any>> {
     if (!isUUID(id)) {
       throw new BadRequestException(
         'Invalid ID format. ID must be a valid UUID',
@@ -541,7 +541,7 @@ export class SurveyService {
       today.getTime() + 7 * 24 * 60 * 60 * 1000, // today + 7 days
     );
 
-    const survey = await this.prisma.form.findMany({
+    return await this.prisma.form.findMany({
       where: {
         AND: [
           {
@@ -581,13 +581,10 @@ export class SurveyService {
         responses: true,
       },
     });
-
-    return survey;
   }
 
   async getAllSurveys(): Promise<Form[]> {
-    const surveys = await this.prisma.form.findMany();
-    return surveys;
+    return await this.prisma.form.findMany();
   }
 
   async fillSurvey(req: FillSurveyDTO, email: string) {
@@ -740,6 +737,30 @@ export class SurveyService {
           );
         }),
       );
+    });
+  }
+
+  async getSurveyResponses(surveyId: string) {
+    const survey = await this.prisma.form.findUnique({
+      where: { id: surveyId },
+    });
+
+    if (!survey) {
+      throw new NotFoundException(
+        `Survey dengan ID ${surveyId} tidak ditemukan`,
+      );
+    }
+
+    return await this.prisma.response.findMany({
+      where: { formId: surveyId },
+      include: {
+        alumni: true,
+        answers: {
+          include: {
+            question: true,
+          },
+        },
+      },
     });
   }
 }
