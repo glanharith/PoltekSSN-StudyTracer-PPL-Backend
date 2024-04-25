@@ -43,14 +43,12 @@ describe('SurveyService', () => {
     surveyService = module.get<SurveyService>(SurveyService);
   });
 
-  const mockOption: Option[] = [
-    {
-      id: 'uuid',
-      questionId: 'uuid',
-      label: 'label',
-      order: 1,
-    },
-  ];
+  const mockOption: Option = {
+    id: 'uuid',
+    questionId: 'uuid',
+    label: 'label',
+    order: 1,
+  };
 
   const optionRadio1: OptionDTO = {
     label: 'Option Radio 1',
@@ -168,7 +166,6 @@ describe('SurveyService', () => {
     ...questionRange,
     order: 8,
   };
-  const surveyId = 'b3eb1541-79cb-432f-a1fb-2101044eff81';
 
   const editSurveyDTO: EditSurveyDTO = {
     title: 'title',
@@ -191,17 +188,50 @@ describe('SurveyService', () => {
     deleteQuestions: [{ id: 'uuid' }],
   };
 
-  const surveyTest: Form = {
+  const mockQuestion: Question & { options: Option[] } = {
+    id: 'uuid',
+    type: 'RADIO',
+    question: 'What is 9 + 10',
+    order: 0,
+    formId: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+    rangeFrom: null,
+    rangeTo: null,
+    options: [mockOption],
+  };
+
+  const mockSurvey: Form & { questions: Question[] } = {
     id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
-    type: 'CURRICULUM',
+    type: FormType.CURRICULUM,
     title: 'Test Survey',
     description: 'This is a testing survey',
     startTime: new Date(2024, 1, 2),
     endTime: new Date(2024, 2, 2),
-    admissionYearFrom: 2019,
-    admissionYearTo: 2019,
-    graduateYearFrom: 2023,
-    graduateYearTo: 2023,
+    admissionYearFrom: 2018,
+    admissionYearTo: 2021,
+    graduateYearFrom: 2022,
+    graduateYearTo: 2025,
+    questions: [mockQuestion],
+  };
+
+  const mockAlumni: Alumni = {
+    id: 'ed036827-2df3-4c45-8323-0eb43627f7f1',
+    phoneNo:
+      '$2b$10$89KoyS3YtlCfSsfHiyZTN.WtVfnFZ9U/.nMeXDtqedgwDE0Mj8kvy|92d362f959534bab|fc54298b1aa9f0ca3bb3e0d997bc3685|000a68a2793d43b622eba0361b458d44',
+    address:
+      '$2b$10$89KoyS3YtlCfSsfHiyZTN.Y2yh6rIYemKlZchKh6gMZxXoNWaRYn.|3528eed66ca856ae|b3157b4ecd41ddc884e86e6b01d5129d|6b96c85f4e36a2783045980c4bc6293a9fb29c7206b15cae60301c45aabbf41b48d1adcc6eddedd5e9cf2b77992bb491f67e2dfe473f3e1283a02bc7f8412ae7cacd7a24671b2e8e48579e42d7e50209',
+    gender: 'MALE',
+    enrollmentYear: 2021,
+    graduateYear: 2025,
+    studyProgramId: '2fa34067-d271-4ea4-9074-dedb3c99cb3a',
+    npm: '1312452141',
+  };
+
+  const mockUser: User = {
+    id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
+    email: 'email@email.com',
+    password: 'currentPassword',
+    name: 'user',
+    role: 'ALUMNI',
   };
 
   describe('create survey', () => {
@@ -362,38 +392,27 @@ describe('SurveyService', () => {
 
   describe('edit survey', () => {
     it('should edit survey successfully', async () => {
-      prismaMock.option.findMany.mockResolvedValue(mockOption);
-      const mockQuestion: Question[] = [
-        {
-          id: 'uuid',
-          type: 'RANGE',
-          question: 'question',
-          rangeFrom: 1,
-          rangeTo: 5,
-          order: 1,
-          formId: 'uuid',
-        },
-      ];
-      prismaMock.question.findMany.mockResolvedValue(mockQuestion);
+      prismaMock.option.findMany.mockResolvedValue([mockOption]);
+      prismaMock.question.findMany.mockResolvedValue([mockQuestion]);
       prismaMock.$transaction.mockImplementation(async (callback) => {
         const prismaMockTx = createPrismaMock();
         prismaMockTx.form.update.mockResolvedValue({ id: 'id' } as Form);
         await callback(prismaMockTx);
       });
 
-      await surveyService.editSurvey(surveyId, editSurveyDTO);
+      await surveyService.editSurvey(mockSurvey.id, editSurveyDTO);
     });
 
     it('should check if the updated or deleted option exists in the updated question', async () => {
       prismaMock.option.findMany.mockResolvedValue([]);
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTO),
+        surveyService.editSurvey(mockSurvey.id, editSurveyDTO),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should check if the updated or deleted question exists in the form', async () => {
-      prismaMock.option.findMany.mockResolvedValue(mockOption);
+      prismaMock.option.findMany.mockResolvedValue([mockOption]);
       prismaMock.question.findMany.mockResolvedValue([]);
       prismaMock.$transaction.mockImplementation(async (callback) => {
         const prismaMockTx = createPrismaMock();
@@ -401,7 +420,7 @@ describe('SurveyService', () => {
       });
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTO),
+        surveyService.editSurvey(mockSurvey.id, editSurveyDTO),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -413,7 +432,7 @@ describe('SurveyService', () => {
       };
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTOWithInvalidTime),
+        surveyService.editSurvey(mockSurvey.id, editSurveyDTOWithInvalidTime),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
@@ -427,7 +446,7 @@ describe('SurveyService', () => {
 
       await expect(
         surveyService.editSurvey(
-          surveyId,
+          mockSurvey.id,
           editSurveyDTOWithInvalidAdmissionYear,
         ),
       ).rejects.toThrow(BadRequestException);
@@ -443,7 +462,7 @@ describe('SurveyService', () => {
 
       await expect(
         surveyService.editSurvey(
-          surveyId,
+          mockSurvey.id,
           editSurveyDTOWithInvalidGraduateYear,
         ),
       ).rejects.toThrow(BadRequestException);
@@ -463,7 +482,7 @@ describe('SurveyService', () => {
 
       await expect(
         surveyService.editSurvey(
-          surveyId,
+          mockSurvey.id,
           editSurveyDTOWithInvalidQuestionOrder,
         ),
       ).rejects.toThrow(BadRequestException);
@@ -479,7 +498,7 @@ describe('SurveyService', () => {
 
       await expect(
         surveyService.editSurvey(
-          surveyId,
+          mockSurvey.id,
           editSurveyDTOWithInvalidQuestionOrder,
         ),
       ).rejects.toThrow(BadRequestException);
@@ -498,7 +517,7 @@ describe('SurveyService', () => {
       };
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTOWithNoRadioOption),
+        surveyService.editSurvey(mockSurvey.id, editSurveyDTOWithNoRadioOption),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
@@ -516,7 +535,7 @@ describe('SurveyService', () => {
       };
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTOWithNoRadioOption),
+        surveyService.editSurvey(mockSurvey.id, editSurveyDTOWithNoRadioOption),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
@@ -533,13 +552,16 @@ describe('SurveyService', () => {
       };
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTOWithNoCheckboxOption),
+        surveyService.editSurvey(
+          mockSurvey.id,
+          editSurveyDTOWithNoCheckboxOption,
+        ),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
 
     it('should validate existing checkbox option', async () => {
-      prismaMock.option.findMany.mockResolvedValue(mockOption);
+      prismaMock.option.findMany.mockResolvedValue([mockOption]);
       const editSurveyDTOWithNoCheckboxOption: EditSurveyDTO = {
         ...editSurveyDTO,
         newQuestions: [],
@@ -552,7 +574,10 @@ describe('SurveyService', () => {
       };
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTOWithNoCheckboxOption),
+        surveyService.editSurvey(
+          mockSurvey.id,
+          editSurveyDTOWithNoCheckboxOption,
+        ),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
@@ -572,7 +597,10 @@ describe('SurveyService', () => {
       };
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTOWithInvalidOptionOrder),
+        surveyService.editSurvey(
+          mockSurvey.id,
+          editSurveyDTOWithInvalidOptionOrder,
+        ),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
@@ -597,7 +625,10 @@ describe('SurveyService', () => {
       };
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTOWithInvalidOptionOrder),
+        surveyService.editSurvey(
+          mockSurvey.id,
+          editSurveyDTOWithInvalidOptionOrder,
+        ),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
@@ -614,13 +645,13 @@ describe('SurveyService', () => {
       };
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTOWithoutRange),
+        surveyService.editSurvey(mockSurvey.id, editSurveyDTOWithoutRange),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
 
     it('should validate rangeFrom and rangeTo of an existing question', async () => {
-      prismaMock.option.findMany.mockResolvedValue(mockOption);
+      prismaMock.option.findMany.mockResolvedValue([mockOption]);
       const editSurveyDTOWithoutRange: EditSurveyDTO = {
         ...editSurveyDTO,
         updateQuestions: [
@@ -636,7 +667,7 @@ describe('SurveyService', () => {
       };
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTOWithoutRange),
+        surveyService.editSurvey(mockSurvey.id, editSurveyDTOWithoutRange),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
@@ -653,13 +684,13 @@ describe('SurveyService', () => {
       };
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTOWithInvalidRange),
+        surveyService.editSurvey(mockSurvey.id, editSurveyDTOWithInvalidRange),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
 
     it('should validate range of an existing question', async () => {
-      prismaMock.option.findMany.mockResolvedValue(mockOption);
+      prismaMock.option.findMany.mockResolvedValue([mockOption]);
       const editSurveyDTOWithInvalidRange: EditSurveyDTO = {
         ...editSurveyDTO,
         updateQuestions: [
@@ -671,24 +702,24 @@ describe('SurveyService', () => {
       };
 
       await expect(
-        surveyService.editSurvey(surveyId, editSurveyDTOWithInvalidRange),
+        surveyService.editSurvey(mockSurvey.id, editSurveyDTOWithInvalidRange),
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
 
     describe('delete', () => {
-      const id = surveyTest.id;
+      const id = mockSurvey.id;
       const nonExistentId = '5e2633ba-435d-41e8-8432-efa2832ce564';
       const invalidUUID = 'invalid-uuid';
 
       it('should successfully delete a survey', async () => {
-        prismaMock.form.findUnique.mockResolvedValue(surveyTest);
-        prismaMock.form.delete.mockResolvedValue(surveyTest);
+        prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
+        prismaMock.form.delete.mockResolvedValue(mockSurvey);
 
         expect(await surveyService.deleteSurvey(id)).toEqual(id);
         expect(prismaMock.form.delete).toHaveBeenCalledWith({
           where: {
-            id: surveyTest.id,
+            id: mockSurvey.id,
           },
         });
       });
@@ -711,7 +742,7 @@ describe('SurveyService', () => {
       it("should not delete a survey if the current date is within the survey's active period", async () => {
         jest.useFakeTimers().setSystemTime(new Date(2024, 1, 15));
 
-        prismaMock.form.findUnique.mockResolvedValue(surveyTest);
+        prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
 
         await expect(surveyService.deleteSurvey(id)).rejects.toThrow(
           BadRequestException,
@@ -725,53 +756,17 @@ describe('SurveyService', () => {
   });
 
   describe('get survey', () => {
-    const option = [
-      {
-        id: 'da20eb7a-8667-4a82-a18d-47aca6cf84ef',
-        label: '21',
-        questionId: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
-        order: 0,
-      },
-    ];
-
-    const question = [
-      {
-        id: 'ca20eb7a-8667-4a82-a18d-47aca6cf84ef',
-        type: 'RADIO',
-        question: 'What is 9 + 10',
-        order: 0,
-        formId: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
-        rangeFrom: null,
-        rangeTo: null,
-        options: option,
-      },
-    ];
-
-    const survey = {
-      id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
-      type: FormType.CURRICULUM,
-      title: 'Test Survey',
-      description: 'This is a testing survey',
-      startTime: new Date(2024, 1, 2),
-      endTime: new Date(2024, 2, 2),
-      admissionYearFrom: 2019,
-      admissionYearTo: 2019,
-      graduateYearFrom: 2023,
-      graduateYearTo: 2023,
-      questions: question,
-    };
-
     const nonExistentId = '5e2633ba-435d-41e8-8432-efa2832ce564';
     const invalidUUID = 'invalid-uuid';
 
     it('should return a survey', async () => {
-      prismaMock.form.findUnique.mockResolvedValue(survey);
+      prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
 
-      expect(await surveyService.getSurvey(survey.id)).toEqual(survey);
+      expect(await surveyService.getSurvey(mockSurvey.id)).toEqual(mockSurvey);
       expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
       expect(prismaMock.form.findUnique).toHaveBeenCalledWith({
         where: {
-          id: survey.id,
+          id: mockSurvey.id,
         },
         include: {
           questions: {
@@ -813,29 +808,11 @@ describe('SurveyService', () => {
       level: 'D3',
     };
 
-    const mockUser: User = {
-      id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
-      email: 'email@email.com',
-      password: 'currentPassword',
-      name: 'user',
-      role: 'ALUMNI',
+    const alumni: Alumni & { user: User } & { studyProgram: StudyProgram } = {
+      ...mockAlumni,
+      studyProgram: studyProgram,
+      user: mockUser,
     };
-
-    const mockAlumni: Alumni & { user: User } & { studyProgram: StudyProgram } =
-      {
-        id: 'ed036827-2df3-4c45-8323-0eb43627f7f1',
-        phoneNo:
-          '$2b$10$89KoyS3YtlCfSsfHiyZTN.WtVfnFZ9U/.nMeXDtqedgwDE0Mj8kvy|92d362f959534bab|fc54298b1aa9f0ca3bb3e0d997bc3685|000a68a2793d43b622eba0361b458d44',
-        address:
-          '$2b$10$89KoyS3YtlCfSsfHiyZTN.Y2yh6rIYemKlZchKh6gMZxXoNWaRYn.|3528eed66ca856ae|b3157b4ecd41ddc884e86e6b01d5129d|6b96c85f4e36a2783045980c4bc6293a9fb29c7206b15cae60301c45aabbf41b48d1adcc6eddedd5e9cf2b77992bb491f67e2dfe473f3e1283a02bc7f8412ae7cacd7a24671b2e8e48579e42d7e50209',
-        gender: 'MALE',
-        enrollmentYear: 1995,
-        graduateYear: 1999,
-        studyProgramId: '2fa34067-d271-4ea4-9074-dedb3c99cb3a',
-        studyProgram: studyProgram,
-        npm: '1312452141',
-        user: mockUser,
-      };
 
     const question = [
       {
@@ -867,7 +844,7 @@ describe('SurveyService', () => {
       id: '0d55baea-a841-4b9b-bf41-392c2b6d60b8',
       formId: 'c75eee37-ced7-4ffd-8322-da086e73a57f',
       alumniId: 'ed036827-2df3-4c45-8323-0eb43627f7f1',
-      alumni: mockAlumni,
+      alumni: alumni,
     };
 
     const responses = [
@@ -926,7 +903,7 @@ describe('SurveyService', () => {
 
   describe('get all surveys', () => {
     it('should return all surveys', async () => {
-      const surveysMock = [surveyTest];
+      const surveysMock = [mockSurvey];
 
       prismaMock.form.findMany.mockResolvedValue(surveysMock);
 
@@ -993,60 +970,21 @@ describe('SurveyService', () => {
   });
 
   describe('get survey for alumni', () => {
-    const mockAlumni: Alumni = {
-      id: 'ed036827-2df3-4c45-8323-0eb43627f7f1',
-      phoneNo:
-        '$2b$10$89KoyS3YtlCfSsfHiyZTN.WtVfnFZ9U/.nMeXDtqedgwDE0Mj8kvy|92d362f959534bab|fc54298b1aa9f0ca3bb3e0d997bc3685|000a68a2793d43b622eba0361b458d44',
-      address:
-        '$2b$10$89KoyS3YtlCfSsfHiyZTN.Y2yh6rIYemKlZchKh6gMZxXoNWaRYn.|3528eed66ca856ae|b3157b4ecd41ddc884e86e6b01d5129d|6b96c85f4e36a2783045980c4bc6293a9fb29c7206b15cae60301c45aabbf41b48d1adcc6eddedd5e9cf2b77992bb491f67e2dfe473f3e1283a02bc7f8412ae7cacd7a24671b2e8e48579e42d7e50209',
-      gender: 'MALE',
-      enrollmentYear: 1995,
-      graduateYear: 1999,
-      studyProgramId: '2fa34067-d271-4ea4-9074-dedb3c99cb3a',
-      npm: '1312452141',
-    };
-
-    const mockUser: User & { alumni: Alumni } = {
-      id: '287ed51b-df85-43ab-96a3-13bb513e68c5',
-      email: 'email@email.com',
-      password: 'currentPassword',
-      name: 'user',
-      role: 'ALUMNI',
+    const user: User & { alumni: Alumni } = {
+      ...mockUser,
       alumni: mockAlumni,
-    };
-
-    const mockSurvey = {
-      id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
-      type: 'CURRICULUM',
-      title: 'test normal',
-      description: 'normal',
-      startTime: new Date('2024-04-02T12:56:00.000Z'),
-      endTime: new Date('2025-04-02T12:57:00.000Z'),
-      admissionYearFrom: null,
-      admissionYearTo: null,
-      graduateYearFrom: null,
-      graduateYearTo: null,
     };
 
     const nonExistentId = '5e2633ba-435d-41e8-8432-efa2832ce564';
     const invalidUUID = 'invalid-uuid';
 
     it('should return a survey', async () => {
-      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      jest.useFakeTimers().setSystemTime(new Date(2024, 1, 2));
+
+      prismaMock.user.findUnique.mockResolvedValue(user);
 
       prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
-      prismaMock.form.findUnique.mockResolvedValue({
-        id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
-        type: 'CURRICULUM',
-        title: 'test normal',
-        description: 'normal',
-        startTime: new Date('2024-04-02T12:56:00.000Z'),
-        endTime: new Date('2025-04-02T12:57:00.000Z'),
-        admissionYearFrom: null,
-        admissionYearTo: null,
-        graduateYearFrom: null,
-        graduateYearTo: null,
-      });
+      prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
 
       expect(
         await surveyService.getSurveyForFill(mockSurvey.id, 'test@gmail.com'),
@@ -1074,8 +1012,10 @@ describe('SurveyService', () => {
     });
 
     it('should throw NotFoundException if survey is not found', async () => {
-      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      prismaMock.user.findUnique.mockResolvedValue(user);
       prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
+      prismaMock.form.findUnique.mockResolvedValue(null);
+
       await expect(
         surveyService.getSurveyForFill(nonExistentId, 'test@gmail.com'),
       ).rejects.toThrow(NotFoundException);
@@ -1102,13 +1042,15 @@ describe('SurveyService', () => {
     });
 
     it('no alumni with Id', async () => {
-      await expect(surveyService.getAlumni(mockUser)).rejects.toThrow(
+      await expect(surveyService.getAlumni(user)).rejects.toThrow(
         NotFoundException,
       );
     });
 
     it('the form is not availble now', async () => {
-      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      jest.useFakeTimers().setSystemTime(new Date(2024, 1, 2));
+
+      prismaMock.user.findUnique.mockResolvedValue(user);
       prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
       prismaMock.form.findUnique.mockResolvedValue({
         id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
@@ -1129,7 +1071,8 @@ describe('SurveyService', () => {
     });
 
     it('the form enrollment year didnt match', async () => {
-      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      jest.useFakeTimers().setSystemTime(new Date(2024, 4, 4));
+      prismaMock.user.findUnique.mockResolvedValue(user);
       prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
       prismaMock.form.findUnique.mockResolvedValue({
         id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
@@ -1140,8 +1083,8 @@ describe('SurveyService', () => {
         endTime: new Date('2025-04-02T12:57:00.000Z'),
         admissionYearFrom: 1999,
         admissionYearTo: 2000,
-        graduateYearFrom: null,
-        graduateYearTo: null,
+        graduateYearFrom: 2003,
+        graduateYearTo: 2004,
       });
 
       await expect(
@@ -1150,7 +1093,8 @@ describe('SurveyService', () => {
     });
 
     it('the form graduate year didnt match', async () => {
-      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      jest.useFakeTimers().setSystemTime(new Date(2024, 4, 4));
+      prismaMock.user.findUnique.mockResolvedValue(user);
       prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
       prismaMock.form.findUnique.mockResolvedValue({
         id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
@@ -1159,10 +1103,10 @@ describe('SurveyService', () => {
         description: 'normal',
         startTime: new Date('2024-04-02T12:56:00.000Z'),
         endTime: new Date('2025-04-02T12:57:00.000Z'),
-        admissionYearFrom: null,
-        admissionYearTo: null,
-        graduateYearFrom: 2001,
-        graduateYearTo: null,
+        admissionYearFrom: 2018,
+        admissionYearTo: 2022,
+        graduateYearFrom: 2022,
+        graduateYearTo: 2024,
       });
 
       await expect(
@@ -1171,7 +1115,8 @@ describe('SurveyService', () => {
     });
 
     it('alumni have filled the same form', async () => {
-      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      jest.useFakeTimers().setSystemTime(new Date(2024, 4, 4));
+      prismaMock.user.findUnique.mockResolvedValue(user);
       prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
       prismaMock.form.findUnique.mockResolvedValue({
         id: '9423bbe7-f14f-4b02-8654-b15b1c163341',
@@ -1180,10 +1125,10 @@ describe('SurveyService', () => {
         description: 'normal',
         startTime: new Date('2024-04-02T12:56:00.000Z'),
         endTime: new Date('2025-04-02T12:57:00.000Z'),
-        admissionYearFrom: null,
-        admissionYearTo: null,
-        graduateYearFrom: null,
-        graduateYearTo: null,
+        admissionYearFrom: 2018,
+        admissionYearTo: 2021,
+        graduateYearFrom: 2022,
+        graduateYearTo: 2025,
       });
       prismaMock.response.findFirst.mockResolvedValue({
         id: 'hehe',
@@ -1225,6 +1170,7 @@ describe('SurveyService', () => {
     };
 
     it('success fill survey', async () => {
+      jest.useFakeTimers().setSystemTime(new Date(2024, 4, 15));
       prismaMock.user.findUnique.mockResolvedValue(mockUser);
       prismaMock.alumni.findUnique.mockResolvedValue(mockAlumni);
       prismaMock.form.findUnique.mockResolvedValue({
@@ -1232,7 +1178,7 @@ describe('SurveyService', () => {
         type: 'CURRICULUM',
         title: 'test normal',
         description: 'normal',
-        startTime: new Date('2024-04-02T12:56:00.000Z'),
+        startTime: new Date('2024-02-02T12:56:00.000Z'),
         endTime: new Date('2025-04-02T12:57:00.000Z'),
         admissionYearFrom: null,
         admissionYearTo: null,
