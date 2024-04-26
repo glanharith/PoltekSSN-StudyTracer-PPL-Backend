@@ -501,6 +501,10 @@ export class SurveyService {
       },
     });
 
+    if (responses.length == 0) {
+      throw new BadRequestException(`Survey does not have any responses.`);
+    }
+
     const flattenedData = responses.map((r) => {
       return {
         question: r.question.question,
