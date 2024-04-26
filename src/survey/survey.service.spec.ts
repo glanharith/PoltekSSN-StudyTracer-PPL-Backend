@@ -900,6 +900,15 @@ describe('SurveyService', () => {
         surveyService.downloadSurveyResponses(invalidUUID),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('should throw BadRequestException if survey does not have responses', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(survey);
+      prismaMock.answer.findMany.mockResolvedValue([]);
+
+      await expect(
+        surveyService.downloadSurveyResponses(survey.id),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('get all surveys', () => {
