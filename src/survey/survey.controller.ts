@@ -99,4 +99,17 @@ export class SurveyController {
       },
     );
   }
+
+  @Get('/:id/response-preview')
+  @IsAdmin()
+  @IsHead()
+  async getSurveyResponse(@Param('id') id: string) {
+    const responses = await this.surveyService.getSurveyResponses(id);
+    return response(
+      `Successfully got responses for survey ${id}`,
+      {
+        data: responses,
+      },
+    );
+  }
 }
