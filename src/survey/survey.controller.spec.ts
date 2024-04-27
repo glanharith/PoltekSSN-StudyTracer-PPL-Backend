@@ -398,7 +398,7 @@ describe('SurveyController', () => {
     });
   });
 
-  describe('GET /:id/response-preview', () => {
+  describe('GET /:id/response-preview/alumni', () => {
     it('should return survey responses', async () => {
       const mockUser: User = {
         id: 'use02c84-f321-4b4e-bff6-780c8cae17b3',
