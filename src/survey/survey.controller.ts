@@ -100,6 +100,13 @@ export class SurveyController {
     );
   }
 
+  @Get('/:id/response-preview/questions')
+  @IsAdmin()
+  @IsHead()
+  async getSurveyResponseByQuestions(@Param('id') id: string) {
+    return this.surveyService.getSurveyResponseByQuestions(id);
+  }
+
   @Get('/:id/response-preview')
   @IsAdmin()
   @IsHead()

@@ -1181,6 +1181,213 @@ describe('SurveyService', () => {
     });
   });
 
+  describe('get survey response by questions', () => {
+    const mockSurveyId = '77198ab9-d338-4fa6-9fdc-3f0eb3f4929e';
+
+    it('should return analysis for a survey with responses', async () => {
+      const mockSurvey = {
+        id: mockSurveyId,
+        type: FormType.CURRICULUM,
+        description: 'deskripsi survey',
+        title: 'Survey test',
+        startTime: new Date(2024, 0, 1),
+        endTime: new Date(2024, 11, 1),
+        admissionYearFrom: 2018,
+        admissionYearTo: 2018,
+        graduateYearFrom: 2022,
+        graduateYearTo: 2022,
+        questions: [{
+          order: 1,
+          options: [{ order: 1, label: 'Ya', answers: [{ answer: 'Ya' }] }],
+          answers: [{ answer: 'Ya' }]
+        }]
+      };
+
+      prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
+      surveyService.analyzeResponse = jest.fn().mockReturnValue('Analysis Data');
+
+      const result = await surveyService.getSurveyResponseByQuestions(mockSurveyId);
+
+      expect(result).toEqual({
+        title: 'Survey test',
+        totalRespondents: 1,
+        answerStats: 'Analysis Data'
+      });
+      expect(surveyService.analyzeResponse).toHaveBeenCalledWith(mockSurvey, 1);
+    });
+
+    it('should return message if survey has questions but no responses', async () => {
+      const mockSurvey = {
+        id: mockSurveyId,
+        type: FormType.CURRICULUM,
+        description: 'deskripsi survey',
+        title: 'Survey no response',
+        startTime: new Date(2024, 0, 1),
+        endTime: new Date(2024, 11, 1),
+        admissionYearFrom: 2018,
+        admissionYearTo: 2018,
+        graduateYearFrom: 2022,
+        graduateYearTo: 2022,
+        questions: [{
+          order: 1,
+          options: [],
+          answers: []
+        }]
+      };
+
+      prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
+
+      const result = await surveyService.getSurveyResponseByQuestions(mockSurveyId);
+
+      expect(result).toEqual({
+        survey: mockSurvey,
+        message: 'Survei tidak memiliki respon'
+      });
+    });
+
+    it('should throw BadRequestException if the ID is not a valid UUID', async () => {
+      const invalidId = '123';
+      await expect(surveyService.getSurveyResponseByQuestions(invalidId))
+        .rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw NotFoundException if the survey does not exist', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(null);
+
+      await expect(surveyService.getSurveyResponseByQuestions(mockSurveyId))
+        .rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw a NotFoundException if the survey has no questions', async () => {
+      const mockSurveyWithNoQuestions = {
+        id: mockSurveyId,
+        type: FormType.CURRICULUM,
+        title: 'Survey Test',
+        description: 'deskripsi',
+        startTime: new Date(2024, 0, 1),
+        endTime: new Date(2024, 1, 1),
+        admissionYearFrom: 2020,
+        admissionYearTo: 2024,
+        graduateYearFrom: 2024,
+        graduateYearTo: 2028,
+        questions: []
+      };
+
+      prismaMock.form.findUnique.mockResolvedValue(mockSurveyWithNoQuestions);
+
+      await expect(surveyService.getSurveyResponseByQuestions(mockSurveyId))
+        .rejects.toThrow(NotFoundException);
+      await expect(surveyService.getSurveyResponseByQuestions(mockSurveyId))
+        .rejects.toThrow('Survei belum memiliki pertanyaan');
+    });
+  });
+
+  describe('analyze response data', () => {
+    const mockSurvey = {
+      title: 'Survey Test',
+      questions: [
+        {
+          question: 'Seberapa baik situs kami?',
+          type: 'RANGE',
+          options: [
+            { label: '1', answers: [] },
+            { label: '2', answers: [] },
+            { label: '3', answers: [{ answer: '3' }] },
+            { label: '4', answers: [{ answer: '4' }] },
+            { label: '5', answers: [{ answer: '5' }] },
+          ],
+          answers: [
+            { answer: '4' }, { answer: '5' }, { answer: '3' }
+          ]
+        },
+        {
+          question: 'Fitur mana yang Anda gunakan?',
+          type: 'CHECKBOX',
+          options: [
+            { label: 'Obrolan', answers: [{ answer: 'Obrolan' }, { answer: 'Obrolan' }] },
+            { label: 'Pencarian', answers: [{ answer: 'Pencarian' }, { answer: 'Pencarian' }] }
+          ],
+          answers: [
+            { answer: 'Obrolan' }, { answer: 'Obrolan' }, { answer: 'Pencarian' }, { answer: 'Pencarian' }
+          ]
+        },
+        {
+          question: 'Apakah Anda akan merekomendasikan kami?',
+          type: 'RADIO',
+          options: [
+            { label: 'Ya', answers: [{ answer: 'Ya' }, { answer: 'Ya' }] },
+            { label: 'Tidak', answers: [{ answer: 'Tidak' }] }
+          ],
+          answers: [
+            { answer: 'Ya' }, { answer: 'Ya' }, { answer: 'Tidak' }
+          ]
+        },
+        {
+          question: 'Saran Anda?',
+          type: 'TEXT',
+          options: [],
+          answers: [
+            { answer: 'Tambah artikel.' },
+            { answer: 'Perbaiki kecepatan.' },
+            { answer: 'Semuanya baik.' }
+          ]
+        }
+      ]
+    };
+
+    const totalRespondents = 3;
+
+    it('should correctly analyze range type questions', async () => {
+      const stats = await surveyService.analyzeResponse(mockSurvey, totalRespondents);
+      expect(stats[0].data).toEqual([
+        { optionLabel: '1', optionAnswersCount: 0, percentage: '0.00%' },
+        { optionLabel: '2', optionAnswersCount: 0, percentage: '0.00%' },
+        { optionLabel: '3', optionAnswersCount: 1, percentage: '33.33%' },
+        { optionLabel: '4', optionAnswersCount: 1, percentage: '33.33%' },
+        { optionLabel: '5', optionAnswersCount: 1, percentage: '33.33%' }
+      ]);
+    });
+
+    it('should correctly analyze checkbox type questions', async () => {
+      const stats = await surveyService.analyzeResponse(mockSurvey, totalRespondents);
+      expect(stats[1].data).toEqual([
+        {
+          optionLabel: 'Obrolan',
+          optionAnswersCount: 2,
+          percentage: '66.67%'
+        },
+        {
+          optionLabel: 'Pencarian',
+          optionAnswersCount: 2,
+          percentage: '66.67%'
+        }
+      ]);
+    });
+
+    it('should correctly analyze radio type questions', async () => {
+      const stats = await surveyService.analyzeResponse(mockSurvey, totalRespondents);
+      expect(stats[2].data).toEqual([
+        {
+          optionLabel: 'Ya',
+          optionAnswersCount: 2,
+          percentage: '66.67%'
+        },
+        {
+          optionLabel: 'Tidak',
+          optionAnswersCount: 1,
+          percentage: '33.33%'
+        }
+      ]);
+    });
+
+    it('should correctly analyze text type questions', async () => {
+      const stats = await surveyService.analyzeResponse(mockSurvey, totalRespondents);
+      expect(stats[3].data).toEqual([
+        'Tambah artikel.', 'Perbaiki kecepatan.', 'Semuanya baik.'
+      ]);
+    });
+  })
+
   describe('getSurveyResponses', () => {
     it('should return survey responses including alumni and answers', async () => {
       const mockAlumni: Alumni = {

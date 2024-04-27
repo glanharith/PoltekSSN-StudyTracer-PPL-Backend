@@ -394,6 +394,55 @@ describe('SurveyController', () => {
     });
   });
 
+  describe('GET /survey/:id/response-review/questions', () => {
+    const id = survey.id;
+    const responseData = {
+      title: 'survey title',
+      totalRespondents: 2,
+      answerStats: Promise.resolve([
+        {
+          question: 'Berapa tinggi kamu?',
+          questionType: 'TEXT',
+          data: ['198', '167']
+        },
+        {
+          question: 'Apa gender kamu?',
+          questionType: 'RADIO',
+          data: [
+            {
+              optionLabel: 'Laki-laki',
+              optionAnswersCount: 1,
+              percentage: "50.00%"
+            },
+            {
+              optionLabel: 'Perempuan',
+              optionAnswersCount: 1,
+              percentage: "50.00%"
+            }
+          ]
+        }
+      ])
+    };
+
+    it('should return responses data of a survey', async () => {
+      surveyServiceMock.getSurveyResponseByQuestions.mockResolvedValue(responseData);
+
+      const result = await surveyController.getSurveyResponseByQuestions(id);
+
+      expect(result).toEqual(responseData);
+    })
+
+    it('should return NotFoundException for non-existing survey', async () => {
+      surveyServiceMock.getSurveyResponseByQuestions.mockRejectedValue(
+        new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`),
+      );
+
+      await expect(surveyController.getSurveyResponseByQuestions(id)).rejects.toThrow(
+        NotFoundException,
+      );
+    })
+  })
+
   describe('GET /:id/response-preview', () => {
     it('should return survey responses', async () => {
       const mockAlumni: Alumni = {

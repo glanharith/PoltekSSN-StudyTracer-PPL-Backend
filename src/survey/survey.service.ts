@@ -666,6 +666,88 @@ export class SurveyService {
     });
   }
 
+  async getSurveyResponseByQuestions(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException(
+        'Format ID tidak valid. ID harus dalam format UUID',
+      );
+    }
+
+    const survey = await this.prisma.form.findUnique({
+      where: { id },
+      select: {
+        title: true,
+        questions: {
+          orderBy: {
+            order: 'asc',
+          },
+          select: {
+            options: {
+              orderBy: {
+                order: 'asc',
+              },
+            },
+            answers: true
+          },
+        },
+      },
+    });
+
+    if (!survey) {
+      throw new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`);
+    }
+
+    const allQuestionsAnswered = survey.questions.every(question => question.answers && question.answers.length > 0);
+
+    if (!allQuestionsAnswered) {
+      return {survey: survey, message: 'Survei tidak memiliki respon'};
+    }
+
+    const answers = survey.questions[0]?.answers ?? [];
+    if (answers.length === 0) {
+      throw new NotFoundException('Survei belum memiliki pertanyaan');
+    }
+
+    const totalRespondents = (new Set(answers.map(answer => answer.responseId))).size;
+    const answerStats = this.analyzeResponse(survey, totalRespondents);
+
+    return {
+      title: survey.title,
+      totalRespondents: totalRespondents,
+      answerStats: answerStats
+    }
+  }
+
+  async analyzeResponse(survey: any, totalRespondents: number) {
+    return survey.questions.map(question => {
+      const { type, options, answers } = question;
+
+      if (type == 'TEXT') {
+        return {
+          question: question.question,
+          questionType: type,
+          data: answers.map(answer => answer.answer)
+        };
+      } else {
+        const optionStats = options.map(option => {
+          const optionAnswersCount = option.answers.length;
+          const percentage = (optionAnswersCount / totalRespondents) * 100;
+          return {
+            optionLabel: option.label,
+            optionAnswersCount,
+            percentage: percentage.toFixed(2) + '%'
+          };
+        });
+
+        return {
+          question: question.question,
+          questionType: type,
+          data: optionStats
+        };
+      }
+    })
+  }
+
   async getSurveyResponses(surveyId: string) {
     const survey = await this.prisma.form.findUnique({
       where: { id: surveyId },
