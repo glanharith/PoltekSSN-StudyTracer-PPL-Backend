@@ -6,6 +6,7 @@ import {
   BadRequestException,
   InternalServerErrorException,
   NotFoundException,
+  StreamableFile,
 } from '@nestjs/common';
 import {
   Alumni,
@@ -16,6 +17,7 @@ import {
   Response,
 } from '@prisma/client';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
+import { Readable } from 'stream';
 
 jest.mock('./survey.service');
 
@@ -361,6 +363,40 @@ describe('SurveyController', () => {
     });
   });
 
+  describe('GET /survey/:id/responses', () => {
+    it('should successfully download survey responses', async () => {
+      const file: StreamableFile = new StreamableFile(new Readable(), {
+        type: 'text/csv',
+        disposition: `attachment; filename=Survey_Responses.csv"`,
+      });
+
+      surveyServiceMock.downloadSurveyResponses.mockResolvedValue(file);
+      const result = await surveyController.downloadSurveyResponses(survey.id);
+
+      expect(result).toEqual(file);
+    });
+
+    it('should return NotFoundException for non-existing survey', async () => {
+      surveyServiceMock.downloadSurveyResponses.mockRejectedValue(
+        new NotFoundException('Survey not found'),
+      );
+
+      await expect(
+        surveyController.downloadSurveyResponses(survey.id),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should handle errors during get', async () => {
+      surveyServiceMock.downloadSurveyResponses.mockRejectedValue(
+        new InternalServerErrorException('Error while retrieving survey'),
+      );
+
+      await expect(
+        surveyController.downloadSurveyResponses(survey.id),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
   describe('GET /survey/all', () => {
     it('should return all surveys', async () => {
       const surveysMock = [survey];
@@ -481,22 +517,24 @@ describe('SurveyController', () => {
         formId: mockSurvey.id,
       };
 
-      const mockResponse = [{
-        id: 'dea1c841-f238-4619-914c-d8b3afe6d47c',
-        formId: '65259cd0-b2e2-4ac0-9dd2-847dbd79157b',
-        alumniId: 'b6e02c84-f321-4b4e-bff6-780c8cae17b3',
-        alumni: mockAlumni,
-        answers: [
-          {
-            id: 'e1c3b99e-576b-4b81-976f-a949797de075',
-            answer: 'rafaaa',
-            responseId: 'dea1c841-f238-4619-914c-d8b3afe6d47c',
-            questionId: '14a4acdc-50b1-477f-90e9-8e0c99e85e58',
-            question: mockQuestion,
-          },
-        ],
-      }];
-      
+      const mockResponse = [
+        {
+          id: 'dea1c841-f238-4619-914c-d8b3afe6d47c',
+          formId: '65259cd0-b2e2-4ac0-9dd2-847dbd79157b',
+          alumniId: 'b6e02c84-f321-4b4e-bff6-780c8cae17b3',
+          alumni: mockAlumni,
+          answers: [
+            {
+              id: 'e1c3b99e-576b-4b81-976f-a949797de075',
+              answer: 'rafaaa',
+              responseId: 'dea1c841-f238-4619-914c-d8b3afe6d47c',
+              questionId: '14a4acdc-50b1-477f-90e9-8e0c99e85e58',
+              question: mockQuestion,
+            },
+          ],
+        },
+      ];
+
       surveyServiceMock.getSurveyResponses.mockResolvedValue(mockResponse);
 
       const result = await surveyController.getSurveyResponse(mockSurvey.id);
