@@ -1,9 +1,14 @@
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import * as fs from 'fs';
+import * as Sentry from '@sentry/node';
+import { SentryFilter } from './sentry/sentry.filter';
 
 async function bootstrap() {
+  Sentry.init({
+    dsn: process.env.SENTRY_DNS,
+  });
   const https = process.env.APP_OPEN_HTTPS;
   const httpsOptions = https
     ? {
@@ -15,6 +20,8 @@ async function bootstrap() {
     AppModule,
     https ? { httpsOptions } : {},
   );
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new SentryFilter(httpAdapter));
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.enableCors({
     origin: process.env.APP_ALLOWED_ORIGIN,

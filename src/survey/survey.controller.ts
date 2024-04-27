@@ -19,7 +19,6 @@ import {
 } from 'src/common/decorator';
 import { response } from 'src/common/util/response';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
-
 @Controller('survey')
 export class SurveyController {
   constructor(private readonly surveyService: SurveyService) {}
@@ -81,6 +80,12 @@ export class SurveyController {
     return this.surveyService.getSurvey(id);
   }
 
+  @Get('/:id/responses')
+  @IsAdmin()
+  async downloadSurveyResponses(@Param('id') id: string) {
+    return this.surveyService.downloadSurveyResponses(id);
+  }
+
   @Get()
   @IsPublic()
   async getAvailableSurveyByYear(
@@ -100,16 +105,20 @@ export class SurveyController {
     );
   }
 
+  @Get('/:id/response-preview/questions')
+  @IsAdmin()
+  @IsHead()
+  async getSurveyResponseByQuestions(@Param('id') id: string) {
+    return this.surveyService.getSurveyResponseByQuestions(id);
+  }
+
   @Get('/:id/response-preview/alumni')
   @IsAdmin()
   @IsHead()
   async getSurveyResponseByAlumni(@Param('id') id: string) {
     const responses = await this.surveyService.getSurveyResponseByAlumni(id);
-    return response(
-      `Successfully got responses for survey ${id}`,
-      {
-        data: responses,
-      },
-    );
+    return response(`Successfully got responses for survey ${id}`, {
+      data: responses,
+    });
   }
 }

@@ -6,6 +6,7 @@ import {
   BadRequestException,
   InternalServerErrorException,
   NotFoundException,
+  StreamableFile,
 } from '@nestjs/common';
 import {
   Alumni,
@@ -20,6 +21,7 @@ import {
   User,
 } from '@prisma/client';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
+import { Readable } from 'stream';
 
 jest.mock('./survey.service');
 
@@ -365,6 +367,40 @@ describe('SurveyController', () => {
     });
   });
 
+  describe('GET /survey/:id/responses', () => {
+    it('should successfully download survey responses', async () => {
+      const file: StreamableFile = new StreamableFile(new Readable(), {
+        type: 'text/csv',
+        disposition: `attachment; filename=Survey_Responses.csv"`,
+      });
+
+      surveyServiceMock.downloadSurveyResponses.mockResolvedValue(file);
+      const result = await surveyController.downloadSurveyResponses(survey.id);
+
+      expect(result).toEqual(file);
+    });
+
+    it('should return NotFoundException for non-existing survey', async () => {
+      surveyServiceMock.downloadSurveyResponses.mockRejectedValue(
+        new NotFoundException('Survey not found'),
+      );
+
+      await expect(
+        surveyController.downloadSurveyResponses(survey.id),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should handle errors during get', async () => {
+      surveyServiceMock.downloadSurveyResponses.mockRejectedValue(
+        new InternalServerErrorException('Error while retrieving survey'),
+      );
+
+      await expect(
+        surveyController.downloadSurveyResponses(survey.id),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
   describe('GET /survey/all', () => {
     it('should return all surveys', async () => {
       const surveysMock = [survey];
@@ -397,6 +433,55 @@ describe('SurveyController', () => {
       });
     });
   });
+
+  describe('GET /survey/:id/response-review/questions', () => {
+    const id = survey.id;
+    const responseData = {
+      title: 'survey title',
+      totalRespondents: 2,
+      answerStats: Promise.resolve([
+        {
+          question: 'Berapa tinggi kamu?',
+          questionType: 'TEXT',
+          data: ['198', '167']
+        },
+        {
+          question: 'Apa gender kamu?',
+          questionType: 'RADIO',
+          data: [
+            {
+              optionLabel: 'Laki-laki',
+              optionAnswersCount: 1,
+              percentage: "50.00%"
+            },
+            {
+              optionLabel: 'Perempuan',
+              optionAnswersCount: 1,
+              percentage: "50.00%"
+            }
+          ]
+        }
+      ])
+    };
+
+    it('should return responses data of a survey', async () => {
+      surveyServiceMock.getSurveyResponseByQuestions.mockResolvedValue(responseData);
+
+      const result = await surveyController.getSurveyResponseByQuestions(id);
+
+      expect(result).toEqual(responseData);
+    })
+
+    it('should return NotFoundException for non-existing survey', async () => {
+      surveyServiceMock.getSurveyResponseByQuestions.mockRejectedValue(
+        new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`),
+      );
+
+      await expect(surveyController.getSurveyResponseByQuestions(id)).rejects.toThrow(
+        NotFoundException,
+      );
+    })
+  })
 
   describe('GET /:id/response-preview/alumni', () => {
     it('should return survey responses', async () => {
