@@ -497,11 +497,11 @@ describe('SurveyController', () => {
         ],
       };
 
-      surveyServiceMock.getSurveyResponses.mockResolvedValue(
+      surveyServiceMock.getSurveyResponseByAlumni.mockResolvedValue(
         mockResponse,
       );
 
-      const result = await surveyController.getSurveyResponses(
+      const result = await surveyController.getSurveyResponseByAlumni(
         mockSurvey.id,
       );
 
