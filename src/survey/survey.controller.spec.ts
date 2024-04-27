@@ -14,6 +14,10 @@ import {
   Gender,
   QuestionType,
   Response,
+  Role,
+  StudyProgram,
+  StudyProgramLevel,
+  User,
 } from '@prisma/client';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
 
@@ -396,7 +400,25 @@ describe('SurveyController', () => {
 
   describe('GET /:id/response-preview', () => {
     it('should return survey responses', async () => {
-      const mockAlumni: Alumni = {
+      const mockUser: User = {
+        id: 'use02c84-f321-4b4e-bff6-780c8cae17b3',
+        name: 'John',
+        email: 'john@example.com',
+        password:
+          '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
+        role: Role.ALUMNI,
+      };
+
+      const mockStudyProgram: StudyProgram = {
+        id: 'std02c84-f321-4b4e-bff6-780c8cae17b3',
+        name: 'Computer Science',
+        code: '123',
+        level: StudyProgramLevel.D3,
+      };
+
+      const mockAlumni: Alumni & { user: User } & {
+        studyProgram: StudyProgram
+      } = {
         id: 'b6e02c84-f321-4b4e-bff6-780c8cae17b3',
         phoneNo:
           '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
@@ -407,6 +429,8 @@ describe('SurveyController', () => {
         graduateYear: 2024,
         studyProgramId: '393f6a47-425e-4402-92b6-782d266e0193',
         npm: '2106634331',
+        user: mockUser,
+        studyProgram: mockStudyProgram,
       };
 
       const mockSurvey = {
@@ -432,25 +456,54 @@ describe('SurveyController', () => {
         formId: mockSurvey.id,
       };
 
-      const mockResponse = [{
-        id: 'dea1c841-f238-4619-914c-d8b3afe6d47c',
-        formId: '65259cd0-b2e2-4ac0-9dd2-847dbd79157b',
-        alumniId: 'b6e02c84-f321-4b4e-bff6-780c8cae17b3',
-        alumni: mockAlumni,
-        answers: [
+      const mockResponse = {
+        id: mockSurvey.id,
+        type: mockSurvey.type,
+        title: mockSurvey.title,
+        description: mockSurvey.description,
+        startTime: mockSurvey.startTime,
+        endTime: mockSurvey.endTime,
+        admissionYearFrom: mockSurvey.admissionYearFrom,
+        admissionYearTo: mockSurvey.admissionYearTo,
+        graduateYearFrom: mockSurvey.graduateYearFrom,
+        graduateYearTo: mockSurvey.graduateYearTo,
+        questions: [
           {
-            id: 'e1c3b99e-576b-4b81-976f-a949797de075',
-            answer: 'rafaaa',
-            responseId: 'dea1c841-f238-4619-914c-d8b3afe6d47c',
-            questionId: '14a4acdc-50b1-477f-90e9-8e0c99e85e58',
-            question: mockQuestion,
+            id: mockQuestion.id,
+            type: mockQuestion.type,
+            question: mockQuestion.question,
+            rangeFrom: mockQuestion.rangeFrom,
+            rangeTo: mockQuestion.rangeTo,
+            order: mockQuestion.order,
+            formId: mockQuestion.formId,
           },
         ],
-      }];
-      
-      surveyServiceMock.getSurveyResponses.mockResolvedValue(mockResponse);
+        alumniResponse: [
+          {
+            alumniId: mockAlumni.id,
+            npm: mockAlumni.npm,
+            enrollmentYear: mockAlumni.enrollmentYear,
+            graduateYear: mockAlumni.graduateYear,
+            studyProgramId: mockAlumni.studyProgramId,
+            name: mockAlumni.user.name,
+            studyProgramName: mockAlumni.studyProgram.name,
+            answers: [
+              {
+                questionId: mockQuestion.id,
+                answer: 'rafaaa',
+              },
+            ],
+          },
+        ],
+      };
 
-      const result = await surveyController.getSurveyResponse(mockSurvey.id);
+      surveyServiceMock.getSurveyResponses.mockResolvedValue(
+        mockResponse,
+      );
+
+      const result = await surveyController.getSurveyResponses(
+        mockSurvey.id,
+      );
 
       expect(result).toEqual({
         message: `Successfully got responses for survey ${mockSurvey.id}`,
