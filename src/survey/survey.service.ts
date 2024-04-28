@@ -826,27 +826,111 @@ export class SurveyService {
     })
   }
 
-  async getSurveyResponses(surveyId: string) {
-    const survey = await this.prisma.form.findUnique({
-      where: { id: surveyId },
-    });
-
-    if (!survey) {
-      throw new NotFoundException(
-        `Survey dengan ID ${surveyId} tidak ditemukan`,
+  async getSurveyResponseByAlumni(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException(
+        'Format ID tidak valid. ID harus dalam format UUID',
       );
     }
 
-    return await this.prisma.response.findMany({
-      where: { formId: surveyId },
+    const survey = await this.prisma.form.findUnique({
+      where: { id },
       include: {
-        alumni: true,
-        answers: {
+        questions: {
+          orderBy: { order: 'asc' },
           include: {
-            question: true,
+            answers: {
+              include: {
+                response: {
+                  include: {
+                    alumni: {
+                      select: {
+                        npm: true,
+                        enrollmentYear: true,
+                        graduateYear: true,
+                        studyProgramId: true,
+                        user: { select: { name: true } },
+                        studyProgram: { select: { name: true } },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
     });
+
+    if (!survey) {
+      throw new NotFoundException(`Survey dengan ID ${id} tidak ditemukan`);
+    }
+
+    const transformedData: any = {
+      id: survey.id,
+      type: survey.type,
+      title: survey.title,
+      description: survey.description,
+      startTime: survey.startTime,
+      endTime: survey.endTime,
+      admissionYearFrom: survey.admissionYearFrom,
+      admissionYearTo: survey.admissionYearTo,
+      graduateYearFrom: survey.graduateYearFrom,
+      graduateYearTo: survey.graduateYearTo,
+      questions: survey.questions.map((question) => ({
+        id: question.id,
+        type: question.type,
+        question: question.question,
+        rangeFrom: question.rangeFrom,
+        rangeTo: question.rangeTo,
+        order: question.order,
+        formId: question.formId,
+      })),
+      alumniResponse: this.constructAlumniResponses(survey.questions),
+    };
+
+    return transformedData;
+  }
+
+  private constructAlumniResponses(questions: any[]): any[] {
+    const alumniResponseMap = new Map<string, any[]>();
+
+    questions.forEach((question) => {
+      question.answers.forEach((answer) => {
+        const alumniId = answer.response.alumniId;
+        const alumniResponse = alumniResponseMap.get(alumniId) || [];
+
+        const existingAlumniIndex = alumniResponse.findIndex(
+          (entry) => entry.alumniId === alumniId,
+        );
+
+        if (existingAlumniIndex === -1) {
+          alumniResponse.push({
+            alumniId,
+            npm: answer.response.alumni.npm,
+            enrollmentYear: answer.response.alumni.enrollmentYear,
+            graduateYear: answer.response.alumni.graduateYear,
+            studyProgramId: answer.response.alumni.studyProgramId,
+            name: answer.response.alumni.user.name,
+            studyProgramName: answer.response.alumni.studyProgram.name,
+            answers: [
+              {
+                questionId: answer.questionId,
+                answer: answer.answer,
+              },
+            ],
+          });
+        } else {
+          alumniResponse[existingAlumniIndex].answers.push({
+            questionId: answer.questionId,
+            answer: answer.answer,
+          });
+        }
+
+        alumniResponseMap.set(alumniId, alumniResponse);
+      });
+    });
+
+    return Array.from(alumniResponseMap.values()).flat();
   }
 }

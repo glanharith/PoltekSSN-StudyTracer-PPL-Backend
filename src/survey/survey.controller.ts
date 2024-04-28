@@ -112,11 +112,11 @@ export class SurveyController {
     return this.surveyService.getSurveyResponseByQuestions(id);
   }
 
-  @Get('/:id/response-preview')
+  @Get('/:id/response-preview/alumni')
   @IsAdmin()
   @IsHead()
-  async getSurveyResponse(@Param('id') id: string) {
-    const responses = await this.surveyService.getSurveyResponses(id);
+  async getSurveyResponseByAlumni(@Param('id') id: string) {
+    const responses = await this.surveyService.getSurveyResponseByAlumni(id);
     return response(`Successfully got responses for survey ${id}`, {
       data: responses,
     });
