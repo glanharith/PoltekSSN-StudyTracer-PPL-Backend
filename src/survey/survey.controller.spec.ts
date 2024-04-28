@@ -6,9 +6,22 @@ import {
   BadRequestException,
   InternalServerErrorException,
   NotFoundException,
+  StreamableFile,
 } from '@nestjs/common';
-import { FormType, QuestionType } from '@prisma/client';
+import {
+  Alumni,
+  Answer,
+  FormType,
+  Gender,
+  QuestionType,
+  Response,
+  Role,
+  StudyProgram,
+  StudyProgramLevel,
+  User,
+} from '@prisma/client';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
+import { Readable } from 'stream';
 
 jest.mock('./survey.service');
 
@@ -354,6 +367,40 @@ describe('SurveyController', () => {
     });
   });
 
+  describe('GET /survey/:id/responses', () => {
+    it('should successfully download survey responses', async () => {
+      const file: StreamableFile = new StreamableFile(new Readable(), {
+        type: 'text/csv',
+        disposition: `attachment; filename=Survey_Responses.csv"`,
+      });
+
+      surveyServiceMock.downloadSurveyResponses.mockResolvedValue(file);
+      const result = await surveyController.downloadSurveyResponses(survey.id);
+
+      expect(result).toEqual(file);
+    });
+
+    it('should return NotFoundException for non-existing survey', async () => {
+      surveyServiceMock.downloadSurveyResponses.mockRejectedValue(
+        new NotFoundException('Survey not found'),
+      );
+
+      await expect(
+        surveyController.downloadSurveyResponses(survey.id),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should handle errors during get', async () => {
+      surveyServiceMock.downloadSurveyResponses.mockRejectedValue(
+        new InternalServerErrorException('Error while retrieving survey'),
+      );
+
+      await expect(
+        surveyController.downloadSurveyResponses(survey.id),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
   describe('GET /survey/all', () => {
     it('should return all surveys', async () => {
       const surveysMock = [survey];
@@ -383,6 +430,169 @@ describe('SurveyController', () => {
       expect(result).toEqual({
         message: `Successfully got surveys for admission year ${admissionYear} and graduate year ${graduateYear}`,
         data: surveysMock,
+      });
+    });
+  });
+
+  describe('GET /survey/:id/response-review/questions', () => {
+    const id = survey.id;
+    const responseData = {
+      title: 'survey title',
+      totalRespondents: 2,
+      answerStats: Promise.resolve([
+        {
+          question: 'Berapa tinggi kamu?',
+          questionType: 'TEXT',
+          data: ['198', '167']
+        },
+        {
+          question: 'Apa gender kamu?',
+          questionType: 'RADIO',
+          data: [
+            {
+              optionLabel: 'Laki-laki',
+              optionAnswersCount: 1,
+              percentage: "50.00%"
+            },
+            {
+              optionLabel: 'Perempuan',
+              optionAnswersCount: 1,
+              percentage: "50.00%"
+            }
+          ]
+        }
+      ])
+    };
+
+    it('should return responses data of a survey', async () => {
+      surveyServiceMock.getSurveyResponseByQuestions.mockResolvedValue(responseData);
+
+      const result = await surveyController.getSurveyResponseByQuestions(id);
+
+      expect(result).toEqual(responseData);
+    })
+
+    it('should return NotFoundException for non-existing survey', async () => {
+      surveyServiceMock.getSurveyResponseByQuestions.mockRejectedValue(
+        new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`),
+      );
+
+      await expect(surveyController.getSurveyResponseByQuestions(id)).rejects.toThrow(
+        NotFoundException,
+      );
+    })
+  })
+
+  describe('GET /:id/response-preview/alumni', () => {
+    it('should return survey responses', async () => {
+      const mockUser: User = {
+        id: 'use02c84-f321-4b4e-bff6-780c8cae17b3',
+        name: 'John',
+        email: 'john@example.com',
+        password:
+          '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
+        role: Role.ALUMNI,
+      };
+
+      const mockStudyProgram: StudyProgram = {
+        id: 'std02c84-f321-4b4e-bff6-780c8cae17b3',
+        name: 'Computer Science',
+        code: '123',
+        level: StudyProgramLevel.D3,
+      };
+
+      const mockAlumni: Alumni & { user: User } & {
+        studyProgram: StudyProgram
+      } = {
+        id: 'b6e02c84-f321-4b4e-bff6-780c8cae17b3',
+        phoneNo:
+          '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
+        address:
+          '$2b$10$89KoyS3YtlCfSsfHiyZTN.uBMnQX2lluICrEGO9kCMCrTk0NFlEDS|cd4f8f6c4b718dd5|5cad4e104c5c6f639d47a668bed256a2|7ac79c3c1744857d5cdbf1d948db5fbad37f01d68fba6bacb5cb50b409d29333',
+        gender: Gender.FEMALE,
+        enrollmentYear: 2021,
+        graduateYear: 2024,
+        studyProgramId: '393f6a47-425e-4402-92b6-782d266e0193',
+        npm: '2106634331',
+        user: mockUser,
+        studyProgram: mockStudyProgram,
+      };
+
+      const mockSurvey = {
+        id: '65259cd0-b2e2-4ac0-9dd2-847dbd79157b',
+        type: FormType.CURRICULUM,
+        title: 'Survey buat semua alumni',
+        description: 'Survey Description',
+        startTime: new Date('2024-03-24T17:00:00.000Z'),
+        endTime: new Date('2024-04-24T20:15:00.000Z'),
+        admissionYearFrom: null,
+        admissionYearTo: null,
+        graduateYearFrom: null,
+        graduateYearTo: null,
+      };
+
+      const mockQuestion = {
+        id: '14a4acdc-50b1-477f-90e9-8e0c99e85e58',
+        type: QuestionType.TEXT,
+        question: 'What is your name?',
+        rangeFrom: null,
+        rangeTo: null,
+        order: 1,
+        formId: mockSurvey.id,
+      };
+
+      const mockResponse = {
+        id: mockSurvey.id,
+        type: mockSurvey.type,
+        title: mockSurvey.title,
+        description: mockSurvey.description,
+        startTime: mockSurvey.startTime,
+        endTime: mockSurvey.endTime,
+        admissionYearFrom: mockSurvey.admissionYearFrom,
+        admissionYearTo: mockSurvey.admissionYearTo,
+        graduateYearFrom: mockSurvey.graduateYearFrom,
+        graduateYearTo: mockSurvey.graduateYearTo,
+        questions: [
+          {
+            id: mockQuestion.id,
+            type: mockQuestion.type,
+            question: mockQuestion.question,
+            rangeFrom: mockQuestion.rangeFrom,
+            rangeTo: mockQuestion.rangeTo,
+            order: mockQuestion.order,
+            formId: mockQuestion.formId,
+          },
+        ],
+        alumniResponse: [
+          {
+            alumniId: mockAlumni.id,
+            npm: mockAlumni.npm,
+            enrollmentYear: mockAlumni.enrollmentYear,
+            graduateYear: mockAlumni.graduateYear,
+            studyProgramId: mockAlumni.studyProgramId,
+            name: mockAlumni.user.name,
+            studyProgramName: mockAlumni.studyProgram.name,
+            answers: [
+              {
+                questionId: mockQuestion.id,
+                answer: 'rafaaa',
+              },
+            ],
+          },
+        ],
+      };
+
+      surveyServiceMock.getSurveyResponseByAlumni.mockResolvedValue(
+        mockResponse,
+      );
+
+      const result = await surveyController.getSurveyResponseByAlumni(
+        mockSurvey.id,
+      );
+
+      expect(result).toEqual({
+        message: `Successfully got responses for survey ${mockSurvey.id}`,
+        data: mockResponse,
       });
     });
   });
