@@ -755,6 +755,8 @@ export class SurveyService {
       where: { id },
       select: {
         title: true,
+        type: true,
+        description: true,
         questions: {
           orderBy: {
             order: 'asc',
@@ -778,7 +780,13 @@ export class SurveyService {
     const allQuestionsAnswered = survey.questions.every(question => question.answers && question.answers.length > 0);
 
     if (!allQuestionsAnswered) {
-      return {survey: survey, message: 'Survei tidak memiliki respon'};
+      return {
+        title: survey.title,
+        type: survey.type,
+        description: survey.description,
+        totalRespondents: 0,
+        answerStats: [],
+        message: 'Survei tidak memiliki respon'};
     }
 
     const answers = survey.questions[0]?.answers ?? [];
@@ -791,9 +799,12 @@ export class SurveyService {
 
     return {
       title: survey.title,
+      type: survey.type,
+      description: survey.description,
       totalRespondents: totalRespondents,
-      answerStats: answerStats
-    }
+      answerStats: answerStats,
+      message: 'Respon survei'
+    };
   }
 
   async analyzeResponse(survey: any, totalRespondents: number) {
