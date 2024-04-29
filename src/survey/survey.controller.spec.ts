@@ -438,6 +438,8 @@ describe('SurveyController', () => {
     const id = survey.id;
     const responseData = {
       title: 'survey title',
+      type: FormType.CURRICULUM,
+      description: 'survey description',
       totalRespondents: 2,
       answerStats: Promise.resolve([
         {
@@ -461,7 +463,8 @@ describe('SurveyController', () => {
             }
           ]
         }
-      ])
+      ]),
+      message: 'Respon survei'
     };
 
     it('should return responses data of a survey', async () => {

@@ -1293,8 +1293,11 @@ describe('SurveyService', () => {
 
       expect(result).toEqual({
         title: 'Survey test',
+        type: FormType.CURRICULUM,
+        description: 'deskripsi survey',
         totalRespondents: 1,
         answerStats: 'Analysis Data',
+        message: 'Respon survei'
       });
       expect(surveyService.analyzeResponse).toHaveBeenCalledWith(mockSurvey, 1);
     });
@@ -1327,7 +1330,11 @@ describe('SurveyService', () => {
       );
 
       expect(result).toEqual({
-        survey: mockSurvey,
+        title: 'Survey no response',
+        type: FormType.CURRICULUM,
+        description: 'deskripsi survey',
+        totalRespondents: 0,
+        answerStats: [],
         message: 'Survei tidak memiliki respon',
       });
     });
