@@ -14,6 +14,7 @@ import {
 import { isUUID } from 'class-validator';
 import { Alumni, Form } from '@prisma/client';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
+import { toCsvFile } from 'src/common/util/csv';
 
 @Injectable()
 export class SurveyService {
@@ -445,6 +446,83 @@ export class SurveyService {
     return survey;
   }
 
+  async downloadSurveyResponses(id: string): Promise<Record<string, any>> {
+    if (!isUUID(id)) {
+      throw new BadRequestException(
+        'Invalid ID format. ID must be a valid UUID',
+      );
+    }
+
+    const survey = await this.prisma.form.findUnique({
+      where: { id },
+    });
+
+    if (!survey) {
+      throw new NotFoundException(`Survey with ID ${id} not found`);
+    }
+
+    const responses = await this.prisma.answer.findMany({
+      select: {
+        question: {
+          select: {
+            question: true,
+          },
+        },
+        answer: true,
+        response: {
+          select: {
+            alumni: {
+              select: {
+                user: {
+                  select: {
+                    name: true,
+                  },
+                },
+                gender: true,
+                enrollmentYear: true,
+                graduateYear: true,
+                npm: true,
+                studyProgram: {
+                  select: {
+                    name: true,
+                    code: true,
+                    level: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      where: {
+        response: {
+          formId: id,
+        },
+      },
+    });
+
+    if (responses.length == 0) {
+      throw new BadRequestException(`Survey does not have any responses.`);
+    }
+
+    const flattenedData = responses.map((r) => {
+      return {
+        question: r.question.question,
+        answer: r.answer,
+        name: r.response.alumni.user.name,
+        npm: r.response.alumni.npm,
+        gender: r.response.alumni.gender,
+        enrollmentYear: r.response.alumni.enrollmentYear,
+        graduateYear: r.response.alumni.graduateYear,
+        studyProgram: r.response.alumni.studyProgram.name,
+        studyProgramCode: r.response.alumni.studyProgram.code,
+        studyProgramLevel: r.response.alumni.studyProgram.level,
+      };
+    });
+
+    return toCsvFile(flattenedData, `${survey.title}_Responses`);
+  }
+
   async getAvailableSurveyByYear(
     admissionYear: string,
     graduateYear: string,
@@ -467,7 +545,7 @@ export class SurveyService {
       today.getTime() + 7 * 24 * 60 * 60 * 1000, // today + 7 days
     );
 
-    const survey = await this.prisma.form.findMany({
+    return await this.prisma.form.findMany({
       where: {
         AND: [
           {
@@ -507,13 +585,10 @@ export class SurveyService {
         responses: true,
       },
     });
-
-    return survey;
   }
 
   async getAllSurveys(): Promise<Form[]> {
-    const surveys = await this.prisma.form.findMany();
-    return surveys;
+    return await this.prisma.form.findMany();
   }
 
   async fillSurvey(req: FillSurveyDTO, email: string) {
@@ -667,5 +742,195 @@ export class SurveyService {
         }),
       );
     });
+  }
+
+  async getSurveyResponseByQuestions(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException(
+        'Format ID tidak valid. ID harus dalam format UUID',
+      );
+    }
+
+    const survey = await this.prisma.form.findUnique({
+      where: { id },
+      select: {
+        title: true,
+        questions: {
+          orderBy: {
+            order: 'asc',
+          },
+          select: {
+            options: {
+              orderBy: {
+                order: 'asc',
+              },
+            },
+            answers: true
+          },
+        },
+      },
+    });
+
+    if (!survey) {
+      throw new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`);
+    }
+
+    const allQuestionsAnswered = survey.questions.every(question => question.answers && question.answers.length > 0);
+
+    if (!allQuestionsAnswered) {
+      return {survey: survey, message: 'Survei tidak memiliki respon'};
+    }
+
+    const answers = survey.questions[0]?.answers ?? [];
+    if (answers.length === 0) {
+      throw new NotFoundException('Survei belum memiliki pertanyaan');
+    }
+
+    const totalRespondents = (new Set(answers.map(answer => answer.responseId))).size;
+    const answerStats = this.analyzeResponse(survey, totalRespondents);
+
+    return {
+      title: survey.title,
+      totalRespondents: totalRespondents,
+      answerStats: answerStats
+    }
+  }
+
+  async analyzeResponse(survey: any, totalRespondents: number) {
+    return survey.questions.map(question => {
+      const { type, options, answers } = question;
+
+      if (type == 'TEXT') {
+        return {
+          question: question.question,
+          questionType: type,
+          data: answers.map(answer => answer.answer)
+        };
+      } else {
+        const optionStats = options.map(option => {
+          const optionAnswersCount = option.answers.length;
+          const percentage = (optionAnswersCount / totalRespondents) * 100;
+          return {
+            optionLabel: option.label,
+            optionAnswersCount,
+            percentage: percentage.toFixed(2) + '%'
+          };
+        });
+
+        return {
+          question: question.question,
+          questionType: type,
+          data: optionStats
+        };
+      }
+    })
+  }
+
+  async getSurveyResponseByAlumni(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException(
+        'Format ID tidak valid. ID harus dalam format UUID',
+      );
+    }
+
+    const survey = await this.prisma.form.findUnique({
+      where: { id },
+      include: {
+        questions: {
+          orderBy: { order: 'asc' },
+          include: {
+            answers: {
+              include: {
+                response: {
+                  include: {
+                    alumni: {
+                      select: {
+                        npm: true,
+                        enrollmentYear: true,
+                        graduateYear: true,
+                        studyProgramId: true,
+                        user: { select: { name: true } },
+                        studyProgram: { select: { name: true } },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!survey) {
+      throw new NotFoundException(`Survey dengan ID ${id} tidak ditemukan`);
+    }
+
+    const transformedData: any = {
+      id: survey.id,
+      type: survey.type,
+      title: survey.title,
+      description: survey.description,
+      startTime: survey.startTime,
+      endTime: survey.endTime,
+      admissionYearFrom: survey.admissionYearFrom,
+      admissionYearTo: survey.admissionYearTo,
+      graduateYearFrom: survey.graduateYearFrom,
+      graduateYearTo: survey.graduateYearTo,
+      questions: survey.questions.map((question) => ({
+        id: question.id,
+        type: question.type,
+        question: question.question,
+        rangeFrom: question.rangeFrom,
+        rangeTo: question.rangeTo,
+        order: question.order,
+        formId: question.formId,
+      })),
+      alumniResponse: this.constructAlumniResponses(survey.questions),
+    };
+
+    return transformedData;
+  }
+
+  private constructAlumniResponses(questions: any[]): any[] {
+    const alumniResponseMap = new Map<string, any[]>();
+
+    questions.forEach((question) => {
+      question.answers.forEach((answer) => {
+        const alumniId = answer.response.alumniId;
+        const alumniResponse = alumniResponseMap.get(alumniId) || [];
+
+        const existingAlumniIndex = alumniResponse.findIndex(
+          (entry) => entry.alumniId === alumniId,
+        );
+
+        if (existingAlumniIndex === -1) {
+          alumniResponse.push({
+            alumniId,
+            npm: answer.response.alumni.npm,
+            enrollmentYear: answer.response.alumni.enrollmentYear,
+            graduateYear: answer.response.alumni.graduateYear,
+            studyProgramId: answer.response.alumni.studyProgramId,
+            name: answer.response.alumni.user.name,
+            studyProgramName: answer.response.alumni.studyProgram.name,
+            answers: [
+              {
+                questionId: answer.questionId,
+                answer: answer.answer,
+              },
+            ],
+          });
+        } else {
+          alumniResponse[existingAlumniIndex].answers.push({
+            questionId: answer.questionId,
+            answer: answer.answer,
+          });
+        }
+
+        alumniResponseMap.set(alumniId, alumniResponse);
+      });
+    });
+
+    return Array.from(alumniResponseMap.values()).flat();
   }
 }
