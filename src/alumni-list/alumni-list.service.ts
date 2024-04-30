@@ -29,7 +29,13 @@ constructor(
                 gender: true,
                 enrollmentYear: true,
                 graduateYear: true,
-                studyProgramId: true,
+                studyProgramId: false,
+                studyProgram: {
+                  select:{
+                    id: false,
+                    name:true
+                  }
+                }
               },
             },
           },
@@ -45,15 +51,6 @@ constructor(
             }
             if(user.email){
               user.email = await unsecure(user.email);
-            }
-            if(user.alumni.studyProgramId){
-              const studyProgram =  await this.prisma.studyProgram.findUnique({
-                where:{
-                  id: user.alumni.studyProgramId
-                }
-              })
-              if (!studyProgram) throw new NotFoundException('StudyProgram not found');
-              user.alumni.studyProgramId = studyProgram.name
             }
           }
         }
@@ -98,6 +95,11 @@ constructor(
               enrollmentYear: true,
               graduateYear: true,
               studyProgramId: true,
+              studyProgram: {
+                select:{
+                  name:true
+                }
+              }
             },
           },
         },
@@ -112,16 +114,7 @@ constructor(
           }
           if(user.email){
             user.email = await unsecure(user.email);
-          }
-          if(user.alumni.studyProgramId){
-            const studyProgram =  await this.prisma.studyProgram.findUnique({
-              where:{
-                id: user.alumni.studyProgramId
-              }
-            })
-            if (!studyProgram) throw new NotFoundException('StudyProgram not found');
-            user.alumni.studyProgramId = studyProgram.name
-          }    
+          }   
         }
       }
       return users;
