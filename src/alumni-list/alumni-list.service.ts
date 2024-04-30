@@ -29,7 +29,7 @@ constructor(
                 gender: true,
                 enrollmentYear: true,
                 graduateYear: true,
-                studyProgramId: false,
+                studyProgramId: true,
                 studyProgram: {
                   select:{
                     id: false,
