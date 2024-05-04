@@ -437,9 +437,16 @@ describe('SurveyController', () => {
   describe('GET /survey/:id/response-review/questions', () => {
     const id = survey.id;
     const responseData = {
-      title: 'survey title',
+      id: id,
       type: FormType.CURRICULUM,
-      description: 'survey description',
+      description: 'deskripsi survey',
+      title: 'Survey test',
+      startTime: new Date(2024, 0, 1),
+      endTime: new Date(2024, 11, 1),
+      admissionYearFrom: 2018,
+      admissionYearTo: 2018,
+      graduateYearFrom: 2022,
+      graduateYearTo: 2022,
       totalRespondents: 2,
       answerStats: Promise.resolve([
         {
@@ -466,11 +473,15 @@ describe('SurveyController', () => {
       ]),
       message: 'Respon survei'
     };
+    const request = {
+      email: 'aaa@gmail.com',
+      role: 'ADMIN',
+    };
 
     it('should return responses data of a survey', async () => {
       surveyServiceMock.getSurveyResponseByQuestions.mockResolvedValue(responseData);
 
-      const result = await surveyController.getSurveyResponseByQuestions(id);
+      const result = await surveyController.getSurveyResponseByQuestions(request, id);
 
       expect(result).toEqual(responseData);
     })
@@ -480,7 +491,7 @@ describe('SurveyController', () => {
         new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`),
       );
 
-      await expect(surveyController.getSurveyResponseByQuestions(id)).rejects.toThrow(
+      await expect(surveyController.getSurveyResponseByQuestions(request, id)).rejects.toThrow(
         NotFoundException,
       );
     })
