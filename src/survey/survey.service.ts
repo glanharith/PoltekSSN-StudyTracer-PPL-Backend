@@ -744,7 +744,7 @@ export class SurveyService {
     });
   }
 
-  async getSurveyResponseByQuestions(id: string) {
+  async getSurveyResponseByQuestions(id: string, request: any) {
     if (!isUUID(id)) {
       throw new BadRequestException(
         'Format ID tidak valid. ID harus dalam format UUID',
@@ -757,6 +757,13 @@ export class SurveyService {
         title: true,
         type: true,
         description: true,
+        id: true,
+        startTime: true,
+        endTime: true,
+        admissionYearFrom: true,
+        admissionYearTo: true,
+        graduateYearFrom: true,
+        graduateYearTo: true,
         questions: {
           orderBy: {
             order: 'asc',
@@ -767,7 +774,15 @@ export class SurveyService {
                 order: 'asc',
               },
             },
-            answers: true
+            answers: {
+              include: {
+                response: {
+                  include: {
+                    alumni: true
+                  }
+                }
+              }
+            }
           },
         },
       },
@@ -777,37 +792,69 @@ export class SurveyService {
       throw new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`);
     }
 
-    const allQuestionsAnswered = survey.questions.every(question => question.answers && question.answers.length > 0);
-
-    if (!allQuestionsAnswered) {
+    if (!survey.questions || survey.questions.length === 0) {
       return {
-        title: survey.title,
+        id: survey.id,
         type: survey.type,
+        title: survey.title,
         description: survey.description,
+        startTime: survey.startTime,
+        endTime: survey.endTime,
+        admissionYearFrom: survey.admissionYearFrom,
+        admissionYearTo: survey.admissionYearTo,
+        graduateYearFrom: survey.graduateYearFrom,
+        graduateYearTo: survey.graduateYearTo,
         totalRespondents: 0,
         answerStats: [],
-        message: 'Survei tidak memiliki respon'};
+        message: 'Survei belum memiliki pertanyaan'
+      }
     }
 
-    const answers = survey.questions[0]?.answers ?? [];
-    if (answers.length === 0) {
-      throw new NotFoundException('Survei belum memiliki pertanyaan');
+    if (request.role === 'HEAD_STUDY_PROGRAM') {
+      const headStudyProgramRecord = await this.prisma.headStudyProgram.findFirst({
+        where: {
+          user: {
+            email: request.email,
+          },
+        },
+        select: {
+          studyProgramId: true
+        }
+      });
+
+      if (!headStudyProgramRecord) {
+        throw new NotFoundException('Program studi tidak ditemukan');
+      }
+
+      const studyProgramId = headStudyProgramRecord.studyProgramId;
+
+      survey.questions.forEach(question => {
+        question.answers = question.answers.filter(answer => answer.response.alumni.studyProgramId === studyProgramId);
+      });
     }
 
+    const answers = survey.questions[0].answers ?? [];
     const totalRespondents = (new Set(answers.map(answer => answer.responseId))).size;
     const answerStats = this.analyzeResponse(survey, totalRespondents);
 
     return {
-      title: survey.title,
+      id: survey.id,
       type: survey.type,
+      title: survey.title,
       description: survey.description,
+      startTime: survey.startTime,
+      endTime: survey.endTime,
+      admissionYearFrom: survey.admissionYearFrom,
+      admissionYearTo: survey.admissionYearTo,
+      graduateYearFrom: survey.graduateYearFrom,
+      graduateYearTo: survey.graduateYearTo,
       totalRespondents: totalRespondents,
       answerStats: answerStats,
-      message: 'Respon survei'
+      message: 'Respon Survei'
     };
   }
 
-  async analyzeResponse(survey: any, totalRespondents: number) {
+  analyzeResponse(survey: any, totalRespondents: number) {
     return survey.questions.map(question => {
       const { type, options, answers } = question;
 
@@ -820,7 +867,7 @@ export class SurveyService {
       } else {
         const optionStats = options.map(option => {
           const optionAnswersCount = option.answers.length;
-          const percentage = (optionAnswersCount / totalRespondents) * 100;
+          const percentage = totalRespondents > 0 ? (optionAnswersCount / totalRespondents) * 100 : 0;
           return {
             optionLabel: option.label,
             optionAnswersCount,
