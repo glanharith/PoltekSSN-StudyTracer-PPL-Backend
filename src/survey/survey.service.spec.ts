@@ -1260,6 +1260,41 @@ describe('SurveyService', () => {
 
   describe('get survey response by questions', () => {
     const mockSurveyId = '77198ab9-d338-4fa6-9fdc-3f0eb3f4929e';
+    const headStudyProgramsId = 'df15cc2d-65f8-4388-b5bf-579e39051b8a';
+
+    const mockSurveyWithAlumni = {
+      id: mockSurveyId,
+      type: FormType.CURRICULUM,
+      description: 'deskripsi survey',
+      title: 'Survey test',
+      startTime: new Date(2024, 0, 1),
+      endTime: new Date(2024, 11, 1),
+      admissionYearFrom: 2018,
+      admissionYearTo: 2018,
+      graduateYearFrom: 2022,
+      graduateYearTo: 2022,
+      questions: [
+        {
+          question: 'Apakah anda sudah lulus?',
+          type: 'RADIO',
+          order: 1,
+          options: [{ order: 1, label: 'Ya', answers: [{ answer: 'Ya' }] }],
+          answers: [
+            { answer: 'Ya', response: { alumni: { studyProgramId:  headStudyProgramsId } } },
+            { answer: 'No', response: { alumni: { studyProgramId: 'ef49063d-b95e-454b-97b3-003dbf6c8be1' } } }
+          ],
+        },
+      ],
+    };
+
+    const requestHead = {
+      email: 'email@email.com',
+      role: 'HEAD_STUDY_PROGRAM'
+    };
+    const requestAdmin = {
+      email: 'email@email.com',
+      role: 'ADMIN'
+    };
 
     it('should return analysis for a survey with responses', async () => {
       const mockSurvey = {
@@ -1288,16 +1323,23 @@ describe('SurveyService', () => {
         .mockReturnValue('Analysis Data');
 
       const result = await surveyService.getSurveyResponseByQuestions(
-        mockSurveyId,
+        mockSurveyId, requestAdmin
       );
 
       expect(result).toEqual({
-        title: 'Survey test',
+        id: mockSurveyId,
         type: FormType.CURRICULUM,
         description: 'deskripsi survey',
+        title: 'Survey test',
+        startTime: new Date(2024, 0, 1),
+        endTime: new Date(2024, 11, 1),
+        admissionYearFrom: 2018,
+        admissionYearTo: 2018,
+        graduateYearFrom: 2022,
+        graduateYearTo: 2022,
         totalRespondents: 1,
         answerStats: 'Analysis Data',
-        message: 'Respon survei'
+        message: 'Respon Survei'
       });
       expect(surveyService.analyzeResponse).toHaveBeenCalledWith(mockSurvey, 1);
     });
@@ -1323,34 +1365,44 @@ describe('SurveyService', () => {
         ],
       };
 
+      surveyService.analyzeResponse = jest
+        .fn()
+        .mockReturnValue('Analysis Data');
       prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
 
       const result = await surveyService.getSurveyResponseByQuestions(
-        mockSurveyId,
+        mockSurveyId, requestAdmin
       );
 
       expect(result).toEqual({
-        title: 'Survey no response',
+        id: mockSurveyId,
         type: FormType.CURRICULUM,
         description: 'deskripsi survey',
+        title: 'Survey no response',
+        startTime: new Date(2024, 0, 1),
+        endTime: new Date(2024, 11, 1),
+        admissionYearFrom: 2018,
+        admissionYearTo: 2018,
+        graduateYearFrom: 2022,
+        graduateYearTo: 2022,
         totalRespondents: 0,
-        answerStats: [],
-        message: 'Survei tidak memiliki respon',
+        answerStats: 'Analysis Data',
+        message: 'Respon Survei',
       });
     });
 
     it('should throw BadRequestException if the ID is not a valid UUID', async () => {
       const invalidId = '123';
       await expect(
-        surveyService.getSurveyResponseByQuestions(invalidId),
+        surveyService.getSurveyResponseByQuestions(invalidId, requestAdmin),
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should throw NotFoundException if the survey does not exist', async () => {
+    it('should throw a NotFoundException if the survey does not exist', async () => {
       prismaMock.form.findUnique.mockResolvedValue(null);
 
       await expect(
-        surveyService.getSurveyResponseByQuestions(mockSurveyId),
+        surveyService.getSurveyResponseByQuestions(mockSurveyId, requestAdmin),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -1369,15 +1421,63 @@ describe('SurveyService', () => {
         questions: [],
       };
 
+      surveyService.analyzeResponse = jest
+        .fn()
+        .mockReturnValue([]);
       prismaMock.form.findUnique.mockResolvedValue(mockSurveyWithNoQuestions);
 
-      await expect(
-        surveyService.getSurveyResponseByQuestions(mockSurveyId),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        surveyService.getSurveyResponseByQuestions(mockSurveyId),
-      ).rejects.toThrow('Survei belum memiliki pertanyaan');
+      const result = await surveyService.getSurveyResponseByQuestions(
+        mockSurveyId, requestAdmin
+      );
+
+      expect(result).toEqual({
+        id: mockSurveyId,
+        type: FormType.CURRICULUM,
+        title: 'Survey Test',
+        description: 'deskripsi',
+        startTime: new Date(2024, 0, 1),
+        endTime: new Date(2024, 1, 1),
+        admissionYearFrom: 2020,
+        admissionYearTo: 2024,
+        graduateYearFrom: 2024,
+        graduateYearTo: 2028,
+        totalRespondents: 0,
+        answerStats: [],
+        message: 'Survei belum memiliki pertanyaan',
+      });
     });
+
+    it('should return analysis that is filtered for head of study program', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(mockSurveyWithAlumni);
+      prismaMock.headStudyProgram.findFirst.mockResolvedValue({
+        id: 'id',
+        studyProgramId: headStudyProgramsId,
+        isActive: true,
+        nip: 'nip'
+      });
+
+      const result = await surveyService.getSurveyResponseByQuestions(
+        mockSurveyId, requestHead
+      );
+
+      expect(result.totalRespondents).toEqual(1);
+      expect(result.answerStats[0]).toEqual({
+        question: 'Apakah anda sudah lulus?',
+        questionType: 'RADIO',
+        data: [
+          { optionLabel: 'Ya', optionAnswersCount: 1, percentage: '100.00%' }
+        ]
+      })
+    })
+
+    it('should throw a NotFoundException if the study program does not exist', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(mockSurveyWithAlumni);
+      prismaMock.headStudyProgram.findFirst.mockResolvedValue(null)
+
+      await expect(
+        surveyService.getSurveyResponseByQuestions(mockSurveyId, requestHead),
+      ).rejects.toThrow('Program studi tidak ditemukan');
+    })
   });
 
   describe('analyze response data', () => {
@@ -1437,7 +1537,6 @@ describe('SurveyService', () => {
         },
       ],
     };
-
     const totalRespondents = 3;
 
     it('should correctly analyze range type questions', async () => {
@@ -1503,6 +1602,88 @@ describe('SurveyService', () => {
         'Semuanya baik.',
       ]);
     });
+
+    it('should handle empty responses for all types of questions', async () => {
+      const emptySurvey = {
+        title: 'Empty Survey Test',
+        questions: [
+          {
+            question: 'How satisfied are you with our site?',
+            type: 'RANGE',
+            options: [
+              { label: '1', answers: [] },
+              { label: '2', answers: [] },
+              { label: '3', answers: [] },
+              { label: '4', answers: [] },
+              { label: '5', answers: [] },
+            ],
+            answers: [],
+          },
+          {
+            question: 'Which features do you use?',
+            type: 'CHECKBOX',
+            options: [
+              { label: 'Chat', answers: [] },
+              { label: 'Search', answers: [] },
+            ],
+            answers: [],
+          },
+          {
+            question: 'Would you recommend us?',
+            type: 'RADIO',
+            options: [
+              { label: 'Yes', answers: [] },
+              { label: 'No', answers: [] },
+            ],
+            answers: [],
+          },
+          {
+            question: 'Any suggestions?',
+            type: 'TEXT',
+            options: [],
+            answers: [],
+          },
+        ],
+      };
+      const noRespondents = 0;
+
+      const stats = await surveyService.analyzeResponse(
+        emptySurvey,
+        noRespondents,
+      );
+      expect(stats[0].data).toEqual([
+        { optionLabel: '1', optionAnswersCount: 0, percentage: '0.00%' },
+        { optionLabel: '2', optionAnswersCount: 0, percentage: '0.00%' },
+        { optionLabel: '3', optionAnswersCount: 0, percentage: '0.00%' },
+        { optionLabel: '4', optionAnswersCount: 0, percentage: '0.00%' },
+        { optionLabel: '5', optionAnswersCount: 0, percentage: '0.00%' },
+      ]);
+      expect(stats[1].data).toEqual([
+        {
+          optionLabel: 'Chat',
+          optionAnswersCount: 0,
+          percentage: '0.00%',
+        },
+        {
+          optionLabel: 'Search',
+          optionAnswersCount: 0,
+          percentage: '0.00%',
+        },
+      ]);
+      expect(stats[2].data).toEqual([
+        {
+          optionLabel: 'Yes',
+          optionAnswersCount: 0,
+          percentage: '0.00%',
+        },
+        {
+          optionLabel: 'No',
+          optionAnswersCount: 0,
+          percentage: '0.00%',
+        },
+      ]);
+      expect(stats[3].data).toEqual([]);
+    })
   });
 
   describe('getSurveyResponseByAlumni', () => {
