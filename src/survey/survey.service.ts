@@ -588,7 +588,15 @@ export class SurveyService {
   }
 
   async getAllSurveys(): Promise<Form[]> {
-    return await this.prisma.form.findMany();
+    return await this.prisma.form.findMany({
+      include: {
+        _count: {
+          select: {
+            responses: true,
+          },
+        },
+      },
+    });
   }
 
   async fillSurvey(req: FillSurveyDTO, email: string) {
@@ -765,7 +773,7 @@ export class SurveyService {
                 order: 'asc',
               },
             },
-            answers: true
+            answers: true,
           },
         },
       },
@@ -775,10 +783,12 @@ export class SurveyService {
       throw new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`);
     }
 
-    const allQuestionsAnswered = survey.questions.every(question => question.answers && question.answers.length > 0);
+    const allQuestionsAnswered = survey.questions.every(
+      (question) => question.answers && question.answers.length > 0,
+    );
 
     if (!allQuestionsAnswered) {
-      return {survey: survey, message: 'Survei tidak memiliki respon'};
+      return { survey: survey, message: 'Survei tidak memiliki respon' };
     }
 
     const answers = survey.questions[0]?.answers ?? [];
@@ -786,44 +796,45 @@ export class SurveyService {
       throw new NotFoundException('Survei belum memiliki pertanyaan');
     }
 
-    const totalRespondents = (new Set(answers.map(answer => answer.responseId))).size;
+    const totalRespondents = new Set(answers.map((answer) => answer.responseId))
+      .size;
     const answerStats = this.analyzeResponse(survey, totalRespondents);
 
     return {
       title: survey.title,
       totalRespondents: totalRespondents,
-      answerStats: answerStats
-    }
+      answerStats: answerStats,
+    };
   }
 
   async analyzeResponse(survey: any, totalRespondents: number) {
-    return survey.questions.map(question => {
+    return survey.questions.map((question) => {
       const { type, options, answers } = question;
 
       if (type == 'TEXT') {
         return {
           question: question.question,
           questionType: type,
-          data: answers.map(answer => answer.answer)
+          data: answers.map((answer) => answer.answer),
         };
       } else {
-        const optionStats = options.map(option => {
+        const optionStats = options.map((option) => {
           const optionAnswersCount = option.answers.length;
           const percentage = (optionAnswersCount / totalRespondents) * 100;
           return {
             optionLabel: option.label,
             optionAnswersCount,
-            percentage: percentage.toFixed(2) + '%'
+            percentage: percentage.toFixed(2) + '%',
           };
         });
 
         return {
           question: question.question,
           questionType: type,
-          data: optionStats
+          data: optionStats,
         };
       }
-    })
+    });
   }
 
   async getSurveyResponseByAlumni(id: string) {
