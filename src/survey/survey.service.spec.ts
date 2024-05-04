@@ -880,11 +880,18 @@ describe('SurveyService', () => {
     const nonExistentId = '5e2633ba-435d-41e8-8432-efa2832ce564';
     const invalidUUID = 'invalid-uuid';
 
+    const request = {
+      user: {
+        email: 'aaa@gmail.com',
+        role: 'ADMIN',
+      },
+    };
+
     it('should return a survey response', async () => {
       prismaMock.form.findUnique.mockResolvedValue(survey);
       prismaMock.answer.findMany.mockResolvedValue(responses);
 
-      await surveyService.downloadSurveyResponses(survey.id);
+      await surveyService.downloadSurveyResponses(survey.id, request);
       expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
       expect(prismaMock.answer.findMany).toHaveBeenCalledTimes(1);
     });
@@ -893,13 +900,13 @@ describe('SurveyService', () => {
       prismaMock.form.findUnique.mockResolvedValue(null);
 
       await expect(
-        surveyService.downloadSurveyResponses(nonExistentId),
+        surveyService.downloadSurveyResponses(nonExistentId, request),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if ID is not a valid UUID', async () => {
       await expect(
-        surveyService.downloadSurveyResponses(invalidUUID),
+        surveyService.downloadSurveyResponses(invalidUUID, request),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -908,18 +915,24 @@ describe('SurveyService', () => {
       prismaMock.answer.findMany.mockResolvedValue([]);
 
       await expect(
-        surveyService.downloadSurveyResponses(survey.id),
+        surveyService.downloadSurveyResponses(survey.id, request),
       ).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('get all surveys', () => {
+    const request = {
+      user: {
+        email: 'aaa@gmail.com',
+        role: 'ADMIN',
+      },
+    };
     it('should return all surveys', async () => {
       const surveysMock = [mockSurvey];
 
       prismaMock.form.findMany.mockResolvedValue(surveysMock);
 
-      const result = await surveyService.getAllSurveys();
+      const result = await surveyService.getAllSurveys(request);
 
       expect(result).toEqual(surveysMock);
       expect(prismaMock.form.findMany).toHaveBeenCalledTimes(1);
