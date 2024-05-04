@@ -15,6 +15,7 @@ import {
   Answer,
   Role,
   StudyProgramLevel,
+  HeadStudyProgram,
 } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
@@ -202,7 +203,13 @@ describe('SurveyService', () => {
     options: [mockOption],
   };
 
-  const mockSurvey: Form & { questions: Question[] } = {
+  const mockSurvey: Form & {
+    questions: Question[];
+    _count: {
+      responses: number;
+    };
+    responses: { alumni: { studyProgramId: string } }[];
+  } = {
     id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
     type: FormType.CURRICULUM,
     title: 'Test Survey',
@@ -214,6 +221,16 @@ describe('SurveyService', () => {
     graduateYearFrom: 2022,
     graduateYearTo: 2025,
     questions: [mockQuestion],
+    _count: {
+      responses: 1,
+    },
+    responses: [
+      {
+        alumni: {
+          studyProgramId: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        },
+      },
+    ],
   };
 
   const mockAlumni: Alumni = {
@@ -918,17 +935,66 @@ describe('SurveyService', () => {
         surveyService.downloadSurveyResponses(survey.id, request),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('should handle for kaprodi', async () => {
+      const request = {
+        email: 'aaa@gmail.com',
+        role: 'HEAD_STUDY_PROGRAM',
+      };
+      const headOfStudyProgram: HeadStudyProgram = {
+        id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        studyProgramId: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        isActive: true,
+        nip: '123',
+      };
+      prismaMock.form.findUnique.mockResolvedValue(survey);
+      prismaMock.headStudyProgram.findFirst.mockResolvedValue(
+        headOfStudyProgram,
+      );
+      prismaMock.answer.findMany.mockResolvedValue(responses);
+
+      await surveyService.downloadSurveyResponses(survey.id, request);
+      expect(prismaMock.headStudyProgram.findFirst).toHaveBeenCalledTimes(1);
+      expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
+      expect(prismaMock.answer.findMany).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('get all surveys', () => {
     const request = {
-      user: {
-        email: 'aaa@gmail.com',
-        role: 'ADMIN',
-      },
+      email: 'aaa@gmail.com',
+      role: 'ADMIN',
     };
+
     it('should return all surveys', async () => {
       const surveysMock = [mockSurvey];
+
+      prismaMock.form.findMany.mockResolvedValue(surveysMock);
+
+      const result = await surveyService.getAllSurveys(request);
+
+      expect(result).toEqual(surveysMock);
+      expect(prismaMock.form.findMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return all survey, but modified for kaprodi', async () => {
+      const request = {
+        email: 'aaa@gmail.com',
+        role: 'HEAD_STUDY_PROGRAM',
+      };
+
+      const headOfStudyProgram: HeadStudyProgram = {
+        id: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        studyProgramId: 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef',
+        isActive: true,
+        nip: '123',
+      };
+
+      const surveysMock = [mockSurvey];
+
+      prismaMock.headStudyProgram.findFirst.mockResolvedValue(
+        headOfStudyProgram,
+      );
 
       prismaMock.form.findMany.mockResolvedValue(surveysMock);
 
