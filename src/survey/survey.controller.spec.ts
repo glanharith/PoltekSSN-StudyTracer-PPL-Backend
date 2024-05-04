@@ -395,7 +395,7 @@ describe('SurveyController', () => {
       );
 
       await expect(
-        await surveyController.downloadSurveyResponses(request, survey.id),
+        surveyController.downloadSurveyResponses(request, survey.id),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -405,7 +405,7 @@ describe('SurveyController', () => {
       );
 
       await expect(
-        await surveyController.downloadSurveyResponses(request, survey.id),
+        surveyController.downloadSurveyResponses(request, survey.id),
       ).rejects.toThrow(InternalServerErrorException);
     });
   });
