@@ -588,7 +588,15 @@ export class SurveyService {
   }
 
   async getAllSurveys(): Promise<Form[]> {
-    return await this.prisma.form.findMany();
+    return await this.prisma.form.findMany({
+      include: {
+        _count: {
+          select: {
+            responses: true,
+          },
+        },
+      },
+    });
   }
 
   async fillSurvey(req: FillSurveyDTO, email: string) {
@@ -862,26 +870,26 @@ export class SurveyService {
         return {
           question: question.question,
           questionType: type,
-          data: answers.map(answer => answer.answer)
+          data: answers.map((answer) => answer.answer),
         };
       } else {
-        const optionStats = options.map(option => {
+        const optionStats = options.map((option) => {
           const optionAnswersCount = option.answers.length;
           const percentage = totalRespondents > 0 ? (optionAnswersCount / totalRespondents) * 100 : 0;
           return {
             optionLabel: option.label,
             optionAnswersCount,
-            percentage: percentage.toFixed(2) + '%'
+            percentage: percentage.toFixed(2) + '%',
           };
         });
 
         return {
           question: question.question,
           questionType: type,
-          data: optionStats
+          data: optionStats,
         };
       }
-    })
+    });
   }
 
   async getSurveyResponseByAlumni(id: string) {

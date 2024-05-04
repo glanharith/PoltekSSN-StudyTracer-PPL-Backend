@@ -11,6 +11,7 @@ import { HeadOfStudyProgramModule } from './head-of-study-program/head-of-study-
 import { ZxcvbnModule } from './zxcvbn/zxcvbn.module';
 import { SurveyModule } from './survey/survey.module';
 import { NotificationModule } from './notification/notification.module';
+import { AlumniListModule } from './alumni-list/alumni-list.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { NotificationModule } from './notification/notification.module';
     ZxcvbnModule,
     SurveyModule,
     NotificationModule,
+    AlumniListModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
