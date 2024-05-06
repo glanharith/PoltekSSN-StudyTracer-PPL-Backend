@@ -833,6 +833,8 @@ export class SurveyService {
             order: 'asc',
           },
           select: {
+            question: true,
+            type: true,
             options: {
               orderBy: {
                 order: 'asc',
@@ -919,9 +921,10 @@ export class SurveyService {
   }
 
   analyzeResponse(survey: any, totalRespondents: number) {
+    console.log(totalRespondents)
     return survey.questions.map(question => {
       const { type, options, answers } = question;
-
+      console.log(question.question)
       if (type == 'TEXT') {
         return {
           question: question.question,
@@ -930,7 +933,8 @@ export class SurveyService {
         };
       } else {
         const optionStats = options.map((option) => {
-          const optionAnswersCount = option.answers.length;
+          const filteredAnswers = answers.filter(answer => answer.answer === option.label);
+          const optionAnswersCount = filteredAnswers.length;
           const percentage = totalRespondents > 0 ? (optionAnswersCount / totalRespondents) * 100 : 0;
           return {
             optionLabel: option.label,
@@ -938,7 +942,6 @@ export class SurveyService {
             percentage: percentage.toFixed(2) + '%',
           };
         });
-
         return {
           question: question.question,
           questionType: type,
