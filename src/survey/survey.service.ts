@@ -837,11 +837,36 @@ export class SurveyService {
     });
   }
 
-  async getSurveyResponseByAlumni(id: string) {
+  async getSurveyResponseByAlumni(id: string, email: string) {
     if (!isUUID(id)) {
       throw new BadRequestException(
         'Format ID tidak valid. ID harus dalam format UUID',
       );
+    }
+
+    // check the user. if user is admin then we need all the alumni response. but if user is head of study program, then we ONLY TAKE the alumi within its study program
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+      include: {
+        admin: true,
+        headStudyProgram: {
+          include: {
+            studyProgram: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    let userStudyProgramId: string = '';
+
+    if (user.role === 'HEAD_STUDY_PROGRAM') {
+      userStudyProgramId = user?.headStudyProgram?.studyProgram.id ?? '';
     }
 
     const survey = await this.prisma.form.findUnique({
@@ -850,6 +875,7 @@ export class SurveyService {
         questions: {
           orderBy: { order: 'asc' },
           include: {
+            options: true,
             answers: {
               include: {
                 response: {
@@ -877,6 +903,17 @@ export class SurveyService {
       throw new NotFoundException(`Survey dengan ID ${id} tidak ditemukan`);
     }
 
+    // Filter out responses where the alumni's study program doesn't match the user's study program
+    const filteredQuestions = survey.questions.map((question) => ({
+      ...question,
+      answers: question.answers.filter(
+        (answer) =>
+          answer.response.alumni.studyProgramId === userStudyProgramId,
+      ),
+    }));
+
+    survey.questions = filteredQuestions;
+
     const transformedData: any = {
       id: survey.id,
       type: survey.type,
@@ -896,6 +933,12 @@ export class SurveyService {
         rangeTo: question.rangeTo,
         order: question.order,
         formId: question.formId,
+        options: question.options ? question.options.map((option) => ({
+          id: option.id,
+          label: option.label,
+          questionId: option.questionId,
+          order: option.order,
+        })) : [],
       })),
       alumniResponse: this.constructAlumniResponses(survey.questions),
     };

@@ -13,6 +13,7 @@ import {
   Answer,
   FormType,
   Gender,
+  HeadStudyProgram,
   QuestionType,
   Response,
   Role,
@@ -485,13 +486,13 @@ describe('SurveyController', () => {
 
   describe('GET /:id/response-preview/alumni', () => {
     it('should return survey responses', async () => {
-      const mockUser: User = {
-        id: 'use02c84-f321-4b4e-bff6-780c8cae17b3',
-        name: 'John',
-        email: 'john@example.com',
+      const mockUserHead: User = {
+        id: 'usa02c84-f321-4b4e-bff6-780c8cae17b3',
+        name: 'Kaprodi',
+        email: 'kaprodi@example.com',
         password:
           '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
-        role: Role.ALUMNI,
+        role: Role.HEAD_STUDY_PROGRAM,
       };
 
       const mockStudyProgram: StudyProgram = {
@@ -499,6 +500,26 @@ describe('SurveyController', () => {
         name: 'Computer Science',
         code: '123',
         level: StudyProgramLevel.D3,
+      };
+
+      const mockHead: HeadStudyProgram & { user: User } & {
+        studyProgram: StudyProgram;
+      } = {
+        id: 'bae02c84-f321-4b4e-bff6-780c8cae17b3',
+        studyProgramId: mockStudyProgram.id,
+        isActive: true,
+        nip: '1234567',
+        user: mockUserHead,
+        studyProgram: mockStudyProgram,
+      };
+      
+      const mockUser: User = {
+        id: 'use02c84-f321-4b4e-bff6-780c8cae17b3',
+        name: 'John',
+        email: 'john@example.com',
+        password:
+          '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
+        role: Role.ALUMNI,
       };
 
       const mockAlumni: Alumni & { user: User } & {
@@ -587,7 +608,7 @@ describe('SurveyController', () => {
       );
 
       const result = await surveyController.getSurveyResponseByAlumni(
-        mockSurvey.id,
+        mockSurvey.id, mockUserHead.email
       );
 
       expect(result).toEqual({

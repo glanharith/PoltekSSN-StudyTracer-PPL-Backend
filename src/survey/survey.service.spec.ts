@@ -15,6 +15,7 @@ import {
   Answer,
   Role,
   StudyProgramLevel,
+  HeadStudyProgram,
 } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
@@ -1499,108 +1500,166 @@ describe('SurveyService', () => {
   });
 
   describe('getSurveyResponseByAlumni', () => {
+    const mockSurveyId = '65259cd0-b2e2-4ac0-9dd2-847dbd79157b';
+    const mockResponseId = '1ea1c841-f238-4619-914c-d8b3afe6d47c';
+    const mockQuestionId1 = '14a4acdc-50b1-477f-90e9-8e0c99e85e58';
+    const mockQuestionId2 = '24a4acdc-50b1-477f-90e9-8e0c99e85e58';
+    const mockQuestionId3 = '34a4acdc-50b1-477f-90e9-8e0c99e85e58';
+    const mockOptionId1 = '3o14acdc-50b1-477f-90e9-8e0c99e85e58';
+    const mockOptionId2 = '3o24acdc-50b1-477f-90e9-8e0c99e85e58';
+
+    const mockUserAlumni: User = {
+      id: 'use02c84-f321-4b4e-bff6-780c8cae17b3',
+      name: 'John',
+      email: 'john@example.com',
+      password:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
+      role: Role.ALUMNI,
+    };
+
+    const mockUserHead: User = {
+      id: 'usa02c84-f321-4b4e-bff6-780c8cae17b3',
+      name: 'Kaprodi',
+      email: 'kaprodi@example.com',
+      password:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
+      role: Role.HEAD_STUDY_PROGRAM,
+    };
+
+    const mockStudyProgram: StudyProgram = {
+      id: 'std02c84-f321-4b4e-bff6-780c8cae17b3',
+      name: 'Computer Science',
+      code: '123',
+      level: StudyProgramLevel.D3,
+    };
+
+    const mockHead: HeadStudyProgram & { user: User } & {
+      studyProgram: StudyProgram;
+    } = {
+      id: 'bae02c84-f321-4b4e-bff6-780c8cae17b3',
+      studyProgramId: mockStudyProgram.id,
+      isActive: true,
+      nip: '1234567',
+      user: mockUserHead,
+      studyProgram: mockStudyProgram,
+    };
+
+    const mockAlumni: Alumni & { user: User } & {
+      studyProgram: StudyProgram;
+    } = {
+      id: 'b6e02c84-f321-4b4e-bff6-780c8cae17b3',
+      phoneNo:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
+      address:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.uBMnQX2lluICrEGO9kCMCrTk0NFlEDS|cd4f8f6c4b718dd5|5cad4e104c5c6f639d47a668bed256a2|7ac79c3c1744857d5cdbf1d948db5fbad37f01d68fba6bacb5cb50b409d29333',
+      gender: 'FEMALE',
+      enrollmentYear: 2021,
+      graduateYear: 2024,
+      studyProgramId: '393f6a47-425e-4402-92b6-782d266e0193',
+      npm: '2106634331',
+      user: mockUserAlumni,
+      studyProgram: mockStudyProgram,
+    };
+
+    const mockResponse: Response & { alumni: Alumni } = {
+      id: mockResponseId,
+      formId: mockSurveyId,
+      alumniId: mockAlumni.id,
+      alumni: mockAlumni,
+    };
+
+    const mockAnswer1: Answer & { response: Response } = {
+      id: 'e1c3b99e-576b-4b81-976f-a949797de075',
+      answer: 'John',
+      responseId: mockResponseId,
+      questionId: mockQuestionId1,
+      response: mockResponse,
+    };
+
+    const mockAnswer2: Answer & { response: Response } = {
+      id: 'e2c3b99e-576b-4b81-976f-a949797de075',
+      answer: 'Python',
+      responseId: mockResponseId,
+      questionId: mockQuestionId2,
+      response: mockResponse,
+    };
+
+    const mockAnswer3: Answer & { response: Response } = {
+      id: 'e3c3b99e-576b-4b81-976f-a949797de075',
+      answer: 'Interstellar',
+      responseId: mockResponseId,
+      questionId: mockQuestionId3,
+      response: mockResponse,
+    };
+
+    const mockQuestion1: Question & { answers: Answer[] } = {
+      id: mockQuestionId1,
+      type: QuestionType.TEXT,
+      question: 'What is your name?',
+      rangeFrom: null,
+      rangeTo: null,
+      order: 1,
+      formId: mockSurveyId,
+      answers: [mockAnswer1],
+    };
+
+    const mockQuestion2: Question & { answers: Answer[] } = {
+      id: mockQuestionId2,
+      type: QuestionType.TEXT,
+      question: 'What is your favorite programming language?',
+      rangeFrom: null,
+      rangeTo: null,
+      order: 2,
+      formId: mockSurveyId,
+      answers: [mockAnswer2],
+    };
+
+    const mockOption1: Option = {
+      id: mockOptionId1,
+      label: 'Interstellar',
+      questionId: mockQuestionId3,
+      order: 1,
+    };
+
+    const mockOption2: Option = {
+      id: mockOptionId2,
+      label: 'Titanic',
+      questionId: mockQuestionId3,
+      order: 2,
+    };
+
+    const mockQuestion3: Question & { options: Option[]; answers: Answer[] } = {
+      id: mockQuestionId3,
+      type: QuestionType.RADIO,
+      question: 'What is your favorite movie?',
+      rangeFrom: null,
+      rangeTo: null,
+      order: 3,
+      formId: mockSurveyId,
+      options: [mockOption1, mockOption2],
+      answers: [mockAnswer3],
+    };
+
+    const mockSurvey: Form & { questions: Question[] } = {
+      id: mockSurveyId,
+      type: FormType.CURRICULUM,
+      title: 'Survey buat semua alumni',
+      description: 'Survey Description',
+      startTime: new Date('2024-03-24T17:00:00.000Z'),
+      endTime: new Date('2024-04-24T20:15:00.000Z'),
+      admissionYearFrom: null,
+      admissionYearTo: null,
+      graduateYearFrom: null,
+      graduateYearTo: null,
+      questions: [mockQuestion1, mockQuestion2, mockQuestion3],
+    };
+
     it('should return survey responses including alumni and answers', async () => {
-      const mockSurveyId = '65259cd0-b2e2-4ac0-9dd2-847dbd79157b';
-      const mockResponseId1 = '1ea1c841-f238-4619-914c-d8b3afe6d47c';
-      const mockQuestionId1 = '14a4acdc-50b1-477f-90e9-8e0c99e85e58';
-      const mockResponseId2 = '2ea1c841-f238-4619-914c-d8b3afe6d47c';
-      const mockQuestionId2 = '24a4acdc-50b1-477f-90e9-8e0c99e85e58';
-
-      const mockUser: User = {
-        id: 'use02c84-f321-4b4e-bff6-780c8cae17b3',
-        name: 'John',
-        email: 'john@example.com',
-        password:
-          '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
-        role: Role.ALUMNI,
-      };
-
-      const mockStudyProgram: StudyProgram = {
-        id: 'std02c84-f321-4b4e-bff6-780c8cae17b3',
-        name: 'Computer Science',
-        code: '123',
-        level: StudyProgramLevel.D3,
-      };
-
-      const mockAlumni: Alumni & { user: User } & {
-        studyProgram: StudyProgram;
-      } = {
-        id: 'b6e02c84-f321-4b4e-bff6-780c8cae17b3',
-        phoneNo:
-          '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
-        address:
-          '$2b$10$89KoyS3YtlCfSsfHiyZTN.uBMnQX2lluICrEGO9kCMCrTk0NFlEDS|cd4f8f6c4b718dd5|5cad4e104c5c6f639d47a668bed256a2|7ac79c3c1744857d5cdbf1d948db5fbad37f01d68fba6bacb5cb50b409d29333',
-        gender: 'FEMALE',
-        enrollmentYear: 2021,
-        graduateYear: 2024,
-        studyProgramId: '393f6a47-425e-4402-92b6-782d266e0193',
-        npm: '2106634331',
-        user: mockUser,
-        studyProgram: mockStudyProgram,
-      };
-
-      const mockResponse1: Response & { alumni: Alumni } = {
-        id: mockResponseId1,
-        formId: mockSurveyId,
-        alumniId: mockAlumni.id,
-        alumni: mockAlumni,
-      };
-
-      const mockAnswer1: Answer & { response: Response } = {
-        id: 'e1c3b99e-576b-4b81-976f-a949797de075',
-        answer: 'John',
-        responseId: mockResponseId1,
-        questionId: mockQuestionId1,
-        response: mockResponse1,
-      };
-
-      const mockAnswer2: Answer & { response: Response } = {
-        id: 'e2c3b99e-576b-4b81-976f-a949797de075',
-        answer: 'Python',
-        responseId: mockResponseId2,
-        questionId: mockQuestionId2,
-        response: mockResponse1,
-      };
-
-      const mockQuestion1: Question & { answers: Answer[] } = {
-        id: mockQuestionId1,
-        type: QuestionType.TEXT,
-        question: 'What is your name?',
-        rangeFrom: null,
-        rangeTo: null,
-        order: 1,
-        formId: mockSurveyId,
-        answers: [mockAnswer1],
-      };
-
-      const mockQuestion2: Question & { answers: Answer[] } = {
-        id: mockQuestionId2,
-        type: QuestionType.TEXT,
-        question: 'What is your favorite programming language?',
-        rangeFrom: null,
-        rangeTo: null,
-        order: 2,
-        formId: mockSurveyId,
-        answers: [mockAnswer2],
-      };
-
-      const mockSurvey: Form & { questions: Question[] } = {
-        id: mockSurveyId,
-        type: FormType.CURRICULUM,
-        title: 'Survey buat semua alumni',
-        description: 'Survey Description',
-        startTime: new Date('2024-03-24T17:00:00.000Z'),
-        endTime: new Date('2024-04-24T20:15:00.000Z'),
-        admissionYearFrom: null,
-        admissionYearTo: null,
-        graduateYearFrom: null,
-        graduateYearTo: null,
-        questions: [mockQuestion1, mockQuestion2],
-      };
-
+      prismaMock.user.findUnique.mockResolvedValue(mockUserHead);
       prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
       const result = await surveyService.getSurveyResponseByAlumni(
         mockSurveyId,
+        mockUserHead.email,
       );
 
       expect(result.alumniResponse).toBeDefined();
@@ -1609,20 +1668,28 @@ describe('SurveyService', () => {
     it('should throw BadRequestException if ID format is invalid', async () => {
       const invalidId = 'invalid-id';
 
+      prismaMock.user.findUnique.mockResolvedValue(mockUserHead);
       prismaMock.form.findUnique.mockResolvedValue(null);
 
       await expect(
-        surveyService.getSurveyResponseByAlumni(invalidId),
+        surveyService.getSurveyResponseByAlumni(invalidId, mockUserHead.email),
       ).rejects.toThrowError(BadRequestException);
     });
 
     it('should throw NotFoundException if survey is not found', async () => {
-      const surveyId = 'e1c3b99e-576b-4b81-911f-a949797de075';
-
+      prismaMock.user.findUnique.mockResolvedValue(mockUserHead);
       prismaMock.form.findUnique.mockResolvedValue(null);
 
       await expect(
-        surveyService.getSurveyResponseByAlumni(surveyId),
+        surveyService.getSurveyResponseByAlumni(mockSurveyId, mockUserHead.email),
+      ).rejects.toThrowError(NotFoundException);
+    });
+
+    it('should throw NotFoundException when user is not found', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(null);
+    
+      await expect(
+        surveyService.getSurveyResponseByAlumni(mockSurveyId, mockUserHead.email)
       ).rejects.toThrowError(NotFoundException);
     });
   });
