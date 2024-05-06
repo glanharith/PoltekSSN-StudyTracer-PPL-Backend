@@ -1406,16 +1406,8 @@ describe('SurveyService', () => {
       );
 
       expect(result).toEqual({
-        id: mockSurveyId,
-        type: FormType.CURRICULUM,
         description: 'deskripsi survey',
         title: 'Survey test',
-        startTime: new Date(2024, 0, 1),
-        endTime: new Date(2024, 11, 1),
-        admissionYearFrom: 2018,
-        admissionYearTo: 2018,
-        graduateYearFrom: 2022,
-        graduateYearTo: 2022,
         totalRespondents: 1,
         answerStats: 'Analysis Data',
         message: 'Respon Survei'
@@ -1454,16 +1446,8 @@ describe('SurveyService', () => {
       );
 
       expect(result).toEqual({
-        id: mockSurveyId,
-        type: FormType.CURRICULUM,
         description: 'deskripsi survey',
         title: 'Survey no response',
-        startTime: new Date(2024, 0, 1),
-        endTime: new Date(2024, 11, 1),
-        admissionYearFrom: 2018,
-        admissionYearTo: 2018,
-        graduateYearFrom: 2022,
-        graduateYearTo: 2022,
         totalRespondents: 0,
         answerStats: 'Analysis Data',
         message: 'Respon Survei',
@@ -1510,16 +1494,8 @@ describe('SurveyService', () => {
       );
 
       expect(result).toEqual({
-        id: mockSurveyId,
-        type: FormType.CURRICULUM,
         title: 'Survey Test',
         description: 'deskripsi',
-        startTime: new Date(2024, 0, 1),
-        endTime: new Date(2024, 1, 1),
-        admissionYearFrom: 2020,
-        admissionYearTo: 2024,
-        graduateYearFrom: 2024,
-        graduateYearTo: 2028,
         totalRespondents: 0,
         answerStats: [],
         message: 'Survei belum memiliki pertanyaan',

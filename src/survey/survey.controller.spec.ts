@@ -451,16 +451,8 @@ describe('SurveyController', () => {
   describe('GET /survey/:id/response-review/questions', () => {
     const id = survey.id;
     const responseData = {
-      id: id,
-      type: FormType.CURRICULUM,
       description: 'deskripsi survey',
       title: 'Survey test',
-      startTime: new Date(2024, 0, 1),
-      endTime: new Date(2024, 11, 1),
-      admissionYearFrom: 2018,
-      admissionYearTo: 2018,
-      graduateYearFrom: 2022,
-      graduateYearTo: 2022,
       totalRespondents: 2,
       answerStats: Promise.resolve([
         {

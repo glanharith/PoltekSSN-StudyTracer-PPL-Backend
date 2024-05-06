@@ -862,16 +862,8 @@ export class SurveyService {
 
     if (!survey.questions || survey.questions.length === 0) {
       return {
-        id: survey.id,
-        type: survey.type,
         title: survey.title,
         description: survey.description,
-        startTime: survey.startTime,
-        endTime: survey.endTime,
-        admissionYearFrom: survey.admissionYearFrom,
-        admissionYearTo: survey.admissionYearTo,
-        graduateYearFrom: survey.graduateYearFrom,
-        graduateYearTo: survey.graduateYearTo,
         totalRespondents: 0,
         answerStats: [],
         message: 'Survei belum memiliki pertanyaan'
@@ -906,16 +898,8 @@ export class SurveyService {
     const answerStats = this.analyzeResponse(survey, totalRespondents);
 
     return {
-      id: survey.id,
-      type: survey.type,
       title: survey.title,
       description: survey.description,
-      startTime: survey.startTime,
-      endTime: survey.endTime,
-      admissionYearFrom: survey.admissionYearFrom,
-      admissionYearTo: survey.admissionYearTo,
-      graduateYearFrom: survey.graduateYearFrom,
-      graduateYearTo: survey.graduateYearTo,
       totalRespondents: totalRespondents,
       answerStats: answerStats,
       message: 'Respon Survei'
