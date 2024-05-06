@@ -835,6 +835,8 @@ export class SurveyService {
           select: {
             question: true,
             type: true,
+            rangeFrom: true,
+            rangeTo: true,
             options: {
               orderBy: {
                 order: 'asc',
@@ -929,9 +931,33 @@ export class SurveyService {
           questionType: type,
           data: answers.map((answer) => answer.answer),
         };
+
+      } else if (type == 'RANGE' ){
+        const rangeIntegers = Array.from(
+          { length: question.rangeTo - question.rangeFrom + 1 }, (_, i) => question.rangeFrom + i
+        );
+
+        const optionStats = rangeIntegers.map(integer => {
+          const filteredAnswers = answers.filter(answer => parseInt(answer.answer.trim()) === integer
+          );
+          const optionAnswersCount = filteredAnswers.length;
+          const percentage = totalRespondents > 0 ? (optionAnswersCount / totalRespondents) * 100 : 0;
+          return {
+            optionLabel: integer.toString(), // Convert integer to string if needed
+            optionAnswersCount,
+            percentage: percentage.toFixed(2) + '%',
+          };
+        });
+
+        return {
+          question: question.question,
+          questionType: question.type,
+          data: optionStats,
+        };
+
       } else {
         const optionStats = options.map((option) => {
-          const filteredAnswers = answers.filter(answer => answer.answer === option.label);
+          const filteredAnswers = answers.filter(answer => answer.answer.trim() === option.label.trim());
           const optionAnswersCount = filteredAnswers.length;
           const percentage = totalRespondents > 0 ? (optionAnswersCount / totalRespondents) * 100 : 0;
           return {
@@ -940,6 +966,7 @@ export class SurveyService {
             percentage: percentage.toFixed(2) + '%',
           };
         });
+
         return {
           question: question.question,
           questionType: type,

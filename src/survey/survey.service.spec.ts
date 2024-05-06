@@ -1566,13 +1566,9 @@ describe('SurveyService', () => {
         {
           question: 'Seberapa baik situs kami?',
           type: 'RANGE',
-          options: [
-            { label: '1', answers: [] },
-            { label: '2', answers: [] },
-            { label: '3', answers: [{ answer: '3' }] },
-            { label: '4', answers: [{ answer: '4' }] },
-            { label: '5', answers: [{ answer: '5' }] },
-          ],
+          rangeFrom: 1,
+          rangeTo: 5,
+          options: [],
           answers: [{ answer: '4' }, { answer: '5' }, { answer: '3' }],
         },
         {
@@ -1581,11 +1577,9 @@ describe('SurveyService', () => {
           options: [
             {
               label: 'Obrolan',
-              answers: [{ answer: 'Obrolan' }, { answer: 'Obrolan' }],
             },
             {
               label: 'Pencarian',
-              answers: [{ answer: 'Pencarian' }, { answer: 'Pencarian' }],
             },
           ],
           answers: [
@@ -1599,8 +1593,8 @@ describe('SurveyService', () => {
           question: 'Apakah Anda akan merekomendasikan kami?',
           type: 'RADIO',
           options: [
-            { label: 'Ya', answers: [{ answer: 'Ya' }, { answer: 'Ya' }] },
-            { label: 'Tidak', answers: [{ answer: 'Tidak' }] },
+            { label: 'Ya'},
+            { label: 'Tidak'},
           ],
           answers: [{ answer: 'Ya' }, { answer: 'Ya' }, { answer: 'Tidak' }],
         },
@@ -1689,12 +1683,14 @@ describe('SurveyService', () => {
           {
             question: 'How satisfied are you with our site?',
             type: 'RANGE',
+            rangeFrom: 1,
+            rangeTo: 5,
             options: [
-              { label: '1', answers: [] },
-              { label: '2', answers: [] },
-              { label: '3', answers: [] },
-              { label: '4', answers: [] },
-              { label: '5', answers: [] },
+              { label: '1' },
+              { label: '2' },
+              { label: '3' },
+              { label: '4' },
+              { label: '5' },
             ],
             answers: [],
           },
@@ -1702,8 +1698,8 @@ describe('SurveyService', () => {
             question: 'Which features do you use?',
             type: 'CHECKBOX',
             options: [
-              { label: 'Chat', answers: [] },
-              { label: 'Search', answers: [] },
+              { label: 'Chat' },
+              { label: 'Search' },
             ],
             answers: [],
           },
@@ -1711,8 +1707,8 @@ describe('SurveyService', () => {
             question: 'Would you recommend us?',
             type: 'RADIO',
             options: [
-              { label: 'Yes', answers: [] },
-              { label: 'No', answers: [] },
+              { label: 'Yes' },
+              { label: 'No' },
             ],
             answers: [],
           },
