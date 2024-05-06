@@ -921,10 +921,8 @@ export class SurveyService {
   }
 
   analyzeResponse(survey: any, totalRespondents: number) {
-    console.log(totalRespondents)
     return survey.questions.map(question => {
       const { type, options, answers } = question;
-      console.log(question.question)
       if (type == 'TEXT') {
         return {
           question: question.question,
