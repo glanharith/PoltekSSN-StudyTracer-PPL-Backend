@@ -1580,16 +1580,26 @@ describe('SurveyService', () => {
   describe('getSurveyResponseByAlumni', () => {
     const mockSurveyId = '65259cd0-b2e2-4ac0-9dd2-847dbd79157b';
     const mockResponseId = '1ea1c841-f238-4619-914c-d8b3afe6d47c';
+    const mockResponseId2 = '1ea1c111-f238-4619-914c-d8b3afe6d47c';
     const mockQuestionId1 = '14a4acdc-50b1-477f-90e9-8e0c99e85e58';
     const mockQuestionId2 = '24a4acdc-50b1-477f-90e9-8e0c99e85e58';
     const mockQuestionId3 = '34a4acdc-50b1-477f-90e9-8e0c99e85e58';
     const mockOptionId1 = '3o14acdc-50b1-477f-90e9-8e0c99e85e58';
     const mockOptionId2 = '3o24acdc-50b1-477f-90e9-8e0c99e85e58';
 
-    const mockUserAlumni: User = {
+    const mockUserAlumni1: User = {
       id: 'use02c84-f321-4b4e-bff6-780c8cae17b3',
       name: 'John',
       email: 'john@example.com',
+      password:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
+      role: Role.ALUMNI,
+    };
+
+    const mockUserAlumni2: User = {
+      id: 'use02c84-f321-4b4e-bff6-780c8cae22b3',
+      name: 'Jane',
+      email: 'jane@example.com',
       password:
         '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
       role: Role.ALUMNI,
@@ -1604,9 +1614,25 @@ describe('SurveyService', () => {
       role: Role.HEAD_STUDY_PROGRAM,
     };
 
+    const mockUserAdmin: User = {
+      id: 'usaa2c84-f321-4b4e-bff6-780c8cae17b3',
+      name: 'Admin',
+      email: 'admin@example.com',
+      password:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
+      role: Role.ADMIN,
+    };
+
     const mockStudyProgram: StudyProgram = {
       id: 'std02c84-f321-4b4e-bff6-780c8cae17b3',
       name: 'Computer Science',
+      code: '123',
+      level: StudyProgramLevel.D3,
+    };
+
+    const mockStudyProgram2: StudyProgram = {
+      id: 'std02c94-f321-4b4e-bff6-780c8cae17b3',
+      name: 'Sociology',
       code: '123',
       level: StudyProgramLevel.D3,
     };
@@ -1622,7 +1648,7 @@ describe('SurveyService', () => {
       studyProgram: mockStudyProgram,
     };
 
-    const mockAlumni: Alumni & { user: User } & {
+    const mockAlumni1: Alumni & { user: User } & {
       studyProgram: StudyProgram;
     } = {
       id: 'b6e02c84-f321-4b4e-bff6-780c8cae17b3',
@@ -1633,20 +1659,44 @@ describe('SurveyService', () => {
       gender: 'FEMALE',
       enrollmentYear: 2021,
       graduateYear: 2024,
-      studyProgramId: '393f6a47-425e-4402-92b6-782d266e0193',
+      studyProgramId: mockStudyProgram.id,
       npm: '2106634331',
-      user: mockUserAlumni,
+      user: mockUserAlumni1,
       studyProgram: mockStudyProgram,
+    };
+
+    const mockAlumni2: Alumni & { user: User } & {
+      studyProgram: StudyProgram;
+    } = {
+      id: 'b6e02c84-f321-4b4e-bff6-780c8cae17w3',
+      phoneNo:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
+      address:
+        '$2b$10$89KoyS3YtlCfSsfHiyZTN.uBMnQX2lluICrEGO9kCMCrTk0NFlEDS|cd4f8f6c4b718dd5|5cad4e104c5c6f639d47a668bed256a2|7ac79c3c1744857d5cdbf1d948db5fbad37f01d68fba6bacb5cb50b409d29333',
+      gender: 'FEMALE',
+      enrollmentYear: 2021,
+      graduateYear: 2024,
+      studyProgramId: mockStudyProgram2.id,
+      npm: '2106634331',
+      user: mockUserAlumni2,
+      studyProgram: mockStudyProgram2,
     };
 
     const mockResponse: Response & { alumni: Alumni } = {
       id: mockResponseId,
       formId: mockSurveyId,
       alumniId: mockAlumni.id,
-      alumni: mockAlumni,
+      alumni: mockAlumni1,
     };
 
-    const mockAnswer1: Answer & { response: Response } = {
+    const mockResponse2: Response & { alumni: Alumni } = {
+      id: mockResponseId2,
+      formId: mockSurveyId,
+      alumniId: mockAlumni2.id,
+      alumni: mockAlumni2,
+    };
+
+    const mockAnswerU11: Answer & { response: Response } = {
       id: 'e1c3b99e-576b-4b81-976f-a949797de075',
       answer: 'John',
       responseId: mockResponseId,
@@ -1654,7 +1704,7 @@ describe('SurveyService', () => {
       response: mockResponse,
     };
 
-    const mockAnswer2: Answer & { response: Response } = {
+    const mockAnswerU12: Answer & { response: Response } = {
       id: 'e2c3b99e-576b-4b81-976f-a949797de075',
       answer: 'Python',
       responseId: mockResponseId,
@@ -1662,12 +1712,44 @@ describe('SurveyService', () => {
       response: mockResponse,
     };
 
-    const mockAnswer3: Answer & { response: Response } = {
+    const mockAnswerU13: Answer & { response: Response } = {
       id: 'e3c3b99e-576b-4b81-976f-a949797de075',
       answer: 'Interstellar',
       responseId: mockResponseId,
       questionId: mockQuestionId3,
       response: mockResponse,
+    };
+
+    const mockAnswerU21: Answer & { response: Response } = {
+      id: 'e1c3b99e-576b-4b81-976f-a941197de075',
+      answer: 'Jane',
+      responseId: mockResponseId2,
+      questionId: mockQuestionId1,
+      response: mockResponse2,
+    };
+
+    const mockAnswerU22: Answer & { response: Response } = {
+      id: 'e2c3b99e-576b-4b81-976f-a949907de075',
+      answer: 'Python',
+      responseId: mockResponseId2,
+      questionId: mockQuestionId2,
+      response: mockResponse2,
+    };
+
+    const mockAnswerU231: Answer & { response: Response } = {
+      id: 'e3c3b99e-576b-4b81-176f-a949797de075',
+      answer: 'Titanic',
+      responseId: mockResponseId2,
+      questionId: mockQuestionId3,
+      response: mockResponse2,
+    };
+
+    const mockAnswerU232: Answer & { response: Response } = {
+      id: 'e3c3j99e-576b-4b81-176f-a949797de075',
+      answer: 'Interstellar',
+      responseId: mockResponseId2,
+      questionId: mockQuestionId3,
+      response: mockResponse2,
     };
 
     const mockQuestion1: Question & { answers: Answer[] } = {
@@ -1678,7 +1760,7 @@ describe('SurveyService', () => {
       rangeTo: null,
       order: 1,
       formId: mockSurveyId,
-      answers: [mockAnswer1],
+      answers: [mockAnswerU11, mockAnswerU21],
     };
 
     const mockQuestion2: Question & { answers: Answer[] } = {
@@ -1689,7 +1771,7 @@ describe('SurveyService', () => {
       rangeTo: null,
       order: 2,
       formId: mockSurveyId,
-      answers: [mockAnswer2],
+      answers: [mockAnswerU12, mockAnswerU22],
     };
 
     const mockOption1: Option = {
@@ -1715,10 +1797,10 @@ describe('SurveyService', () => {
       order: 3,
       formId: mockSurveyId,
       options: [mockOption1, mockOption2],
-      answers: [mockAnswer3],
+      answers: [mockAnswerU13, mockAnswerU231, mockAnswerU232],
     };
 
-    const mockSurvey: Form & { questions: Question[] } = {
+    const mockSurvey: Form & { questions: Question[] } & { responses: Response[]} = {
       id: mockSurveyId,
       type: FormType.CURRICULUM,
       title: 'Survey buat semua alumni',
@@ -1730,9 +1812,21 @@ describe('SurveyService', () => {
       graduateYearFrom: null,
       graduateYearTo: null,
       questions: [mockQuestion1, mockQuestion2, mockQuestion3],
+      responses: [mockResponse, mockResponse2],
     };
 
-    it('should return survey responses including alumni and answers', async () => {
+    it('should return survey responses from all alumni when admin send request', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(mockUserAdmin);
+      prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
+      const result = await surveyService.getSurveyResponseByAlumni(
+        mockSurveyId,
+        mockUserAdmin.email,
+      );
+
+      expect(result.alumniResponse).toBeDefined();
+    });
+
+    it('should return survey responses only alumni in the respective program when head of study program send request', async () => {
       prismaMock.user.findUnique.mockResolvedValue(mockUserHead);
       prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
       const result = await surveyService.getSurveyResponseByAlumni(

@@ -919,12 +919,6 @@ export class SurveyService {
       throw new NotFoundException('User not found');
     }
 
-    let userStudyProgramId: string = '';
-
-    if (user.role === 'HEAD_STUDY_PROGRAM') {
-      userStudyProgramId = user?.headStudyProgram?.studyProgram.id ?? '';
-    }
-
     const survey = await this.prisma.form.findUnique({
       where: { id },
       include: {
@@ -959,53 +953,25 @@ export class SurveyService {
       throw new NotFoundException(`Survey dengan ID ${id} tidak ditemukan`);
     }
 
-    // Filter out responses where the alumni's study program doesn't match the user's study program
-    const filteredQuestions = survey.questions.map((question) => ({
-      ...question,
-      answers: question.answers.filter(
-        (answer) =>
-          answer.response.alumni.studyProgramId === userStudyProgramId,
-      ),
-    }));
 
-    survey.questions = filteredQuestions;
+    if (user.role === 'HEAD_STUDY_PROGRAM') {
+      const userStudyProgramId = user?.headStudyProgram?.studyProgram.id;
 
-    const transformedData: any = {
-      id: survey.id,
-      type: survey.type,
-      title: survey.title,
-      description: survey.description,
-      startTime: survey.startTime,
-      endTime: survey.endTime,
-      admissionYearFrom: survey.admissionYearFrom,
-      admissionYearTo: survey.admissionYearTo,
-      graduateYearFrom: survey.graduateYearFrom,
-      graduateYearTo: survey.graduateYearTo,
-      questions: survey.questions.map((question) => ({
-        id: question.id,
-        type: question.type,
-        question: question.question,
-        rangeFrom: question.rangeFrom,
-        rangeTo: question.rangeTo,
-        order: question.order,
-        formId: question.formId,
-        options: question.options ? question.options.map((option) => ({
-          id: option.id,
-          label: option.label,
-          questionId: option.questionId,
-          order: option.order,
-        })) : [],
-      })),
-      alumniResponse: this.constructAlumniResponses(survey.questions),
-    };
+      // Filter out responses where the alumni's study program doesn't match the user's study program
+      const filteredAnswers = survey.questions.map((question) => ({
+        ...question,
+        answers: question.answers.filter(
+          (answer) =>
+            answer.response.alumni.studyProgramId === userStudyProgramId,
+        ),
+      }));
 
-    return transformedData;
-  }
+      survey.questions = filteredAnswers;
+    }
 
-  private constructAlumniResponses(questions: any[]): any[] {
     const alumniResponseMap = new Map<string, any[]>();
 
-    questions.forEach((question) => {
+    survey.questions.forEach((question) => {
       question.answers.forEach((answer) => {
         const alumniId = answer.response.alumniId;
         const alumniResponse = alumniResponseMap.get(alumniId) || [];
@@ -1041,6 +1007,37 @@ export class SurveyService {
       });
     });
 
-    return Array.from(alumniResponseMap.values()).flat();
+    const transformedData: any = {
+      id: survey.id,
+      type: survey.type,
+      title: survey.title,
+      description: survey.description,
+      startTime: survey.startTime,
+      endTime: survey.endTime,
+      admissionYearFrom: survey.admissionYearFrom,
+      admissionYearTo: survey.admissionYearTo,
+      graduateYearFrom: survey.graduateYearFrom,
+      graduateYearTo: survey.graduateYearTo,
+      questions: survey.questions.map((question) => ({
+        id: question.id,
+        type: question.type,
+        question: question.question,
+        rangeFrom: question.rangeFrom,
+        rangeTo: question.rangeTo,
+        order: question.order,
+        formId: question.formId,
+        options: question.options
+          ? question.options.map((option) => ({
+              id: option.id,
+              label: option.label,
+              questionId: option.questionId,
+              order: option.order,
+            }))
+          : [],
+      })),
+      alumniResponse: Array.from(alumniResponseMap.values()).flat(),
+    };
+
+    return transformedData;
   }
 }
