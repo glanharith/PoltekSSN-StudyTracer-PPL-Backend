@@ -369,6 +369,12 @@ describe('SurveyController', () => {
   });
 
   describe('GET /survey/:id/responses', () => {
+    const request = {
+      user: {
+        email: 'aaa@gmail.com',
+        role: 'ADMIN',
+      },
+    };
     it('should successfully download survey responses', async () => {
       const file: StreamableFile = new StreamableFile(new Readable(), {
         type: 'text/csv',
@@ -376,7 +382,10 @@ describe('SurveyController', () => {
       });
 
       surveyServiceMock.downloadSurveyResponses.mockResolvedValue(file);
-      const result = await surveyController.downloadSurveyResponses(survey.id);
+      const result = await surveyController.downloadSurveyResponses(
+        request,
+        survey.id,
+      );
 
       expect(result).toEqual(file);
     });
@@ -387,7 +396,7 @@ describe('SurveyController', () => {
       );
 
       await expect(
-        surveyController.downloadSurveyResponses(survey.id),
+        surveyController.downloadSurveyResponses(request, survey.id),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -397,7 +406,7 @@ describe('SurveyController', () => {
       );
 
       await expect(
-        surveyController.downloadSurveyResponses(survey.id),
+        surveyController.downloadSurveyResponses(request, survey.id),
       ).rejects.toThrow(InternalServerErrorException);
     });
   });
@@ -406,8 +415,13 @@ describe('SurveyController', () => {
     it('should return all surveys', async () => {
       const surveysMock = [survey];
       surveyServiceMock.getAllSurveys.mockResolvedValue(surveysMock);
-
-      const result = await surveyController.getAllSurveys();
+      const request = {
+        user: {
+          email: 'aaa@gmail.com',
+          role: 'ADMIN',
+        },
+      };
+      const result = await surveyController.getAllSurveys(request);
 
       expect(result).toEqual({
         message: 'Successfully got all surveys',
@@ -444,7 +458,7 @@ describe('SurveyController', () => {
         {
           question: 'Berapa tinggi kamu?',
           questionType: 'TEXT',
-          data: ['198', '167']
+          data: ['198', '167'],
         },
         {
           question: 'Apa gender kamu?',
@@ -453,36 +467,38 @@ describe('SurveyController', () => {
             {
               optionLabel: 'Laki-laki',
               optionAnswersCount: 1,
-              percentage: "50.00%"
+              percentage: '50.00%',
             },
             {
               optionLabel: 'Perempuan',
               optionAnswersCount: 1,
-              percentage: "50.00%"
-            }
-          ]
-        }
-      ])
+              percentage: '50.00%',
+            },
+          ],
+        },
+      ]),
     };
 
     it('should return responses data of a survey', async () => {
-      surveyServiceMock.getSurveyResponseByQuestions.mockResolvedValue(responseData);
+      surveyServiceMock.getSurveyResponseByQuestions.mockResolvedValue(
+        responseData,
+      );
 
       const result = await surveyController.getSurveyResponseByQuestions(id);
 
       expect(result).toEqual(responseData);
-    })
+    });
 
     it('should return NotFoundException for non-existing survey', async () => {
       surveyServiceMock.getSurveyResponseByQuestions.mockRejectedValue(
         new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`),
       );
 
-      await expect(surveyController.getSurveyResponseByQuestions(id)).rejects.toThrow(
-        NotFoundException,
-      );
-    })
-  })
+      await expect(
+        surveyController.getSurveyResponseByQuestions(id),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
 
   describe('GET /:id/response-preview/alumni', () => {
     it('should return survey responses', async () => {
@@ -523,7 +539,7 @@ describe('SurveyController', () => {
       };
 
       const mockAlumni: Alumni & { user: User } & {
-        studyProgram: StudyProgram
+        studyProgram: StudyProgram;
       } = {
         id: 'b6e02c84-f321-4b4e-bff6-780c8cae17b3',
         phoneNo:

@@ -446,7 +446,10 @@ export class SurveyService {
     return survey;
   }
 
-  async downloadSurveyResponses(id: string): Promise<Record<string, any>> {
+  async downloadSurveyResponses(
+    id: string,
+    request: any,
+  ): Promise<Record<string, any>> {
     if (!isUUID(id)) {
       throw new BadRequestException(
         'Invalid ID format. ID must be a valid UUID',
@@ -459,6 +462,26 @@ export class SurveyService {
 
     if (!survey) {
       throw new NotFoundException(`Survey with ID ${id} not found`);
+    }
+
+    const whereCondition: any = {
+      response: {
+        formId: id,
+      },
+    };
+
+    if (request.role === 'HEAD_STUDY_PROGRAM') {
+      const head = await this.prisma.headStudyProgram.findFirst({
+        where: {
+          user: {
+            email: request.email,
+          },
+        },
+      });
+
+      whereCondition.response.alumni = {
+        studyProgramId: head?.studyProgramId,
+      };
     }
 
     const responses = await this.prisma.answer.findMany({
@@ -494,11 +517,7 @@ export class SurveyService {
           },
         },
       },
-      where: {
-        response: {
-          formId: id,
-        },
-      },
+      where: whereCondition,
     });
 
     if (responses.length == 0) {
@@ -587,7 +606,44 @@ export class SurveyService {
     });
   }
 
-  async getAllSurveys(): Promise<Form[]> {
+  async getAllSurveys(request: any): Promise<Form[]> {
+    if (request.role === 'HEAD_STUDY_PROGRAM') {
+      const head = await this.prisma.headStudyProgram.findFirst({
+        where: {
+          user: {
+            email: request.email,
+          },
+        },
+      });
+
+      const headStudyProgramId = head?.studyProgramId;
+
+      const forms = await this.prisma.form.findMany({
+        include: {
+          _count: {
+            select: {
+              responses: true,
+            },
+          },
+          responses: {
+            include: {
+              alumni: true,
+            },
+          },
+        },
+      });
+
+      const filteredForms = forms.map((form) => {
+        const filteredResponses = form.responses.filter(
+          (response) => response.alumni.studyProgramId === headStudyProgramId,
+        );
+        const count = filteredResponses.length;
+        return { ...form, _count: { responses: count } };
+      });
+
+      return filteredForms;
+    }
+
     return await this.prisma.form.findMany({
       include: {
         _count: {
