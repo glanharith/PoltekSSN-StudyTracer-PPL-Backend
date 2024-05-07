@@ -109,8 +109,8 @@ export class SurveyController {
   @Get('/:id/response-preview/questions')
   @IsAdmin()
   @IsHead()
-  async getSurveyResponseByQuestions(@Param('id') id: string) {
-    return this.surveyService.getSurveyResponseByQuestions(id);
+  async getSurveyResponseByQuestions(@ReqUser() request, @Param('id') id: string) {
+    return this.surveyService.getSurveyResponseByQuestions(id, request);
   }
 
   @Get('/:id/response-preview/alumni')

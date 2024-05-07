@@ -808,7 +808,7 @@ export class SurveyService {
     });
   }
 
-  async getSurveyResponseByQuestions(id: string) {
+  async getSurveyResponseByQuestions(id: string, request: any) {
     if (!isUUID(id)) {
       throw new BadRequestException(
         'Format ID tidak valid. ID harus dalam format UUID',
@@ -819,17 +819,38 @@ export class SurveyService {
       where: { id },
       select: {
         title: true,
+        type: true,
+        description: true,
+        id: true,
+        startTime: true,
+        endTime: true,
+        admissionYearFrom: true,
+        admissionYearTo: true,
+        graduateYearFrom: true,
+        graduateYearTo: true,
         questions: {
           orderBy: {
             order: 'asc',
           },
           select: {
+            question: true,
+            type: true,
+            rangeFrom: true,
+            rangeTo: true,
             options: {
               orderBy: {
                 order: 'asc',
               },
             },
-            answers: true,
+            answers: {
+              include: {
+                response: {
+                  include: {
+                    alumni: true
+                  }
+                }
+              }
+            }
           },
         },
       },
@@ -839,44 +860,90 @@ export class SurveyService {
       throw new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`);
     }
 
-    const allQuestionsAnswered = survey.questions.every(
-      (question) => question.answers && question.answers.length > 0,
-    );
-
-    if (!allQuestionsAnswered) {
-      return { survey: survey, message: 'Survei tidak memiliki respon' };
+    if (!survey.questions || survey.questions.length === 0) {
+      return {
+        title: survey.title,
+        description: survey.description,
+        totalRespondents: 0,
+        answerStats: [],
+        message: 'Survei belum memiliki pertanyaan'
+      }
     }
 
-    const answers = survey.questions[0]?.answers ?? [];
-    if (answers.length === 0) {
-      throw new NotFoundException('Survei belum memiliki pertanyaan');
+    if (request.role === 'HEAD_STUDY_PROGRAM') {
+      const headStudyProgramRecord = await this.prisma.headStudyProgram.findFirst({
+        where: {
+          user: {
+            email: request.email,
+          },
+        },
+        select: {
+          studyProgramId: true
+        }
+      });
+
+      if (!headStudyProgramRecord) {
+        throw new NotFoundException('Program studi tidak ditemukan');
+      }
+
+      const studyProgramId = headStudyProgramRecord.studyProgramId;
+
+      survey.questions.forEach(question => {
+        question.answers = question.answers.filter(answer => answer.response.alumni.studyProgramId === studyProgramId);
+      });
     }
 
-    const totalRespondents = new Set(answers.map((answer) => answer.responseId))
-      .size;
+    const answers = survey.questions[0].answers ?? [];
+    const totalRespondents = (new Set(answers.map(answer => answer.responseId))).size;
     const answerStats = this.analyzeResponse(survey, totalRespondents);
 
     return {
       title: survey.title,
+      description: survey.description,
       totalRespondents: totalRespondents,
       answerStats: answerStats,
+      message: 'Respon Survei'
     };
   }
 
-  async analyzeResponse(survey: any, totalRespondents: number) {
-    return survey.questions.map((question) => {
+  analyzeResponse(survey: any, totalRespondents: number) {
+    return survey.questions.map(question => {
       const { type, options, answers } = question;
-
       if (type == 'TEXT') {
         return {
           question: question.question,
           questionType: type,
           data: answers.map((answer) => answer.answer),
         };
+
+      } else if (type == 'RANGE' ){
+        const rangeIntegers = Array.from(
+          { length: question.rangeTo - question.rangeFrom + 1 }, (_, i) => question.rangeFrom + i
+        );
+
+        const optionStats = rangeIntegers.map(integer => {
+          const filteredAnswers = answers.filter(answer => parseInt(answer.answer.trim()) === integer
+          );
+          const optionAnswersCount = filteredAnswers.length;
+          const percentage = totalRespondents > 0 ? (optionAnswersCount / totalRespondents) * 100 : 0;
+          return {
+            optionLabel: integer.toString(), // Convert integer to string if needed
+            optionAnswersCount,
+            percentage: percentage.toFixed(2) + '%',
+          };
+        });
+
+        return {
+          question: question.question,
+          questionType: question.type,
+          data: optionStats,
+        };
+
       } else {
         const optionStats = options.map((option) => {
-          const optionAnswersCount = option.answers.length;
-          const percentage = (optionAnswersCount / totalRespondents) * 100;
+          const filteredAnswers = answers.filter(answer => answer.answer.trim() === option.label.trim());
+          const optionAnswersCount = filteredAnswers.length;
+          const percentage = totalRespondents > 0 ? (optionAnswersCount / totalRespondents) * 100 : 0;
           return {
             optionLabel: option.label,
             optionAnswersCount,
