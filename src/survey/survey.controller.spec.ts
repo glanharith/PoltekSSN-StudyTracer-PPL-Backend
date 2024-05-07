@@ -13,6 +13,7 @@ import {
   Answer,
   FormType,
   Gender,
+  HeadStudyProgram,
   QuestionType,
   Response,
   Role,
@@ -368,6 +369,12 @@ describe('SurveyController', () => {
   });
 
   describe('GET /survey/:id/responses', () => {
+    const request = {
+      user: {
+        email: 'aaa@gmail.com',
+        role: 'ADMIN',
+      },
+    };
     it('should successfully download survey responses', async () => {
       const file: StreamableFile = new StreamableFile(new Readable(), {
         type: 'text/csv',
@@ -375,7 +382,10 @@ describe('SurveyController', () => {
       });
 
       surveyServiceMock.downloadSurveyResponses.mockResolvedValue(file);
-      const result = await surveyController.downloadSurveyResponses(survey.id);
+      const result = await surveyController.downloadSurveyResponses(
+        request,
+        survey.id,
+      );
 
       expect(result).toEqual(file);
     });
@@ -386,7 +396,7 @@ describe('SurveyController', () => {
       );
 
       await expect(
-        surveyController.downloadSurveyResponses(survey.id),
+        surveyController.downloadSurveyResponses(request, survey.id),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -396,7 +406,7 @@ describe('SurveyController', () => {
       );
 
       await expect(
-        surveyController.downloadSurveyResponses(survey.id),
+        surveyController.downloadSurveyResponses(request, survey.id),
       ).rejects.toThrow(InternalServerErrorException);
     });
   });
@@ -405,8 +415,13 @@ describe('SurveyController', () => {
     it('should return all surveys', async () => {
       const surveysMock = [survey];
       surveyServiceMock.getAllSurveys.mockResolvedValue(surveysMock);
-
-      const result = await surveyController.getAllSurveys();
+      const request = {
+        user: {
+          email: 'aaa@gmail.com',
+          role: 'ADMIN',
+        },
+      };
+      const result = await surveyController.getAllSurveys(request);
 
       expect(result).toEqual({
         message: 'Successfully got all surveys',
@@ -437,13 +452,14 @@ describe('SurveyController', () => {
   describe('GET /survey/:id/response-review/questions', () => {
     const id = survey.id;
     const responseData = {
-      title: 'survey title',
+      description: 'deskripsi survey',
+      title: 'Survey test',
       totalRespondents: 2,
       answerStats: Promise.resolve([
         {
           question: 'Berapa tinggi kamu?',
           questionType: 'TEXT',
-          data: ['198', '167']
+          data: ['198', '167'],
         },
         {
           question: 'Apa gender kamu?',
@@ -452,7 +468,7 @@ describe('SurveyController', () => {
             {
               optionLabel: 'Laki-laki',
               optionAnswersCount: 1,
-              percentage: "50.00%"
+              percentage: '50.00%',
             },
             {
               optionLabel: 'Perempuan',
@@ -461,23 +477,30 @@ describe('SurveyController', () => {
             }
           ]
         }
-      ])
+      ]),
+      message: 'Respon survei'
+    };
+    const request = {
+      email: 'aaa@gmail.com',
+      role: 'ADMIN',
     };
 
     it('should return responses data of a survey', async () => {
-      surveyServiceMock.getSurveyResponseByQuestions.mockResolvedValue(responseData);
+      surveyServiceMock.getSurveyResponseByQuestions.mockResolvedValue(
+        responseData,
+      );
 
-      const result = await surveyController.getSurveyResponseByQuestions(id);
+      const result = await surveyController.getSurveyResponseByQuestions(request, id);
 
       expect(result).toEqual(responseData);
-    })
+    });
 
     it('should return NotFoundException for non-existing survey', async () => {
       surveyServiceMock.getSurveyResponseByQuestions.mockRejectedValue(
         new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`),
       );
 
-      await expect(surveyController.getSurveyResponseByQuestions(id)).rejects.toThrow(
+      await expect(surveyController.getSurveyResponseByQuestions(request, id)).rejects.toThrow(
         NotFoundException,
       );
     })
@@ -485,13 +508,13 @@ describe('SurveyController', () => {
 
   describe('GET /:id/response-preview/alumni', () => {
     it('should return survey responses', async () => {
-      const mockUser: User = {
-        id: 'use02c84-f321-4b4e-bff6-780c8cae17b3',
-        name: 'John',
-        email: 'john@example.com',
+      const mockUserHead: User = {
+        id: 'usa02c84-f321-4b4e-bff6-780c8cae17b3',
+        name: 'Kaprodi',
+        email: 'kaprodi@example.com',
         password:
           '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
-        role: Role.ALUMNI,
+        role: Role.HEAD_STUDY_PROGRAM,
       };
 
       const mockStudyProgram: StudyProgram = {
@@ -501,8 +524,28 @@ describe('SurveyController', () => {
         level: StudyProgramLevel.D3,
       };
 
+      const mockHead: HeadStudyProgram & { user: User } & {
+        studyProgram: StudyProgram;
+      } = {
+        id: 'bae02c84-f321-4b4e-bff6-780c8cae17b3',
+        studyProgramId: mockStudyProgram.id,
+        isActive: true,
+        nip: '1234567',
+        user: mockUserHead,
+        studyProgram: mockStudyProgram,
+      };
+      
+      const mockUser: User = {
+        id: 'use02c84-f321-4b4e-bff6-780c8cae17b3',
+        name: 'John',
+        email: 'john@example.com',
+        password:
+          '$2b$10$89KoyS3YtlCfSsfHiyZTN.HZjngo8VPgztWWHQHkM0A7JqpMuDWgm|b7adb2299b170577|b3b6620444be4ad38531d3eaae8924a4|5a015347e1321163988c75132dfbea5d',
+        role: Role.ALUMNI,
+      };
+
       const mockAlumni: Alumni & { user: User } & {
-        studyProgram: StudyProgram
+        studyProgram: StudyProgram;
       } = {
         id: 'b6e02c84-f321-4b4e-bff6-780c8cae17b3',
         phoneNo:
@@ -587,7 +630,7 @@ describe('SurveyController', () => {
       );
 
       const result = await surveyController.getSurveyResponseByAlumni(
-        mockSurvey.id,
+        mockSurvey.id, mockUserHead.email
       );
 
       expect(result).toEqual({
