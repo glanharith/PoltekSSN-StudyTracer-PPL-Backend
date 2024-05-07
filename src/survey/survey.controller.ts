@@ -116,8 +116,8 @@ export class SurveyController {
   @Get('/:id/response-preview/alumni')
   @IsAdmin()
   @IsHead()
-  async getSurveyResponseByAlumni(@Param('id') id: string) {
-    const responses = await this.surveyService.getSurveyResponseByAlumni(id);
+  async getSurveyResponseByAlumni(@Param('id') id: string, @ReqUser() request) {
+    const responses = await this.surveyService.getSurveyResponseByAlumni(id, request.email);
     return response(`Successfully got responses for survey ${id}`, {
       data: responses,
     });

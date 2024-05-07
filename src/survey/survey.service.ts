@@ -960,11 +960,30 @@ export class SurveyService {
     });
   }
 
-  async getSurveyResponseByAlumni(id: string) {
+  async getSurveyResponseByAlumni(id: string, email: string) {
     if (!isUUID(id)) {
       throw new BadRequestException(
         'Format ID tidak valid. ID harus dalam format UUID',
       );
+    }
+
+    // check the user. if user is admin then we need all the alumni response. but if user is head of study program, then we ONLY TAKE the alumi within its study program
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+      include: {
+        admin: true,
+        headStudyProgram: {
+          include: {
+            studyProgram: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
 
     const survey = await this.prisma.form.findUnique({
@@ -973,6 +992,7 @@ export class SurveyService {
         questions: {
           orderBy: { order: 'asc' },
           include: {
+            options: true,
             answers: {
               include: {
                 response: {
@@ -1000,36 +1020,25 @@ export class SurveyService {
       throw new NotFoundException(`Survey dengan ID ${id} tidak ditemukan`);
     }
 
-    const transformedData: any = {
-      id: survey.id,
-      type: survey.type,
-      title: survey.title,
-      description: survey.description,
-      startTime: survey.startTime,
-      endTime: survey.endTime,
-      admissionYearFrom: survey.admissionYearFrom,
-      admissionYearTo: survey.admissionYearTo,
-      graduateYearFrom: survey.graduateYearFrom,
-      graduateYearTo: survey.graduateYearTo,
-      questions: survey.questions.map((question) => ({
-        id: question.id,
-        type: question.type,
-        question: question.question,
-        rangeFrom: question.rangeFrom,
-        rangeTo: question.rangeTo,
-        order: question.order,
-        formId: question.formId,
-      })),
-      alumniResponse: this.constructAlumniResponses(survey.questions),
-    };
 
-    return transformedData;
-  }
+    if (user.role === 'HEAD_STUDY_PROGRAM') {
+      const userStudyProgramId = user?.headStudyProgram?.studyProgram.id;
 
-  private constructAlumniResponses(questions: any[]): any[] {
+      // Filter out responses where the alumni's study program doesn't match the user's study program
+      const filteredAnswers = survey.questions.map((question) => ({
+        ...question,
+        answers: question.answers.filter(
+          (answer) =>
+            answer.response.alumni.studyProgramId === userStudyProgramId,
+        ),
+      }));
+
+      survey.questions = filteredAnswers;
+    }
+
     const alumniResponseMap = new Map<string, any[]>();
 
-    questions.forEach((question) => {
+    survey.questions.forEach((question) => {
       question.answers.forEach((answer) => {
         const alumniId = answer.response.alumniId;
         const alumniResponse = alumniResponseMap.get(alumniId) || [];
@@ -1065,6 +1074,37 @@ export class SurveyService {
       });
     });
 
-    return Array.from(alumniResponseMap.values()).flat();
+    const transformedData: any = {
+      id: survey.id,
+      type: survey.type,
+      title: survey.title,
+      description: survey.description,
+      startTime: survey.startTime,
+      endTime: survey.endTime,
+      admissionYearFrom: survey.admissionYearFrom,
+      admissionYearTo: survey.admissionYearTo,
+      graduateYearFrom: survey.graduateYearFrom,
+      graduateYearTo: survey.graduateYearTo,
+      questions: survey.questions.map((question) => ({
+        id: question.id,
+        type: question.type,
+        question: question.question,
+        rangeFrom: question.rangeFrom,
+        rangeTo: question.rangeTo,
+        order: question.order,
+        formId: question.formId,
+        options: question.options
+          ? question.options.map((option) => ({
+              id: option.id,
+              label: option.label,
+              questionId: option.questionId,
+              order: option.order,
+            }))
+          : [],
+      })),
+      alumniResponse: Array.from(alumniResponseMap.values()).flat(),
+    };
+
+    return transformedData;
   }
 }
