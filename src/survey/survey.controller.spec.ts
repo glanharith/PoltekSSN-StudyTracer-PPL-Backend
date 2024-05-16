@@ -382,7 +382,7 @@ describe('SurveyController', () => {
       });
 
       surveyServiceMock.downloadSurveyResponses.mockResolvedValue(file);
-      const result = await surveyController.downloadSurveyResponsesCsv(
+      const result = await surveyController.downloadSurveyResponsesCSV(
         request,
         survey.id,
       );
@@ -396,7 +396,7 @@ describe('SurveyController', () => {
       );
 
       await expect(
-        surveyController.downloadSurveyResponsesCsv(request, survey.id),
+        surveyController.downloadSurveyResponsesCSV(request, survey.id),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -406,7 +406,7 @@ describe('SurveyController', () => {
       );
 
       await expect(
-        surveyController.downloadSurveyResponsesCsv(request, survey.id),
+        surveyController.downloadSurveyResponsesCSV(request, survey.id),
       ).rejects.toThrow(InternalServerErrorException);
     });
   });
