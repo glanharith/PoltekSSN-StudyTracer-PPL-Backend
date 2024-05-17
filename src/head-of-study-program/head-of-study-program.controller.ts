@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Patch,
+  Query
 } from '@nestjs/common';
 import { HeadOfStudyProgramService } from './head-of-study-program.service';
 import { CreateHeadOfStudyProgramDto } from './dto/create-head-of-study-program.dto';
@@ -30,8 +31,8 @@ export class HeadOfStudyProgramController {
 
   @Get()
   @IsAdmin()
-  async findAll() {
-    return this.headOfStudyProgramService.findAll();
+  async findAll(@Query('page') page: number) {
+    return this.headOfStudyProgramService.findAll(page);
   }
 
   @Delete()
