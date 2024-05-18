@@ -41,7 +41,7 @@ describe('StudyProgramController', () => {
     code: 'code',
     level: 'D3',
   };
-  const allStudyPrograms: StudyProgram[] = [studyProgram, studyProgram2];
+  const allStudyPrograms: any = [studyProgram, studyProgram2];
 
   describe('POST /study-program', () => {
     it('should create a new study program', async () => {
@@ -74,24 +74,30 @@ describe('StudyProgramController', () => {
 
   describe('GET /study-program', () => {
     it('should return all study programs', async () => {
-      studyProgramServiceMock.findAll.mockResolvedValue(allStudyPrograms);
+      studyProgramServiceMock.findAll.mockResolvedValue({
+        studyPrograms: allStudyPrograms,
+        pagination: {} as any,
+      });
 
-      const result = await studyProgramController.viewAllStudyProgram();
+      const result = await studyProgramController.viewAllStudyProgram(1);
 
       expect(result).toEqual({
         message: 'Successfully got all study programs',
-        data: allStudyPrograms,
+        data: { allStudyPrograms, pagination: {} as any },
       });
     });
 
     it('an empty array if no study program exist', async () => {
-      studyProgramServiceMock.findAll.mockResolvedValue([]);
+      studyProgramServiceMock.findAll.mockResolvedValue({
+        studyPrograms: [],
+        pagination: {} as any,
+      });
 
-      const result = await studyProgramController.viewAllStudyProgram();
+      const result = await studyProgramController.viewAllStudyProgram(1);
 
       expect(result).toEqual({
         message: 'Successfully got all study programs',
-        data: [],
+        data: { studyPrograms: [], pagination: {} },
       });
     });
   });
