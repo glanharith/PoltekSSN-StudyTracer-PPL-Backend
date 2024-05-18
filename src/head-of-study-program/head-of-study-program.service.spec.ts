@@ -14,6 +14,7 @@ import { createPrismaMock } from 'src/prisma/prisma.mock';
 import { hash, secure } from 'src/common/util/security';
 import { ZxcvbnService } from 'src/zxcvbn/zxcvbn.service';
 import { ZxcvbnModule } from 'src/zxcvbn/zxcvbn.module';
+import exp from 'constants';
 
 jest.mock('src/zxcvbn/zxcvbn.service');
 describe('HeadOfStudyProgramService', () => {
@@ -195,27 +196,52 @@ describe('HeadOfStudyProgramService', () => {
 
   describe('findAll', () => {
     it('should return all head of study programs', async () => {
-      const hashEmail = await hash(registerKaprodiDTO.email);
-      const secureEmail = await secure(hashEmail);
-      prismaMock.studyProgram.findUnique.mockResolvedValue(studyProgram);
-      prismaMock.user.findMany.mockResolvedValue([
-        {
-          id: 'id',
-          email: secureEmail,
-          name: 'Test kaprodi',
-          password: 'passwordKaprpdi',
-          role: 'HEAD_STUDY_PROGRAM',
-        },
-      ]);
+      const page = 1;
+      const secureEmail = await secure( cleanData[0].email);
+      cleanData[0].email = secureEmail
+      const findUniqueMock = jest.fn().mockResolvedValue(studyProgram);
+      const findManyMock = jest.fn().mockResolvedValue(cleanData);
+      const countMock = jest.fn().mockResolvedValue(cleanData.length);
+      const headService = new HeadOfStudyProgramService({
+        user: { findMany: findManyMock, count: countMock, findUnique:findUniqueMock  },
+      } as any, zxcvbnService);
 
-      expect(await headOfStudyProgramService.findAll()).toHaveLength(1);
+      const result = await headService.findAll(page);
+      cleanData[0].email = registerKaprodiDTO.email
+      expect(result).toEqual({
+        data: cleanData,
+        pagination: {
+          page: 1,
+          from: 1,
+          to: 1,
+          totalHead: 1,
+          totalPage: 1,
+        },
+      });
+
     });
 
     it('should return an empty array if no head of study program exist', async () => {
-      prismaMock.user.findMany.mockResolvedValue([]);
-      prismaMock.headStudyProgram.findMany.mockResolvedValue([]);
+      const page = 1;
+      const findUniqueMock = jest.fn().mockResolvedValue(studyProgram);
+      const findManyMock = jest.fn().mockResolvedValue([]);
+      const countMock = jest.fn().mockResolvedValue(0);
+      const headService = new HeadOfStudyProgramService({
+        user: { findMany: findManyMock, count: countMock, findUnique:findUniqueMock  },
+      } as any, zxcvbnService);
 
-      expect(await headOfStudyProgramService.findAll()).toEqual([]);
+      const result = await headService.findAll(page);
+      expect(result).toEqual({
+        data: [],
+        pagination: {
+          page: 1,
+          from: 0,
+          skip:0,
+          to: 0,
+          totalHead: 0,
+          totalPage: 1,
+        },
+      });
     });
   });
 
