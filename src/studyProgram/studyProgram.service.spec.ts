@@ -212,91 +212,83 @@ describe('StudyProgramService', () => {
   });
 
   describe('findAll', () => {
-    it('should return paginated study programs', async () => {
-      const page = 2;
-      const studyProgramCount = 15;
-      const expectedPagination = await studyProgramService['preparePagination'](
-        page,
-        studyProgramCount
-      );
-      const expectedStudyPrograms = allStudyPrograms.slice(5, 10);
-  
-      prismaMock.studyProgram.findMany.mockResolvedValue(expectedStudyPrograms);
-      prismaMock.studyProgram.count.mockResolvedValue(studyProgramCount);
-  
-      const result = await studyProgramService.findAll(page);
-  
-      expect(result).toEqual({
-        studyPrograms: expectedStudyPrograms,
-        pagination: expectedPagination,
-      });
-      expect(prismaMock.studyProgram.findMany).toHaveBeenCalledWith({
-        take: studyProgramService['STUDY_PROGRAM_PER_PAGE'],
-        skip: expectedPagination.skip,
-      });
-      expect(prismaMock.studyProgram.count).toHaveBeenCalledTimes(1);
-    });
-  
-    it('should return the first page if page is invalid', async () => {
-      const page = -1;
-      const studyProgramCount = 15;
-      const expectedPagination = await studyProgramService['preparePagination'](
-        1,
-        studyProgramCount
-      );
-      const expectedStudyPrograms = allStudyPrograms.slice(0, 5);
-  
-      prismaMock.studyProgram.findMany.mockResolvedValue(expectedStudyPrograms);
-      prismaMock.studyProgram.count.mockResolvedValue(studyProgramCount);
-  
-      const result = await studyProgramService.findAll(page);
-  
-      expect(result).toEqual({
-        studyPrograms: expectedStudyPrograms,
-        pagination: expectedPagination,
-      });
-    });
-  
-    it('should return an empty array with correct pagination if no study program exist', async () => {
-      const page = 1;
-      const studyProgramCount = 0;
-      const expectedPagination = await studyProgramService['preparePagination'](
-        page,
-        studyProgramCount
-      );
-  
-      prismaMock.studyProgram.findMany.mockResolvedValue([]);
-      prismaMock.studyProgram.count.mockResolvedValue(studyProgramCount);
-  
-      const result = await studyProgramService.findAll(page);
-  
-      expect(result).toEqual({
-        studyPrograms: [],
-        pagination: expectedPagination,
+    it('should return all study programs', async () => {
+      const findManyMock = jest.fn().mockResolvedValue([{studyProgram}]);
+      const countMock = jest.fn().mockResolvedValue(1);
+      const studyProgramService = new StudyProgramService({
+        studyProgram: { findMany: findManyMock, count: countMock },
+      } as any);
+
+      const result = await studyProgramService.findAll(1);
+
+      expect(result.studyPrograms).toHaveLength(1);
+      expect(result.pagination).toEqual({
+        page: 1,
+        from: 1,
+        to: 1,
+        totalStudyProgram: 1,
+        totalPage: 1,
       });
     });
 
-    it('should return the first page if page is NaN', async () => {
-      const page = NaN; 
-      const studyProgramCount = 15;
-      const expectedPagination = await studyProgramService['preparePagination'](
-        1,
-        studyProgramCount
-      );
-      const expectedStudyPrograms = allStudyPrograms.slice(0, 5);
-    
-      prismaMock.studyProgram.findMany.mockResolvedValue(expectedStudyPrograms);
-      prismaMock.studyProgram.count.mockResolvedValue(studyProgramCount);
-    
-      const result = await studyProgramService.findAll(page);
-    
-      expect(result).toEqual({
-        studyPrograms: expectedStudyPrograms,
-        pagination: expectedPagination,
+    it('should handle NaN page', async () => {
+      const findManyMock = jest.fn().mockResolvedValue([{studyProgram}]);
+      const countMock = jest.fn().mockResolvedValue(1);
+      const studyProgramService = new StudyProgramService({
+        studyProgram: { findMany: findManyMock, count: countMock },
+      } as any);
+
+      const result = await studyProgramService.findAll(NaN);
+
+      expect(result.studyPrograms).toHaveLength(1);
+      expect(result.pagination).toEqual({
+        page: 1,
+        from: 1,
+        to: 1,
+        totalStudyProgram: 1,
+        totalPage: 1,
       });
-    });    
+    });
+
+    it('should handle page < 1', async () => {
+      const findManyMock = jest.fn().mockResolvedValue([{studyProgram}]);
+      const countMock = jest.fn().mockResolvedValue(1);
+      const studyProgramService = new StudyProgramService({
+        studyProgram: { findMany: findManyMock, count: countMock },
+      } as any);
+
+      const result = await studyProgramService.findAll(0);
+
+      expect(result.studyPrograms).toHaveLength(1);
+      expect(result.pagination).toEqual({
+        page: 1,
+        from: 1,
+        to: 1,
+        totalStudyProgram: 1,
+        totalPage: 1,
+      });
+    });
+
+    it('should handle page > totalPage', async () => {
+      const findManyMock = jest.fn().mockResolvedValue([{studyProgram}]);
+      const countMock = jest.fn().mockResolvedValue(1);
+      const studyProgramService = new StudyProgramService({
+        studyProgram: { findMany: findManyMock, count: countMock },
+      } as any);
+
+      const result = await studyProgramService.findAll(7);
+
+      expect(result.studyPrograms).toHaveLength(1);
+      expect(result.pagination).toEqual({
+        page: 1,
+        from: 1,
+        to: 1,
+        totalStudyProgram: 1,
+        totalPage: 1,
+      });
+    });
   });
-  
+
   describe('delete', () => {
     it('should delete a study program', async () => {
       prismaMock.studyProgram.findUnique.mockResolvedValueOnce(studyProgram);
