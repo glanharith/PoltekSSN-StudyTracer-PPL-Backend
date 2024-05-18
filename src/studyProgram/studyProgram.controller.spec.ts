@@ -89,7 +89,6 @@ describe('StudyProgramController', () => {
         },
       ];
     
-      // Mocking the service method to return the expected result
       studyProgramServiceMock.findAll.mockResolvedValue({
         studyPrograms: allStudyPrograms,
         pagination: {} as any,
@@ -97,7 +96,6 @@ describe('StudyProgramController', () => {
     
       const result = await studyProgramController.viewAllStudyProgram(1);
     
-      // Adjusting the expected result to match the actual structure
       expect(result).toEqual({
         message: 'Successfully got all study programs',
         data: { studyPrograms: allStudyPrograms, pagination: {} as any },
