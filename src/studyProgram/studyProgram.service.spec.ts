@@ -215,7 +215,7 @@ describe('StudyProgramService', () => {
     it('should return paginated study programs', async () => {
       const page = 2;
       const studyProgramCount = 15;
-      const expectedPagination = await studyProgramService.preparePagination(
+      const expectedPagination = await studyProgramService['preparePagination'](
         page,
         studyProgramCount
       );
@@ -238,10 +238,10 @@ describe('StudyProgramService', () => {
     });
   
     it('should return the first page if page is invalid', async () => {
-      const page = -1; // Invalid page number
+      const page = -1;
       const studyProgramCount = 15;
       const expectedPagination = await studyProgramService['preparePagination'](
-        1, // Page defaults to 1
+        1,
         studyProgramCount
       );
       const expectedStudyPrograms = allStudyPrograms.slice(0, 5);
@@ -279,7 +279,7 @@ describe('StudyProgramService', () => {
     it('should return the first page if page is NaN', async () => {
       const page = NaN; 
       const studyProgramCount = 15;
-      const expectedPagination = await studyProgramService.preparePagination(
+      const expectedPagination = await studyProgramService['preparePagination'](
         1,
         studyProgramCount
       );

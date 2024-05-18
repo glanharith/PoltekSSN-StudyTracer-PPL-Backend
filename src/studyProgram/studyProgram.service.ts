@@ -9,6 +9,8 @@ import { StudyProgramDTO } from './DTO';
 
 @Injectable()
 export class StudyProgramService {
+  STUDY_PROGRAM_PER_PAGE = 10;
+
   constructor(private readonly prisma: PrismaService) {}
   async create({ name, code, level }: StudyProgramDTO): Promise<StudyProgram> {
     if (await this.isStudyProgramNameAvailable('', name)) {
@@ -65,8 +67,41 @@ export class StudyProgramService {
     return count === 0;
   }
 
-  async findAll(): Promise<StudyProgram[]> {
-    return this.prisma.studyProgram.findMany({});
+  private async preparePagination(page: number, studyProgramCount: number) {
+    if (Number.isNaN(page)) page = 1;
+    if (page < 1) page = 1;
+
+    const totalPage = Math.ceil(
+      studyProgramCount / this.STUDY_PROGRAM_PER_PAGE,
+    );
+
+    if (page > totalPage) page = totalPage;
+
+    const skip = (page - 1) * this.STUDY_PROGRAM_PER_PAGE;
+    const from = skip + 1;
+    const to = Math.min(skip + this.STUDY_PROGRAM_PER_PAGE, studyProgramCount);
+
+    return {
+      page,
+      totalStudyProgram: studyProgramCount,
+      totalPage,
+      skip,
+      from,
+      to,
+    };
+  }
+
+  async findAll(page: number) {
+    const studyProgramCount = await this.prisma.studyProgram.count({});
+    const { skip, ...rest } = await this.preparePagination(
+      page,
+      studyProgramCount,
+    );
+    const studyPrograms = await this.prisma.studyProgram.findMany({
+      take: this.STUDY_PROGRAM_PER_PAGE,
+      skip,
+    });
+    return { studyPrograms, pagination: { ...rest } };
   }
 
   async delete(id: string): Promise<StudyProgram> {
