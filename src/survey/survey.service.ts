@@ -1107,4 +1107,42 @@ export class SurveyService {
 
     return transformedData;
   }
+
+  async updateToggleSurveyActiveStatus(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException(
+        'Format ID tidak valid. ID harus dalam format UUID',
+      );
+    }
+
+    const survey = await this.prisma.form.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        isActive: true,
+        lastUpdate: true
+      }
+    })
+
+    if (!survey) {
+      throw new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`);
+    }
+
+    const active = !survey.isActive;
+    const lastUpdateTime = new Date();
+
+    await this.prisma.form.update({
+      where: { id },
+      data: {
+        isActive: active,
+        lastUpdate: lastUpdateTime
+      }
+    });
+
+    return {
+      id: id,
+      isActive: active,
+      lastUpdate: lastUpdateTime
+    };
+  }
 }
