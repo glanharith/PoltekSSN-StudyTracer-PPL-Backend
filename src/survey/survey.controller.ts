@@ -122,4 +122,10 @@ export class SurveyController {
       data: responses,
     });
   }
+
+  @Patch('/patchActive/:id')
+  @IsAdmin()
+  async updateToggleSurveyActiveStatus(@Param('id') id: string) {
+    return this.surveyService.updateToggleSurveyActiveStatus(id);
+  }
 }
