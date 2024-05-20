@@ -14,7 +14,9 @@ import { NotificationModule } from './notification/notification.module';
 import { AlumniListModule } from './alumni-list/alumni-list.module';
 import { TasksService } from './tasks/tasks.service';
 import { ScheduleModule } from '@nestjs/schedule';
-
+import { MailModule } from './mail/mail.module';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 
 @Module({
   imports: [
@@ -28,7 +30,27 @@ import { ScheduleModule } from '@nestjs/schedule';
     ZxcvbnModule,
     SurveyModule,
     NotificationModule,
-    AlumniListModule
+    AlumniListModule,
+    MailModule,
+    MailerModule.forRoot({
+      transport: {
+        service: 'gmail',
+        auth: {
+          user: process.env.MAILING_EMAIL,
+          pass: process.env.MAILING_PASS,
+        },
+      },
+      template: {
+        dir:
+          process.env.NODE_ENV === 'production'
+            ? '/dist/mail/templates/'
+            : process.cwd() + '/src/mail/templates/',
+        adapter: new HandlebarsAdapter(),
+        options: {
+          strict: true,
+        },
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, TasksService],
