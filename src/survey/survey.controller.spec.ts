@@ -189,39 +189,39 @@ describe('SurveyController', () => {
 
       expect(result).toEqual({ message: 'Survey successfully updated' });
     });
+  });
 
-    describe('DELETE /survey/:id', () => {
-      const id = 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef';
-      const nonExistentId = 'notExist';
+  describe('DELETE /survey/:id', () => {
+    const id = 'ba20eb7a-8667-4a82-a18d-47aca6cf84ef';
+    const nonExistentId = 'notExist';
 
-      it('should successfully delete a survey', async () => {
-        surveyServiceMock.deleteSurvey.mockResolvedValue(id);
-        const result = await surveyController.deleteSurvey(id);
+    it('should successfully delete a survey', async () => {
+      surveyServiceMock.deleteSurvey.mockResolvedValue(id);
+      const result = await surveyController.deleteSurvey(id);
 
-        expect(result).toEqual(id);
+      expect(result).toEqual(id);
 
-        expect(surveyServiceMock.deleteSurvey).toHaveBeenCalledWith(id);
-      });
+      expect(surveyServiceMock.deleteSurvey).toHaveBeenCalledWith(id);
+    });
 
-      it('should throw NotFoundException for a non-existing survey', async () => {
-        surveyServiceMock.deleteSurvey.mockRejectedValue(
-          new NotFoundException('Survey not found'),
-        );
+    it('should throw NotFoundException for a non-existing survey', async () => {
+      surveyServiceMock.deleteSurvey.mockRejectedValue(
+        new NotFoundException('Survey not found'),
+      );
 
-        await expect(
-          surveyController.deleteSurvey(nonExistentId),
-        ).rejects.toThrow(NotFoundException);
-      });
+      await expect(
+        surveyController.deleteSurvey(nonExistentId),
+      ).rejects.toThrow(NotFoundException);
+    });
 
-      it('should handle errors during deletion', async () => {
-        surveyServiceMock.deleteSurvey.mockRejectedValue(
-          new InternalServerErrorException('Error while deleting survey'),
-        );
+    it('should handle errors during deletion', async () => {
+      surveyServiceMock.deleteSurvey.mockRejectedValue(
+        new InternalServerErrorException('Error while deleting survey'),
+      );
 
-        await expect(surveyController.deleteSurvey(id)).rejects.toThrow(
-          InternalServerErrorException,
-        );
-      });
+      await expect(surveyController.deleteSurvey(id)).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 
@@ -645,4 +645,32 @@ describe('SurveyController', () => {
       });
     });
   });
+
+  describe('PATCH /survey/patchActive/:id', () => {
+    it('should successfully toggle the active field of a survey', async () => {
+      const validId = '123e4567-e89b-12d3-a456-426614174000';
+      const surveyActive = {
+        id: validId,
+        isActive: true,
+        lastUpdate: new Date('2024-03-24T17:00:00.000Z'),
+      };
+
+      surveyServiceMock.updateToggleSurveyActiveStatus.mockResolvedValue(surveyActive)
+
+      const result = await surveyController.updateToggleSurveyActiveStatus(validId)
+
+      expect(result).toEqual(surveyActive)
+    })
+
+    it('should return NotFoundException for non-existing survey', async () => {
+      const invalidId = '111'
+      surveyServiceMock.updateToggleSurveyActiveStatus.mockRejectedValue(
+        new NotFoundException(`Survei dengan ID ${invalidId} tidak ditemukan`)
+      );
+
+      await expect(surveyController.updateToggleSurveyActiveStatus(invalidId)).rejects.toThrow(
+        NotFoundException
+      )
+    })
+  })
 });
