@@ -12,10 +12,14 @@ import { ZxcvbnModule } from './zxcvbn/zxcvbn.module';
 import { SurveyModule } from './survey/survey.module';
 import { NotificationModule } from './notification/notification.module';
 import { AlumniListModule } from './alumni-list/alumni-list.module';
+import { TasksService } from './tasks/tasks.service';
+import { ScheduleModule } from '@nestjs/schedule';
+
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     StudyProgramModule,
@@ -27,6 +31,6 @@ import { AlumniListModule } from './alumni-list/alumni-list.module';
     AlumniListModule
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [AppService, PrismaService, TasksService],
 })
 export class AppModule {}
