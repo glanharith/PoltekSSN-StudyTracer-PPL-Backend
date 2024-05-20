@@ -13,6 +13,10 @@ export const toSheetsFile = async (
   const buf = write(wb, { type: 'buffer', bookType: type as BookType });
 
   return new StreamableFile(buf, {
+    type:
+      type === 'csv'
+        ? 'type/csv'
+        : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     disposition: `attachment; filename="${name}.${type}"`,
   });
 };
