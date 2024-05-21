@@ -71,7 +71,7 @@ sonar:
 #     - staging
 #   tags:
 #     - shell
-glpat-6D1Mk7Zkcz6VbCzCN_r7
+
 publish:
   stage: deploy
   dependencies:
