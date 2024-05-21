@@ -214,6 +214,8 @@ describe('SurveyService', () => {
     type: FormType.CURRICULUM,
     title: 'Test Survey',
     description: 'This is a testing survey',
+    isActive: true,
+    lastUpdate: null,
     startTime: new Date(2024, 1, 2),
     endTime: new Date(2024, 2, 2),
     admissionYearFrom: 2018,
@@ -726,52 +728,52 @@ describe('SurveyService', () => {
       ).rejects.toThrow(BadRequestException);
       expect(prismaMock.$transaction).toBeCalledTimes(0);
     });
+  });
 
-    describe('delete', () => {
-      const id = mockSurvey.id;
-      const nonExistentId = '5e2633ba-435d-41e8-8432-efa2832ce564';
-      const invalidUUID = 'invalid-uuid';
+  describe('delete', () => {
+    const id = mockSurvey.id;
+    const nonExistentId = '5e2633ba-435d-41e8-8432-efa2832ce564';
+    const invalidUUID = 'invalid-uuid';
 
-      it('should successfully delete a survey', async () => {
-        prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
-        prismaMock.form.delete.mockResolvedValue(mockSurvey);
+    it('should successfully delete a survey', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
+      prismaMock.form.delete.mockResolvedValue(mockSurvey);
 
-        expect(await surveyService.deleteSurvey(id)).toEqual(id);
-        expect(prismaMock.form.delete).toHaveBeenCalledWith({
-          where: {
-            id: mockSurvey.id,
-          },
-        });
+      expect(await surveyService.deleteSurvey(id)).toEqual(id);
+      expect(prismaMock.form.delete).toHaveBeenCalledWith({
+        where: {
+          id: mockSurvey.id,
+        },
       });
+    });
 
-      it('should throw NotFoundException if survey is not found', async () => {
-        prismaMock.form.findUnique.mockResolvedValue(null);
+    it('should throw NotFoundException if survey is not found', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(null);
 
-        await expect(surveyService.deleteSurvey(nonExistentId)).rejects.toThrow(
-          NotFoundException,
-        );
-        expect(prismaMock.form.delete).toHaveBeenCalledTimes(0);
-      });
+      await expect(surveyService.deleteSurvey(nonExistentId)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prismaMock.form.delete).toHaveBeenCalledTimes(0);
+    });
 
-      it('should throw BadRequestException if ID is not a valid UUID', async () => {
-        await expect(surveyService.deleteSurvey(invalidUUID)).rejects.toThrow(
-          BadRequestException,
-        );
-      });
+    it('should throw BadRequestException if ID is not a valid UUID', async () => {
+      await expect(surveyService.deleteSurvey(invalidUUID)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
 
-      it("should not delete a survey if the current date is within the survey's active period", async () => {
-        jest.useFakeTimers().setSystemTime(new Date(2024, 1, 15));
+    it("should not delete a survey if the current date is within the survey's active period", async () => {
+      jest.useFakeTimers().setSystemTime(new Date(2024, 1, 15));
 
-        prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
+      prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
 
-        await expect(surveyService.deleteSurvey(id)).rejects.toThrow(
-          BadRequestException,
-        );
+      await expect(surveyService.deleteSurvey(id)).rejects.toThrow(
+        BadRequestException,
+      );
 
-        expect(prismaMock.form.delete).toHaveBeenCalledTimes(0);
+      expect(prismaMock.form.delete).toHaveBeenCalledTimes(0);
 
-        jest.useRealTimers();
-      });
+      jest.useRealTimers();
     });
   });
 
@@ -851,6 +853,8 @@ describe('SurveyService', () => {
       type: FormType.CURRICULUM,
       title: 'Test Survey',
       description: 'This is a testing survey',
+      isActive: false,
+      lastUpdate: null,
       startTime: new Date(2024, 1, 2),
       endTime: new Date(2024, 2, 2),
       admissionYearFrom: 2019,
@@ -1018,6 +1022,8 @@ describe('SurveyService', () => {
       type: FormType.CURRICULUM,
       title: 'Test Survey',
       description: 'Test',
+      isActive: false,
+      lastUpdate: null,
       startTime: startTime,
       endTime: endTime,
       admissionYearFrom: 2020,
@@ -1150,6 +1156,8 @@ describe('SurveyService', () => {
         type: 'CURRICULUM',
         title: 'test normal',
         description: 'normal',
+        isActive: false,
+        lastUpdate: null,
         startTime: new Date('2024-04-02T12:56:00.000Z'),
         endTime: new Date('2024-04-02T12:57:00.000Z'),
         admissionYearFrom: null,
@@ -1172,6 +1180,8 @@ describe('SurveyService', () => {
         type: 'CURRICULUM',
         title: 'test normal',
         description: 'normal',
+        isActive: false,
+        lastUpdate: null,
         startTime: new Date('2024-04-02T12:56:00.000Z'),
         endTime: new Date('2025-04-02T12:57:00.000Z'),
         admissionYearFrom: 1999,
@@ -1194,6 +1204,8 @@ describe('SurveyService', () => {
         type: 'CURRICULUM',
         title: 'test normal',
         description: 'normal',
+        isActive: false,
+        lastUpdate: null,
         startTime: new Date('2024-04-02T12:56:00.000Z'),
         endTime: new Date('2025-04-02T12:57:00.000Z'),
         admissionYearFrom: 2018,
@@ -1216,6 +1228,8 @@ describe('SurveyService', () => {
         type: 'CURRICULUM',
         title: 'test normal',
         description: 'normal',
+        isActive: false,
+        lastUpdate: null,
         startTime: new Date('2024-04-02T12:56:00.000Z'),
         endTime: new Date('2025-04-02T12:57:00.000Z'),
         admissionYearFrom: 2018,
@@ -1271,6 +1285,8 @@ describe('SurveyService', () => {
         type: 'CURRICULUM',
         title: 'test normal',
         description: 'normal',
+        isActive: false,
+        lastUpdate: null,
         startTime: new Date('2024-02-02T12:56:00.000Z'),
         endTime: new Date('2025-04-02T12:57:00.000Z'),
         admissionYearFrom: null,
@@ -1307,6 +1323,8 @@ describe('SurveyService', () => {
         type: 'CURRICULUM',
         title: 'test normal',
         description: 'normal',
+        isActive: false,
+        lastUpdate: null,
         startTime: new Date('2024-04-02T12:56:00.000Z'),
         endTime: new Date('2025-04-02T12:57:00.000Z'),
         admissionYearFrom: null,
@@ -1348,6 +1366,8 @@ describe('SurveyService', () => {
       type: FormType.CURRICULUM,
       description: 'deskripsi survey',
       title: 'Survey test',
+      isActive: false,
+      lastUpdate: null,
       startTime: new Date(2024, 0, 1),
       endTime: new Date(2024, 11, 1),
       admissionYearFrom: 2018,
@@ -1393,6 +1413,8 @@ describe('SurveyService', () => {
         type: FormType.CURRICULUM,
         description: 'deskripsi survey',
         title: 'Survey test',
+        isActive: false,
+        lastUpdate: null,
         startTime: new Date(2024, 0, 1),
         endTime: new Date(2024, 11, 1),
         admissionYearFrom: 2018,
@@ -1434,6 +1456,8 @@ describe('SurveyService', () => {
         type: FormType.CURRICULUM,
         description: 'deskripsi survey',
         title: 'Survey no response',
+        isActive: false,
+        lastUpdate: null,
         startTime: new Date(2024, 0, 1),
         endTime: new Date(2024, 11, 1),
         admissionYearFrom: 2018,
@@ -1489,6 +1513,8 @@ describe('SurveyService', () => {
         type: FormType.CURRICULUM,
         title: 'Survey Test',
         description: 'deskripsi',
+        isActive: false,
+        lastUpdate: null,
         startTime: new Date(2024, 0, 1),
         endTime: new Date(2024, 1, 1),
         admissionYearFrom: 2020,
@@ -1972,6 +1998,8 @@ describe('SurveyService', () => {
       type: FormType.CURRICULUM,
       title: 'Survey buat semua alumni',
       description: 'Survey Description',
+      isActive: false,
+      lastUpdate: null,
       startTime: new Date('2024-03-24T17:00:00.000Z'),
       endTime: new Date('2024-04-24T20:15:00.000Z'),
       admissionYearFrom: null,
@@ -2038,4 +2066,57 @@ describe('SurveyService', () => {
       ).rejects.toThrowError(NotFoundException);
     });
   });
+
+  describe('toggle survey active status', () => {
+    const validId = '123e4567-e89b-12d3-a456-426614174000';
+
+    it('should throw BadRequestException if id is not a valid UUID', async () => {
+      const invalidId = '123';
+      await expect(surveyService.updateToggleSurveyActiveStatus(invalidId))
+        .rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw NotFoundException if no survey exists with provided id', async () => {
+      prismaMock.form.findUnique.mockResolvedValue(null);
+      await expect(surveyService.updateToggleSurveyActiveStatus(validId))
+        .rejects.toThrow(NotFoundException);
+    });
+
+    it('should toggle isActive to true if previously was false', async () => {
+      const surveyActive = {
+        id: validId,
+        type: FormType.CURRICULUM,
+        title: 'test title',
+        description: 'just a desc',
+        isActive: false,
+        lastUpdate: null,
+        startTime: new Date('2024-03-24T17:00:00.000Z'),
+        endTime: new Date('2024-04-24T20:15:00.000Z'),
+        admissionYearFrom: null,
+        admissionYearTo: null,
+        graduateYearFrom: null,
+        graduateYearTo: null,
+      };
+
+      prismaMock.form.findUnique.mockResolvedValue(surveyActive);
+
+      prismaMock.form.update.mockResolvedValue({
+        ...mockSurvey,
+        isActive: !mockSurvey.isActive,
+        lastUpdate: new Date(),
+      });
+
+      const result = await surveyService.updateToggleSurveyActiveStatus(validId);
+
+      expect(prismaMock.form.update).toHaveBeenCalledWith({
+        where: { id: validId },
+        data: {
+          isActive: true,
+          lastUpdate: expect.any(Date)
+        }
+      });
+      expect(result.isActive).toBe(true);
+      expect(result.id).toEqual(validId);
+    });
+  })
 });

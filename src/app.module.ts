@@ -12,6 +12,8 @@ import { ZxcvbnModule } from './zxcvbn/zxcvbn.module';
 import { SurveyModule } from './survey/survey.module';
 import { NotificationModule } from './notification/notification.module';
 import { AlumniListModule } from './alumni-list/alumni-list.module';
+import { TasksService } from './tasks/tasks.service';
+import { ScheduleModule } from '@nestjs/schedule';
 import { MailModule } from './mail/mail.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
@@ -19,6 +21,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     StudyProgramModule,
@@ -50,6 +53,6 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [AppService, PrismaService, TasksService],
 })
 export class AppModule {}
