@@ -51,6 +51,27 @@ sonar:
   only:
     - development
 
+# publish:
+#   stage: deploy
+#   dependencies:
+#     - test
+#   before_script:
+#     - |
+#       if [ "$CI_COMMIT_BRANCH" == "main" ]; then
+#         export TAG=$PRODUCTION_TAG
+#       elif [ "$CI_COMMIT_BRANCH" == "staging" ]; then
+#         export TAG=$STAGING_TAG
+#       fi
+#     - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
+#   script:
+#     - docker build -t $DOCKER_IMAGE_NAME:$TAG .
+#     - docker push $DOCKER_IMAGE_NAME:$TAG
+#   only:
+#     - main
+#     - staging
+#   tags:
+#     - shell
+
 publish:
   stage: deploy
   dependencies:
@@ -62,15 +83,16 @@ publish:
       elif [ "$CI_COMMIT_BRANCH" == "staging" ]; then
         export TAG=$STAGING_TAG
       fi
-    - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
   script:
-    - docker build -t $DOCKER_IMAGE_NAME:$TAG .
-    - docker push $DOCKER_IMAGE_NAME:$TAG
+    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY $GCP_USERNAME@$GCP_HOST "
+      docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN &&
+      docker build -t $DOCKER_IMAGE_NAME:$TAG . &&
+      docker push $DOCKER_IMAGE_NAME:$TAG"
   only:
     - main
     - staging
   tags:
-    - shell
+    - ssh
 
 deploy:
   stage: deploy
