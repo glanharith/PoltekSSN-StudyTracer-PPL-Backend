@@ -80,9 +80,13 @@ publish:
     - |
       if [ "$CI_COMMIT_BRANCH" == "main" ]; then
         export TAG=$PRODUCTION_TAG
+        export GCP_HOST=$PRODUCTION_GCP_HOST
       elif [ "$CI_COMMIT_BRANCH" == "staging" ]; then
         export TAG=$STAGING_TAG
+        export GCP_HOST=$STAGING_GCP_HOST
       fi
+    - chmod 400 $SSH_KEY
+    - apk update && apk add openssh-client
   script:
     - ssh -o StrictHostKeyChecking=no -i $SSH_KEY $GCP_USERNAME@$GCP_HOST "
       docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN &&
