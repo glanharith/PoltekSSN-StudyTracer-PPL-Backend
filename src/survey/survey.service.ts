@@ -592,9 +592,14 @@ export class SurveyService {
             ],
           },
           {
-            AND: [
-              { startTime: { lte: startDateThreshold } },
-              { endTime: { gte: today } },
+            OR: [
+              { isActive: { equals: true } },
+              { AND: [
+                  { lastUpdate: { equals: null } },
+                  { startTime: { lte: startDateThreshold } },
+                  { startTime: { gte: today } }
+                ]
+              },
             ],
           },
         ],
