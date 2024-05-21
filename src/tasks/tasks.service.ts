@@ -8,7 +8,7 @@ export class TasksService {
 
   constructor(private prisma: PrismaService) {}
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_30_MINUTES)
   async updateFormActivityStatus() {
     this.logger.log('Updating form activity status');
     const now = new Date();
