@@ -106,15 +106,15 @@ describe('HeadOfStudyProgramController', () => {
 
   describe('GET /kaprodi', () => {
     it('should return all head of study programs', async () => {
-      kaprodiServiceMock.findAll.mockResolvedValue(cleanData);
-      const result = await kaprodiController.findAll();
+      kaprodiServiceMock.findAll.mockResolvedValue(cleanData as any);
+      const result = await kaprodiController.findAll(1);
 
       expect(result).toEqual(cleanData);
     });
 
     it('should return no head of study programs', async () => {
       kaprodiServiceMock.findAll.mockResolvedValue([]);
-      const result = await kaprodiController.findAll();
+      const result = await kaprodiController.findAll(1);
 
       expect(result).toEqual([]);
     });

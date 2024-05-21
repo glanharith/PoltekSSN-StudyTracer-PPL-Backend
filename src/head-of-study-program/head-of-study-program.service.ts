@@ -13,10 +13,32 @@ import { ZxcvbnService } from 'src/zxcvbn/zxcvbn.service';
 
 @Injectable()
 export class HeadOfStudyProgramService {
+  HEAD_PER_PAGE = 10
   constructor(
     private readonly prisma: PrismaService,
     private readonly zxcvbnService: ZxcvbnService,
   ) {}
+  private async preparePagination(page: number, headCount: number) {
+    if (Number.isNaN(page)) page = 1;
+    if (page < 1) page = 1;
+
+    const totalPage = Math.ceil(headCount / this.HEAD_PER_PAGE);
+
+    if (page > totalPage) page = totalPage;
+
+    const skip = (page - 1) * this.HEAD_PER_PAGE;
+    const from = skip + 1;
+    const to = Math.min(skip + this.HEAD_PER_PAGE, headCount);
+
+    return {
+      page,
+      totalHead: headCount,
+      totalPage,
+      skip,
+      from,
+      to,
+    };
+  }
 
   async create({
     email,
@@ -106,11 +128,33 @@ export class HeadOfStudyProgramService {
     });
   }
 
-  async findAll() {
+  async findAll(page:number) {
+    const headCount = await this.prisma.user.count({
+      where:{
+        role: 'HEAD_STUDY_PROGRAM',
+      }
+    });
+    if (headCount === 0) {
+      return {
+        data: [],
+        pagination: {
+          page: 1,
+          totalHead: 0,
+          totalPage: 1,
+          skip: 0,
+          from: 0,
+          to: 0,
+        },
+      };
+    }
+    const { skip, ...rest } = await this.preparePagination(page, headCount);
+    
     const res = await this.prisma.user.findMany({
       where: {
         role: 'HEAD_STUDY_PROGRAM',
       },
+      take: this.HEAD_PER_PAGE,
+      skip,
       select: {
         id: true,
         name: true,
@@ -138,7 +182,7 @@ export class HeadOfStudyProgramService {
     }));
 
     const cleanData = await Promise.all(modifiedData);
-    return cleanData;
+    return {data:cleanData, pagination: { ...rest }};
   }
 
   // Get a head of study program by id
