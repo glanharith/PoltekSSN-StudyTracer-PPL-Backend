@@ -362,4 +362,69 @@ describe('AlumniListService', () => {
       totalPage: 1,
     });
   });
+  it('should return empty array if alumni is none in getAllAlumni', async () => {
+    const alumniUser = [];
+    const studyProgram = {
+      id: '1',
+      name: 'Computer Science',
+    };
+    const findManyMock = jest.fn().mockResolvedValue(alumniUser);
+    const findUniqueMock = jest.fn().mockResolvedValue(studyProgram);
+    const countMock = jest.fn().mockResolvedValue(alumniUser.length);
+    const alumnilistService = new AlumniListService({
+      user: { findMany: findManyMock, count: countMock },
+      studyProgram: { findUnique: findUniqueMock },
+    } as any);
+
+    const result = await alumnilistService.getAllAlumni(1);
+    expect(result.users).toHaveLength(0);
+    expect(result.pagination).toEqual({
+      page: 1,
+      totalAlumni: 0,
+      totalPage: 1,
+      skip: 0,
+      from: 0,
+      to: 0,
+    });
+  });
+  it('should get all alumni by study program', async () => {
+    const headEmail = 'head@example.com';
+    const headStudyProgramId = 123;
+    const head = {
+      email: headEmail,
+      headStudyProgram: {
+        studyProgramId: headStudyProgramId,
+      },
+    };
+
+    const alumniUser = [];
+    const studyProgram = {
+      id: headStudyProgramId,
+      name: 'Computer Science',
+    };
+    const findUniqueMockStudy = jest.fn().mockResolvedValue(studyProgram);
+    const findManyMock = jest.fn().mockResolvedValue(alumniUser);
+    const findUniqueMockHead = jest.fn().mockResolvedValue(head);
+    const countMock = jest.fn().mockResolvedValue(alumniUser.length);
+    const alumnilistService = new AlumniListService({
+      user: {
+        findMany: findManyMock,
+        findUnique: findUniqueMockHead,
+        count: countMock,
+      },
+      studyProgram: {
+        findUnique: findUniqueMockStudy,
+      },
+    } as any);
+    const result = await alumnilistService.getAllAlumnibyProdi(headEmail, 1);
+    expect(result.pagination).toEqual({
+      page: 1,
+      totalAlumni: 0,
+      totalPage: 1,
+      skip: 0,
+      from: 0,
+      to: 0,
+    });
+  });
 });
+
