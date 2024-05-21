@@ -71,7 +71,7 @@ sonar:
 #     - staging
 #   tags:
 #     - shell
-
+glpat-6D1Mk7Zkcz6VbCzCN_r7
 publish:
   stage: deploy
   dependencies:
@@ -89,6 +89,9 @@ publish:
     - apk update && apk add openssh-client
   script:
     - ssh -o StrictHostKeyChecking=no -i $SSH_KEY $GCP_USERNAME@$GCP_HOST "
+      rm -rf tracer-study-be/ || true &&
+      git clone https://$GITLAB_USERNAME:$GITLAB_PAT@gitlab.cs.ui.ac.id/tracer-study-poltekssn/tracer-study-be.git &&
+      cd tracer-study-be/ &&
       docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN &&
       docker build -t $DOCKER_IMAGE_NAME:$TAG . &&
       docker push $DOCKER_IMAGE_NAME:$TAG"
