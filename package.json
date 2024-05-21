@@ -24,7 +24,6 @@
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^0.14.0",
-    "@json2csv/node": "^7.0.6",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^3.2.0",
@@ -46,7 +45,8 @@
     "handlebars": "^4.7.8",
     "nodemailer": "^6.9.13",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",

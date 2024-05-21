@@ -80,11 +80,24 @@ export class SurveyController {
     return this.surveyService.getSurvey(id);
   }
 
-  @Get('/:id/responses')
+  @Get('/:id/responses/csv')
   @IsAdmin()
   @IsHead()
-  async downloadSurveyResponses(@ReqUser() request, @Param('id') id: string) {
-    return this.surveyService.downloadSurveyResponses(id, request);
+  async downloadSurveyResponsesCSV(
+    @ReqUser() request,
+    @Param('id') id: string,
+  ) {
+    return this.surveyService.downloadSurveyResponses(id, request, 'csv');
+  }
+
+  @Get('/:id/responses/xlsx')
+  @IsAdmin()
+  @IsHead()
+  async downloadSurveyResponsesExcel(
+    @ReqUser() request,
+    @Param('id') id: string,
+  ) {
+    return this.surveyService.downloadSurveyResponses(id, request, 'xlsx');
   }
 
   @Get()
@@ -109,7 +122,10 @@ export class SurveyController {
   @Get('/:id/response-preview/questions')
   @IsAdmin()
   @IsHead()
-  async getSurveyResponseByQuestions(@ReqUser() request, @Param('id') id: string) {
+  async getSurveyResponseByQuestions(
+    @ReqUser() request,
+    @Param('id') id: string,
+  ) {
     return this.surveyService.getSurveyResponseByQuestions(id, request);
   }
 
@@ -117,7 +133,10 @@ export class SurveyController {
   @IsAdmin()
   @IsHead()
   async getSurveyResponseByAlumni(@Param('id') id: string, @ReqUser() request) {
-    const responses = await this.surveyService.getSurveyResponseByAlumni(id, request.email);
+    const responses = await this.surveyService.getSurveyResponseByAlumni(
+      id,
+      request.email,
+    );
     return response(`Successfully got responses for survey ${id}`, {
       data: responses,
     });

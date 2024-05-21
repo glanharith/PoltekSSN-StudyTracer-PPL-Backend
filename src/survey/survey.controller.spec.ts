@@ -368,21 +368,21 @@ describe('SurveyController', () => {
     });
   });
 
-  describe('GET /survey/:id/responses', () => {
+  describe('GET /survey/:id/responses/csv', () => {
     const request = {
       user: {
         email: 'aaa@gmail.com',
         role: 'ADMIN',
       },
     };
-    it('should successfully download survey responses', async () => {
+    it('should successfully download survey responses in CSV (.csv) format', async () => {
       const file: StreamableFile = new StreamableFile(new Readable(), {
         type: 'text/csv',
         disposition: `attachment; filename=Survey_Responses.csv"`,
       });
 
       surveyServiceMock.downloadSurveyResponses.mockResolvedValue(file);
-      const result = await surveyController.downloadSurveyResponses(
+      const result = await surveyController.downloadSurveyResponsesCSV(
         request,
         survey.id,
       );
@@ -396,7 +396,7 @@ describe('SurveyController', () => {
       );
 
       await expect(
-        surveyController.downloadSurveyResponses(request, survey.id),
+        surveyController.downloadSurveyResponsesCSV(request, survey.id),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -406,7 +406,50 @@ describe('SurveyController', () => {
       );
 
       await expect(
-        surveyController.downloadSurveyResponses(request, survey.id),
+        surveyController.downloadSurveyResponsesCSV(request, survey.id),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
+  describe('GET /survey/:id/responses/xlsx', () => {
+    const request = {
+      user: {
+        email: 'aaa@gmail.com',
+        role: 'ADMIN',
+      },
+    };
+    it('should successfully download survey responses in Excel (.xlsx) format', async () => {
+      const file: StreamableFile = new StreamableFile(new Readable(), {
+        type: 'text/csv',
+        disposition: `attachment; filename=Survey_Responses.xlsx"`,
+      });
+
+      surveyServiceMock.downloadSurveyResponses.mockResolvedValue(file);
+      const result = await surveyController.downloadSurveyResponsesExcel(
+        request,
+        survey.id,
+      );
+
+      expect(result).toEqual(file);
+    });
+
+    it('should return NotFoundException for non-existing survey', async () => {
+      surveyServiceMock.downloadSurveyResponses.mockRejectedValue(
+        new NotFoundException('Survey not found'),
+      );
+
+      await expect(
+        surveyController.downloadSurveyResponsesExcel(request, survey.id),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should handle errors during get', async () => {
+      surveyServiceMock.downloadSurveyResponses.mockRejectedValue(
+        new InternalServerErrorException('Error while retrieving survey'),
+      );
+
+      await expect(
+        surveyController.downloadSurveyResponsesExcel(request, survey.id),
       ).rejects.toThrow(InternalServerErrorException);
     });
   });
@@ -473,12 +516,12 @@ describe('SurveyController', () => {
             {
               optionLabel: 'Perempuan',
               optionAnswersCount: 1,
-              percentage: "50.00%"
-            }
-          ]
-        }
+              percentage: '50.00%',
+            },
+          ],
+        },
       ]),
-      message: 'Respon survei'
+      message: 'Respon survei',
     };
     const request = {
       email: 'aaa@gmail.com',
@@ -490,7 +533,10 @@ describe('SurveyController', () => {
         responseData,
       );
 
-      const result = await surveyController.getSurveyResponseByQuestions(request, id);
+      const result = await surveyController.getSurveyResponseByQuestions(
+        request,
+        id,
+      );
 
       expect(result).toEqual(responseData);
     });
@@ -500,11 +546,11 @@ describe('SurveyController', () => {
         new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`),
       );
 
-      await expect(surveyController.getSurveyResponseByQuestions(request, id)).rejects.toThrow(
-        NotFoundException,
-      );
-    })
-  })
+      await expect(
+        surveyController.getSurveyResponseByQuestions(request, id),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
 
   describe('GET /:id/response-preview/alumni', () => {
     it('should return survey responses', async () => {
@@ -534,7 +580,7 @@ describe('SurveyController', () => {
         user: mockUserHead,
         studyProgram: mockStudyProgram,
       };
-      
+
       const mockUser: User = {
         id: 'use02c84-f321-4b4e-bff6-780c8cae17b3',
         name: 'John',
@@ -630,7 +676,8 @@ describe('SurveyController', () => {
       );
 
       const result = await surveyController.getSurveyResponseByAlumni(
-        mockSurvey.id, mockUserHead.email
+        mockSurvey.id,
+        mockUserHead.email,
       );
 
       expect(result).toEqual({

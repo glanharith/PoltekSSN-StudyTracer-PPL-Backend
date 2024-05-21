@@ -904,11 +904,13 @@ describe('SurveyService', () => {
       },
     };
 
+    const filetype = 'csv';
+
     it('should return a survey response', async () => {
       prismaMock.form.findUnique.mockResolvedValue(survey);
       prismaMock.answer.findMany.mockResolvedValue(responses);
 
-      await surveyService.downloadSurveyResponses(survey.id, request);
+      await surveyService.downloadSurveyResponses(survey.id, request, filetype);
       expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
       expect(prismaMock.answer.findMany).toHaveBeenCalledTimes(1);
     });
@@ -917,13 +919,13 @@ describe('SurveyService', () => {
       prismaMock.form.findUnique.mockResolvedValue(null);
 
       await expect(
-        surveyService.downloadSurveyResponses(nonExistentId, request),
+        surveyService.downloadSurveyResponses(nonExistentId, request, filetype),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if ID is not a valid UUID', async () => {
       await expect(
-        surveyService.downloadSurveyResponses(invalidUUID, request),
+        surveyService.downloadSurveyResponses(invalidUUID, request, filetype),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -932,7 +934,7 @@ describe('SurveyService', () => {
       prismaMock.answer.findMany.mockResolvedValue([]);
 
       await expect(
-        surveyService.downloadSurveyResponses(survey.id, request),
+        surveyService.downloadSurveyResponses(survey.id, request, filetype),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -953,7 +955,7 @@ describe('SurveyService', () => {
       );
       prismaMock.answer.findMany.mockResolvedValue(responses);
 
-      await surveyService.downloadSurveyResponses(survey.id, request);
+      await surveyService.downloadSurveyResponses(survey.id, request, filetype);
       expect(prismaMock.headStudyProgram.findFirst).toHaveBeenCalledTimes(1);
       expect(prismaMock.form.findUnique).toHaveBeenCalledTimes(1);
       expect(prismaMock.answer.findMany).toHaveBeenCalledTimes(1);
@@ -1359,8 +1361,18 @@ describe('SurveyService', () => {
           order: 1,
           options: [{ order: 1, label: 'Ya', answers: [{ answer: 'Ya' }] }],
           answers: [
-            { answer: 'Ya', response: { alumni: { studyProgramId:  headStudyProgramsId } } },
-            { answer: 'No', response: { alumni: { studyProgramId: 'ef49063d-b95e-454b-97b3-003dbf6c8be1' } } }
+            {
+              answer: 'Ya',
+              response: { alumni: { studyProgramId: headStudyProgramsId } },
+            },
+            {
+              answer: 'No',
+              response: {
+                alumni: {
+                  studyProgramId: 'ef49063d-b95e-454b-97b3-003dbf6c8be1',
+                },
+              },
+            },
           ],
         },
       ],
@@ -1368,11 +1380,11 @@ describe('SurveyService', () => {
 
     const requestHead = {
       email: 'email@email.com',
-      role: 'HEAD_STUDY_PROGRAM'
+      role: 'HEAD_STUDY_PROGRAM',
     };
     const requestAdmin = {
       email: 'email@email.com',
-      role: 'ADMIN'
+      role: 'ADMIN',
     };
 
     it('should return analysis for a survey with responses', async () => {
@@ -1402,7 +1414,8 @@ describe('SurveyService', () => {
         .mockReturnValue('Analysis Data');
 
       const result = await surveyService.getSurveyResponseByQuestions(
-        mockSurveyId, requestAdmin
+        mockSurveyId,
+        requestAdmin,
       );
 
       expect(result).toEqual({
@@ -1410,7 +1423,7 @@ describe('SurveyService', () => {
         title: 'Survey test',
         totalRespondents: 1,
         answerStats: 'Analysis Data',
-        message: 'Respon Survei'
+        message: 'Respon Survei',
       });
       expect(surveyService.analyzeResponse).toHaveBeenCalledWith(mockSurvey, 1);
     });
@@ -1442,7 +1455,8 @@ describe('SurveyService', () => {
       prismaMock.form.findUnique.mockResolvedValue(mockSurvey);
 
       const result = await surveyService.getSurveyResponseByQuestions(
-        mockSurveyId, requestAdmin
+        mockSurveyId,
+        requestAdmin,
       );
 
       expect(result).toEqual({
@@ -1484,13 +1498,12 @@ describe('SurveyService', () => {
         questions: [],
       };
 
-      surveyService.analyzeResponse = jest
-        .fn()
-        .mockReturnValue([]);
+      surveyService.analyzeResponse = jest.fn().mockReturnValue([]);
       prismaMock.form.findUnique.mockResolvedValue(mockSurveyWithNoQuestions);
 
       const result = await surveyService.getSurveyResponseByQuestions(
-        mockSurveyId, requestAdmin
+        mockSurveyId,
+        requestAdmin,
       );
 
       expect(result).toEqual({
@@ -1508,11 +1521,12 @@ describe('SurveyService', () => {
         id: 'id',
         studyProgramId: headStudyProgramsId,
         isActive: true,
-        nip: 'nip'
+        nip: 'nip',
       });
 
       const result = await surveyService.getSurveyResponseByQuestions(
-        mockSurveyId, requestHead
+        mockSurveyId,
+        requestHead,
       );
 
       expect(result.totalRespondents).toEqual(1);
@@ -1520,19 +1534,19 @@ describe('SurveyService', () => {
         question: 'Apakah anda sudah lulus?',
         questionType: 'RADIO',
         data: [
-          { optionLabel: 'Ya', optionAnswersCount: 1, percentage: '100.00%' }
-        ]
-      })
-    })
+          { optionLabel: 'Ya', optionAnswersCount: 1, percentage: '100.00%' },
+        ],
+      });
+    });
 
     it('should throw a NotFoundException if the study program does not exist', async () => {
       prismaMock.form.findUnique.mockResolvedValue(mockSurveyWithAlumni);
-      prismaMock.headStudyProgram.findFirst.mockResolvedValue(null)
+      prismaMock.headStudyProgram.findFirst.mockResolvedValue(null);
 
       await expect(
         surveyService.getSurveyResponseByQuestions(mockSurveyId, requestHead),
       ).rejects.toThrow('Program studi tidak ditemukan');
-    })
+    });
   });
 
   describe('analyze response data', () => {
@@ -1568,10 +1582,7 @@ describe('SurveyService', () => {
         {
           question: 'Apakah Anda akan merekomendasikan kami?',
           type: 'RADIO',
-          options: [
-            { label: 'Ya'},
-            { label: 'Tidak'},
-          ],
+          options: [{ label: 'Ya' }, { label: 'Tidak' }],
           answers: [{ answer: 'Ya' }, { answer: 'Ya' }, { answer: 'Tidak' }],
         },
         {
@@ -1673,19 +1684,13 @@ describe('SurveyService', () => {
           {
             question: 'Which features do you use?',
             type: 'CHECKBOX',
-            options: [
-              { label: 'Chat' },
-              { label: 'Search' },
-            ],
+            options: [{ label: 'Chat' }, { label: 'Search' }],
             answers: [],
           },
           {
             question: 'Would you recommend us?',
             type: 'RADIO',
-            options: [
-              { label: 'Yes' },
-              { label: 'No' },
-            ],
+            options: [{ label: 'Yes' }, { label: 'No' }],
             answers: [],
           },
           {
@@ -1734,7 +1739,7 @@ describe('SurveyService', () => {
         },
       ]);
       expect(stats[3].data).toEqual([]);
-    })
+    });
   });
 
   describe('getSurveyResponseByAlumni', () => {
@@ -1960,7 +1965,9 @@ describe('SurveyService', () => {
       answers: [mockAnswerU13, mockAnswerU231, mockAnswerU232],
     };
 
-    const mockSurvey: Form & { questions: Question[] } & { responses: Response[]} = {
+    const mockSurvey: Form & { questions: Question[] } & {
+      responses: Response[];
+    } = {
       id: mockSurveyId,
       type: FormType.CURRICULUM,
       title: 'Survey buat semua alumni',
@@ -2013,15 +2020,21 @@ describe('SurveyService', () => {
       prismaMock.form.findUnique.mockResolvedValue(null);
 
       await expect(
-        surveyService.getSurveyResponseByAlumni(mockSurveyId, mockUserHead.email),
+        surveyService.getSurveyResponseByAlumni(
+          mockSurveyId,
+          mockUserHead.email,
+        ),
       ).rejects.toThrowError(NotFoundException);
     });
 
     it('should throw NotFoundException when user is not found', async () => {
       prismaMock.user.findUnique.mockResolvedValue(null);
-    
+
       await expect(
-        surveyService.getSurveyResponseByAlumni(mockSurveyId, mockUserHead.email)
+        surveyService.getSurveyResponseByAlumni(
+          mockSurveyId,
+          mockUserHead.email,
+        ),
       ).rejects.toThrowError(NotFoundException);
     });
   });
