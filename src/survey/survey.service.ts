@@ -14,7 +14,7 @@ import {
 import { isUUID } from 'class-validator';
 import { Alumni, Form } from '@prisma/client';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
-import { toCsvFile } from 'src/common/util/csv';
+import { toSheetsFile } from 'src/common/util/sheets';
 
 @Injectable()
 export class SurveyService {
@@ -449,6 +449,7 @@ export class SurveyService {
   async downloadSurveyResponses(
     id: string,
     request: any,
+    filetype: string,
   ): Promise<Record<string, any>> {
     if (!isUUID(id)) {
       throw new BadRequestException(
@@ -539,7 +540,7 @@ export class SurveyService {
       };
     });
 
-    return toCsvFile(flattenedData, `${survey.title}_Responses`);
+    return toSheetsFile(flattenedData, `${survey.title}_Responses`, filetype);
   }
 
   async getAvailableSurveyByYear(
@@ -592,9 +593,14 @@ export class SurveyService {
             ],
           },
           {
-            AND: [
-              { startTime: { lte: startDateThreshold } },
-              { endTime: { gte: today } },
+            OR: [
+              { isActive: { equals: true } },
+              { AND: [
+                  { lastUpdate: { equals: null } },
+                  { startTime: { lte: startDateThreshold } },
+                  { startTime: { gte: today } }
+                ]
+              },
             ],
           },
         ],
@@ -846,11 +852,11 @@ export class SurveyService {
               include: {
                 response: {
                   include: {
-                    alumni: true
-                  }
-                }
-              }
-            }
+                    alumni: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -866,21 +872,22 @@ export class SurveyService {
         description: survey.description,
         totalRespondents: 0,
         answerStats: [],
-        message: 'Survei belum memiliki pertanyaan'
-      }
+        message: 'Survei belum memiliki pertanyaan',
+      };
     }
 
     if (request.role === 'HEAD_STUDY_PROGRAM') {
-      const headStudyProgramRecord = await this.prisma.headStudyProgram.findFirst({
-        where: {
-          user: {
-            email: request.email,
+      const headStudyProgramRecord =
+        await this.prisma.headStudyProgram.findFirst({
+          where: {
+            user: {
+              email: request.email,
+            },
           },
-        },
-        select: {
-          studyProgramId: true
-        }
-      });
+          select: {
+            studyProgramId: true,
+          },
+        });
 
       if (!headStudyProgramRecord) {
         throw new NotFoundException('Program studi tidak ditemukan');
@@ -888,13 +895,16 @@ export class SurveyService {
 
       const studyProgramId = headStudyProgramRecord.studyProgramId;
 
-      survey.questions.forEach(question => {
-        question.answers = question.answers.filter(answer => answer.response.alumni.studyProgramId === studyProgramId);
+      survey.questions.forEach((question) => {
+        question.answers = question.answers.filter(
+          (answer) => answer.response.alumni.studyProgramId === studyProgramId,
+        );
       });
     }
 
     const answers = survey.questions[0].answers ?? [];
-    const totalRespondents = (new Set(answers.map(answer => answer.responseId))).size;
+    const totalRespondents = new Set(answers.map((answer) => answer.responseId))
+      .size;
     const answerStats = this.analyzeResponse(survey, totalRespondents);
 
     return {
@@ -902,12 +912,12 @@ export class SurveyService {
       description: survey.description,
       totalRespondents: totalRespondents,
       answerStats: answerStats,
-      message: 'Respon Survei'
+      message: 'Respon Survei',
     };
   }
 
   analyzeResponse(survey: any, totalRespondents: number) {
-    return survey.questions.map(question => {
+    return survey.questions.map((question) => {
       const { type, options, answers } = question;
       if (type == 'TEXT') {
         return {
@@ -915,17 +925,21 @@ export class SurveyService {
           questionType: type,
           data: answers.map((answer) => answer.answer),
         };
-
-      } else if (type == 'RANGE' ){
+      } else if (type == 'RANGE') {
         const rangeIntegers = Array.from(
-          { length: question.rangeTo - question.rangeFrom + 1 }, (_, i) => question.rangeFrom + i
+          { length: question.rangeTo - question.rangeFrom + 1 },
+          (_, i) => question.rangeFrom + i,
         );
 
-        const optionStats = rangeIntegers.map(integer => {
-          const filteredAnswers = answers.filter(answer => parseInt(answer.answer.trim()) === integer
+        const optionStats = rangeIntegers.map((integer) => {
+          const filteredAnswers = answers.filter(
+            (answer) => parseInt(answer.answer.trim()) === integer,
           );
           const optionAnswersCount = filteredAnswers.length;
-          const percentage = totalRespondents > 0 ? (optionAnswersCount / totalRespondents) * 100 : 0;
+          const percentage =
+            totalRespondents > 0
+              ? (optionAnswersCount / totalRespondents) * 100
+              : 0;
           return {
             optionLabel: integer.toString(), // Convert integer to string if needed
             optionAnswersCount,
@@ -938,12 +952,16 @@ export class SurveyService {
           questionType: question.type,
           data: optionStats,
         };
-
       } else {
         const optionStats = options.map((option) => {
-          const filteredAnswers = answers.filter(answer => answer.answer.trim() === option.label.trim());
+          const filteredAnswers = answers.filter(
+            (answer) => answer.answer.trim() === option.label.trim(),
+          );
           const optionAnswersCount = filteredAnswers.length;
-          const percentage = totalRespondents > 0 ? (optionAnswersCount / totalRespondents) * 100 : 0;
+          const percentage =
+            totalRespondents > 0
+              ? (optionAnswersCount / totalRespondents) * 100
+              : 0;
           return {
             optionLabel: option.label,
             optionAnswersCount,
@@ -1019,7 +1037,6 @@ export class SurveyService {
     if (!survey) {
       throw new NotFoundException(`Survey dengan ID ${id} tidak ditemukan`);
     }
-
 
     if (user.role === 'HEAD_STUDY_PROGRAM') {
       const userStudyProgramId = user?.headStudyProgram?.studyProgram.id;
@@ -1106,5 +1123,43 @@ export class SurveyService {
     };
 
     return transformedData;
+  }
+
+  async updateToggleSurveyActiveStatus(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException(
+        'Format ID tidak valid. ID harus dalam format UUID',
+      );
+    }
+
+    const survey = await this.prisma.form.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        isActive: true,
+        lastUpdate: true
+      }
+    })
+
+    if (!survey) {
+      throw new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`);
+    }
+
+    const active = !survey.isActive;
+    const lastUpdateTime = new Date();
+
+    await this.prisma.form.update({
+      where: { id },
+      data: {
+        isActive: active,
+        lastUpdate: lastUpdateTime
+      }
+    });
+
+    return {
+      id: id,
+      isActive: active,
+      lastUpdate: lastUpdateTime
+    };
   }
 }

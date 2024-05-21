@@ -36,6 +36,21 @@ export class AlumniListService {
         role: 'ALUMNI',
       },
     });
+
+    if (alumniCount === 0) {
+      return {
+        users: [],
+        pagination: {
+          page: 1,
+          totalAlumni: 0,
+          totalPage: 1,
+          skip: 0,
+          from: 0,
+          to: 0,
+        },
+      };
+    }
+
     const { skip, ...rest } = await this.preparePagination(page, alumniCount);
 
     const users = await this.prisma.user.findMany({
@@ -86,6 +101,7 @@ export class AlumniListService {
     }
     return { users, pagination: { ...rest } };
   }
+
   async getAllAlumnibyProdi(headEmail: string, page: number) {
     const head = await this.prisma.user.findUnique({
       where: {
@@ -110,6 +126,21 @@ export class AlumniListService {
         },
       },
     });
+
+    if (alumniCount === 0) {
+      return {
+        users: [],
+        pagination: {
+          page: 1,
+          totalAlumni: 0,
+          totalPage: 1,
+          skip: 0,
+          from: 0,
+          to: 0,
+        },
+      };
+    }
+
     const { skip, ...rest } = await this.preparePagination(page, alumniCount);
 
     const users = await this.prisma.user.findMany({
@@ -146,6 +177,7 @@ export class AlumniListService {
         },
       },
     });
+
     for (const user of users) {
       if (user.alumni) {
         if (user.alumni.address) {

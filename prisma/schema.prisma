@@ -69,7 +69,9 @@ model Form {
   description String
   startTime   DateTime
   endTime     DateTime
+  isActive    Boolean @default(false)
 
+  lastUpdate DateTime?
   admissionYearFrom Int?
   admissionYearTo   Int?
   graduateYearFrom  Int?
