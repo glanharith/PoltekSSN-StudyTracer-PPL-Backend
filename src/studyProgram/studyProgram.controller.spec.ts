@@ -89,7 +89,7 @@ describe('StudyProgramController', () => {
         },
       ];
     
-      studyProgramServiceMock.findAll.mockResolvedValue({
+      studyProgramServiceMock.viewAll.mockResolvedValue({
         studyPrograms: allStudyPrograms,
         pagination: {} as any,
       });
@@ -99,6 +99,17 @@ describe('StudyProgramController', () => {
       expect(result).toEqual({
         message: 'Successfully got all study programs',
         data: { studyPrograms: allStudyPrograms, pagination: {} as any },
+      });
+    });
+
+    it('should return all study programs', async () => {
+      studyProgramServiceMock.findAll.mockResolvedValue(allStudyPrograms);
+
+      const result = await studyProgramController.getAllStudyPrograms();
+
+      expect(result).toEqual({
+        message: 'Successfully got all study programs',
+        data: allStudyPrograms,
       });
     });
   });
