@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { StudyProgramService } from './studyProgram.service';
 import { StudyProgramDTO } from './DTO';
@@ -36,10 +37,9 @@ export class StudyProgramController {
   @IsPublic()
   @IsAdmin()
   @Get()
-  async viewAllStudyProgram() {
-    const allStudyPrograms = await this.studyProgramService.findAll();
+  async viewAllStudyProgram(@Query('page') page: number) {
     return response('Successfully got all study programs', {
-      data: allStudyPrograms,
+      data: await this.studyProgramService.findAll(page),
     });
   }
 

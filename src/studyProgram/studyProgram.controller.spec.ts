@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { StudyProgram } from '@prisma/client';
+import { StudyProgram, StudyProgramLevel } from '@prisma/client';
 import { StudyProgramDTO } from './DTO';
 import { StudyProgramController } from './studyProgram.controller';
 import { StudyProgramService } from './studyProgram.service';
@@ -41,7 +41,7 @@ describe('StudyProgramController', () => {
     code: 'code',
     level: 'D3',
   };
-  const allStudyPrograms: StudyProgram[] = [studyProgram, studyProgram2];
+  const allStudyPrograms: any = [studyProgram, studyProgram2];
 
   describe('POST /study-program', () => {
     it('should create a new study program', async () => {
@@ -74,24 +74,31 @@ describe('StudyProgramController', () => {
 
   describe('GET /study-program', () => {
     it('should return all study programs', async () => {
-      studyProgramServiceMock.findAll.mockResolvedValue(allStudyPrograms);
-
-      const result = await studyProgramController.viewAllStudyProgram();
-
-      expect(result).toEqual({
-        message: 'Successfully got all study programs',
-        data: allStudyPrograms,
+      const allStudyPrograms = [
+        {
+          code: "code",
+          id: "287ed51b-df85-43ab-96a3-13bb513e68c5",
+          level: StudyProgramLevel.D3,
+          name: "Computer Science"
+        },
+        {
+          code: "code",
+          id: "221cf51e-df85-43ab-96a3-13bb513e77d3",
+          level: StudyProgramLevel.D3,
+          name: "Information System"
+        },
+      ];
+    
+      studyProgramServiceMock.findAll.mockResolvedValue({
+        studyPrograms: allStudyPrograms,
+        pagination: {} as any,
       });
-    });
-
-    it('an empty array if no study program exist', async () => {
-      studyProgramServiceMock.findAll.mockResolvedValue([]);
-
-      const result = await studyProgramController.viewAllStudyProgram();
-
+    
+      const result = await studyProgramController.viewAllStudyProgram(1);
+    
       expect(result).toEqual({
         message: 'Successfully got all study programs',
-        data: [],
+        data: { studyPrograms: allStudyPrograms, pagination: {} as any },
       });
     });
   });
