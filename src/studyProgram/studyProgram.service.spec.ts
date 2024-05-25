@@ -213,13 +213,22 @@ describe('StudyProgramService', () => {
 
   describe('findAll', () => {
     it('should return all study programs', async () => {
+      prismaMock.studyProgram.findMany.mockResolvedValue(allStudyPrograms);
+      
+      expect(
+        await studyProgramService.findAll(),
+      ).toEqual(allStudyPrograms);
+      expect(prismaMock.studyProgram.findMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return all study programs', async () => {
       const findManyMock = jest.fn().mockResolvedValue([{studyProgram}]);
       const countMock = jest.fn().mockResolvedValue(1);
       const studyProgramService = new StudyProgramService({
         studyProgram: { findMany: findManyMock, count: countMock },
       } as any);
 
-      const result = await studyProgramService.findAll(1);
+      const result = await studyProgramService.viewAll(1);
 
       expect(result.studyPrograms).toHaveLength(1);
       expect(result.pagination).toEqual({
@@ -238,7 +247,7 @@ describe('StudyProgramService', () => {
         studyProgram: { findMany: findManyMock, count: countMock },
       } as any);
 
-      const result = await studyProgramService.findAll(NaN);
+      const result = await studyProgramService.viewAll(NaN);
 
       expect(result.studyPrograms).toHaveLength(1);
       expect(result.pagination).toEqual({
@@ -257,7 +266,7 @@ describe('StudyProgramService', () => {
         studyProgram: { findMany: findManyMock, count: countMock },
       } as any);
 
-      const result = await studyProgramService.findAll(0);
+      const result = await studyProgramService.viewAll(0);
 
       expect(result.studyPrograms).toHaveLength(1);
       expect(result.pagination).toEqual({
@@ -276,7 +285,7 @@ describe('StudyProgramService', () => {
         studyProgram: { findMany: findManyMock, count: countMock },
       } as any);
 
-      const result = await studyProgramService.findAll(7);
+      const result = await studyProgramService.viewAll(7);
 
       expect(result.studyPrograms).toHaveLength(1);
       expect(result.pagination).toEqual({

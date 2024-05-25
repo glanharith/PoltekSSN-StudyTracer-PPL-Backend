@@ -39,7 +39,15 @@ export class StudyProgramController {
   @Get()
   async viewAllStudyProgram(@Query('page') page: number) {
     return response('Successfully got all study programs', {
-      data: await this.studyProgramService.findAll(page),
+      data: await this.studyProgramService.viewAll(page),
+    });
+  }
+
+  @IsPublic()
+  @Get('all')
+  async getAllStudyPrograms() {
+    return response('Successfully got all study programs', {
+      data: await this.studyProgramService.findAll(),
     });
   }
 

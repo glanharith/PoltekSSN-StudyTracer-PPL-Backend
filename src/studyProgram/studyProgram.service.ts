@@ -91,7 +91,7 @@ export class StudyProgramService {
     };
   }
 
-  async findAll(page: number) {
+  async viewAll(page: number) {
     const studyProgramCount = await this.prisma.studyProgram.count({});
     const { skip, ...rest } = await this.preparePagination(
       page,
@@ -102,6 +102,10 @@ export class StudyProgramService {
       skip,
     });
     return { studyPrograms, pagination: { ...rest } };
+  }
+
+  async findAll(): Promise<StudyProgram[]> {
+    return this.prisma.studyProgram.findMany({});
   }
 
   async delete(id: string): Promise<StudyProgram> {
