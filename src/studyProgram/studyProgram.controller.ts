@@ -36,7 +36,7 @@ export class StudyProgramController {
 
   @IsPublic()
   @IsAdmin()
-  @Get()
+  @Get('paginated')
   async viewAllStudyProgram(@Query('page') page: number) {
     return response('Successfully got all study programs', {
       data: await this.studyProgramService.viewAll(page),
@@ -44,7 +44,7 @@ export class StudyProgramController {
   }
 
   @IsPublic()
-  @Get('all')
+  @Get()
   async getAllStudyPrograms() {
     return response('Successfully got all study programs', {
       data: await this.studyProgramService.findAll(),
