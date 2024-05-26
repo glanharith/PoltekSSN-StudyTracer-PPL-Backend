@@ -13,7 +13,7 @@ import { ZxcvbnService } from 'src/zxcvbn/zxcvbn.service';
 
 @Injectable()
 export class HeadOfStudyProgramService {
-  HEAD_PER_PAGE = 10
+  HEAD_PER_PAGE = 10;
   constructor(
     private readonly prisma: PrismaService,
     private readonly zxcvbnService: ZxcvbnService,
@@ -128,11 +128,11 @@ export class HeadOfStudyProgramService {
     });
   }
 
-  async findAll(page:number) {
+  async findAll(page: number) {
     const headCount = await this.prisma.user.count({
-      where:{
+      where: {
         role: 'HEAD_STUDY_PROGRAM',
-      }
+      },
     });
     if (headCount === 0) {
       return {
@@ -148,7 +148,7 @@ export class HeadOfStudyProgramService {
       };
     }
     const { skip, ...rest } = await this.preparePagination(page, headCount);
-    
+
     const res = await this.prisma.user.findMany({
       where: {
         role: 'HEAD_STUDY_PROGRAM',
@@ -182,7 +182,7 @@ export class HeadOfStudyProgramService {
     }));
 
     const cleanData = await Promise.all(modifiedData);
-    return {data:cleanData, pagination: { ...rest }};
+    return { data: cleanData, pagination: { ...rest } };
   }
 
   // Get a head of study program by id

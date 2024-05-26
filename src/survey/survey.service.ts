@@ -12,12 +12,13 @@ import {
   SurveyDTO,
 } from './DTO/SurveyDTO';
 import { isUUID } from 'class-validator';
-import { Alumni, Form } from '@prisma/client';
+import { Alumni, Form, FormType } from '@prisma/client';
 import { FillSurveyDTO } from './DTO/FIllSurveyDTO';
 import { toSheetsFile } from 'src/common/util/sheets';
 
 @Injectable()
 export class SurveyService {
+  SURVEY_PER_PAGE = 6;
   constructor(private readonly prisma: PrismaService) {}
 
   private validateFormDetails(form: SurveyDTO) {
@@ -595,11 +596,12 @@ export class SurveyService {
           {
             OR: [
               { isActive: { equals: true } },
-              { AND: [
+              {
+                AND: [
                   { lastUpdate: { equals: null } },
                   { startTime: { lte: startDateThreshold } },
-                  { startTime: { gte: today } }
-                ]
+                  { startTime: { gte: today } },
+                ],
               },
             ],
           },
@@ -610,6 +612,134 @@ export class SurveyService {
         responses: true,
       },
     });
+  }
+
+  private async preparePagination(page: number, surveyCount: number) {
+    if (Number.isNaN(page)) page = 1;
+    if (page < 1) page = 1;
+
+    const totalPage = Math.ceil(surveyCount / this.SURVEY_PER_PAGE);
+
+    if (page > totalPage) page = totalPage;
+
+    const skip = Math.max((page - 1) * this.SURVEY_PER_PAGE, 0);
+    const from = skip + 1;
+    const to = Math.min(skip + this.SURVEY_PER_PAGE, surveyCount);
+
+    return {
+      page,
+      totalSurvey: surveyCount,
+      totalPage,
+      skip,
+      from,
+      to,
+    };
+  }
+
+  async getAllSurveysPagi(
+    request: any,
+    page: number,
+    type: string,
+    condition: string,
+  ) {
+    const now = new Date();
+    let dateFilter = {};
+    const tipe = type == 'CAREER' ? FormType.CAREER : FormType.CURRICULUM;
+
+    if (condition === 'upcoming') {
+      dateFilter = {
+        startTime: {
+          gte: now,
+        },
+        isActive: false,
+      };
+    } else if (condition === 'ongoing') {
+      dateFilter = {
+        startTime: {
+          lte: now,
+        },
+        endTime: {
+          gte: now,
+        },
+        isActive: true,
+      };
+    } else if (condition === 'archived') {
+      dateFilter = {
+        endTime: {
+          lte: now,
+        },
+        isActive: false,
+      };
+    }
+
+    if (request.role === 'HEAD_STUDY_PROGRAM') {
+      const head = await this.prisma.headStudyProgram.findFirst({
+        where: {
+          user: {
+            email: request.email,
+          },
+        },
+      });
+
+      const headStudyProgramId = head?.studyProgramId;
+
+      const surveyCount = await this.prisma.form.count({
+        where: { ...dateFilter, type: tipe },
+      });
+      const { skip, ...rest } = await this.preparePagination(page, surveyCount);
+
+      const formsRes = await this.prisma.form.findMany({
+        where: { ...dateFilter, type: tipe },
+        take: this.SURVEY_PER_PAGE,
+        skip,
+        include: {
+          _count: {
+            select: {
+              responses: true,
+            },
+          },
+          responses: {
+            include: {
+              alumni: true,
+            },
+          },
+        },
+      });
+      const filteredForms = formsRes.map((form) => {
+        const filteredResponses = form.responses.filter(
+          (response) => response.alumni.studyProgramId === headStudyProgramId,
+        );
+        const count = filteredResponses.length;
+        return { ...form, _count: { responses: count } };
+      });
+
+      return { surveys: filteredForms, pagination: { ...rest } };
+    }
+
+    const surveyCount = await this.prisma.form.count({
+      where: { ...dateFilter, type: tipe },
+    });
+    const { skip, ...rest } = await this.preparePagination(page, surveyCount);
+
+    const formsRes = await this.prisma.form.findMany({
+      where: { ...dateFilter, type: tipe },
+      take: this.SURVEY_PER_PAGE,
+      skip,
+      include: {
+        _count: {
+          select: {
+            responses: true,
+          },
+        },
+        responses: {
+          include: {
+            alumni: true,
+          },
+        },
+      },
+    });
+
+    return { surveys: formsRes, pagination: { ...rest } };
   }
 
   async getAllSurveys(request: any): Promise<Form[]> {
@@ -1137,9 +1267,9 @@ export class SurveyService {
       select: {
         id: true,
         isActive: true,
-        lastUpdate: true
-      }
-    })
+        lastUpdate: true,
+      },
+    });
 
     if (!survey) {
       throw new NotFoundException(`Survei dengan ID ${id} tidak ditemukan`);
@@ -1152,14 +1282,14 @@ export class SurveyService {
       where: { id },
       data: {
         isActive: active,
-        lastUpdate: lastUpdateTime
-      }
+        lastUpdate: lastUpdateTime,
+      },
     });
 
     return {
       id: id,
       isActive: active,
-      lastUpdate: lastUpdateTime
+      lastUpdate: lastUpdateTime,
     };
   }
 }
