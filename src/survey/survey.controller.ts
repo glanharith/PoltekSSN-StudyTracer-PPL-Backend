@@ -74,6 +74,26 @@ export class SurveyController {
     });
   }
 
+  @Get('/all-pagination')
+  @IsAdmin()
+  @IsHead()
+  async getAllSurveysPagination(
+    @ReqUser() request,
+    @Query('page') page: number,
+    @Query('type') type: string,
+    @Query('condition') condition: string,
+  ) {
+    const allSurveys = await this.surveyService.getAllSurveysPagi(
+      request,
+      page,
+      type,
+      condition,
+    );
+    return response('Successfully got all surveys', {
+      data: allSurveys,
+    });
+  }
+
   @Get('/:id')
   @IsAdmin()
   async getSurvey(@Param('id') id: string) {
